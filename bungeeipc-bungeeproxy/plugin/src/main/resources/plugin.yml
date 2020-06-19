@@ -1,0 +1,4 @@
+name: BungeeIPCPlugin
+main: org.unixminecraft.bungeeipc.bungeeproxy.BungeeIPCPlugin
+version: 0.0.1
+author: mciolkosz
