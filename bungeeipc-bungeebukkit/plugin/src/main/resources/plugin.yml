@@ -1,16 +1,16 @@
 name: BungeeIPCPlugin
-main: org.unixminecraft.bungeeipc.bungeebukkit.BungeeIPCPlugin
+main: org.bspfsystems.bungeeipc.bungeebukkit.BungeeIPCPlugin
 author: mciolkosz
-website: https://github.com/unixminecraft/BungeeIPC/
-version: 0.0.1-SNAPSHOT
+website: https://github.com/bspfsystems/BungeeIPC/
+version: 0.0.2-SNAPSHOT
 api-version: 1.15
 
 commands:
   ipc:
     description: Base command for all client-side IPC subcommands
     permission: bungeeipc.command.ipc
-    permission-message: §r§cYou do not have permission to execute this command.§r
-    usage: §r§cUnknown command. Use§r §b/ipc <subcommand> [args]§r
+    permission-message: "§r§cYou do not have permission to execute this command.§r"
+    usage: "§r§cUnknown command. Use§r §b/ipc <subcommand> [args]§r"
 
 permissions:
   bungeeipc.command.ipc:
