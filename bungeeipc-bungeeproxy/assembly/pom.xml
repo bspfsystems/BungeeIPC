@@ -24,16 +24,28 @@
   <parent>
     <groupId>org.bspfsystems.bungeeipc.bungeeproxy</groupId>
     <artifactId>bungeeipc-bungeeproxy-parent</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
   </parent>
   
   <artifactId>bungeeipc-bungeeproxy-assembly</artifactId>
+  <packaging>jar</packaging>
+  
+  <name>BungeeIPC-Assembly</name>
+  <description>Assembly for the BungeeIPC plugin for Minecraft BungeeCord servers.</description>
   
   <build>
     <directory>../target</directory>
     <finalName>BungeeIPC-BungeeProxy-${version}</finalName>
     
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>2.8.2</version>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>3.3.0</version>

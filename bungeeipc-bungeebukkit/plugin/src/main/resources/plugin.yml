@@ -2,7 +2,7 @@ name: BungeeIPCPlugin
 main: org.bspfsystems.bungeeipc.bungeebukkit.BungeeIPCPlugin
 author: mciolkosz
 website: https://github.com/bspfsystems/BungeeIPC/
-version: 0.0.2-SNAPSHOT
+version: 0.0.3-SNAPSHOT
 api-version: 1.15
 
 commands:
