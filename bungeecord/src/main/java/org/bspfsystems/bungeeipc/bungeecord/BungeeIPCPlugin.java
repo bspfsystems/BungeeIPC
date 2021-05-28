@@ -75,7 +75,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
         this.logger.log(Level.INFO, "///////////////////////////////////////////////////////////////////////////");
         this.logger.log(Level.INFO, "//                                                                       //");
         this.logger.log(Level.INFO, "// BungeeIPC BungeeCord/Bukkit plugin for Minecraft                      //");
-        this.logger.log(Level.INFO, "// Copyright (C) 2020  Matt Ciolkosz (https://github.com/mciolkosz)      //");
+        this.logger.log(Level.INFO, "// Copyright (C) 2020-2021 BSPF Systems, LLC (https://bspfsystems.org/)  //");
         this.logger.log(Level.INFO, "//                                                                       //");
         this.logger.log(Level.INFO, "// This program is free software: you can redistribute it and/or modify  //");
         this.logger.log(Level.INFO, "// it under the terms of the GNU General Public License as published by  //");
