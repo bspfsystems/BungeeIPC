@@ -2,7 +2,7 @@
  * This file is part of the BungeeIPC plugins for
  * BungeeCord and Bukkit servers for Minecraft.
  *
- * Copyright (C) 2020  Matt Ciolkosz (https://github.com/mciolkosz)
+ * Copyright (C) 2020-2021 BSPF Systems, LLC (https://bspfsystems.org/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
