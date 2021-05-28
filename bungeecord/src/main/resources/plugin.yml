@@ -1,0 +1,4 @@
+name: BungeeIPCPlugin
+main: org.bspfsystems.bungeeipc.bungeecord.BungeeIPCPlugin
+version: 0.1.0-SNAPSHOT
+author: mciolkosz

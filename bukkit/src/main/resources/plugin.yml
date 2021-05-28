@@ -1,0 +1,33 @@
+name: BukkitIPCPlugin
+main: org.bspfsystems.bungeeipc.bukkit.BukkitIPCPlugin
+author: mciolkosz
+website: https://github.com/bspfsystems/BungeeIPC/
+version: 0.1.0-SNAPSHOT
+api-version: 1.15
+
+commands:
+  ipc:
+    description: Base command for all client-side IPC subcommands
+    permission: bungeeipc.command.ipc
+    permission-message: "§r§cYou do not have permission to execute this command.§r"
+    usage: "§r§cUnknown command. Use§r §b/ipc <subcommand> [args]§r"
+
+permissions:
+  bungeeipc.command.ipc:
+    description: Ability to use the base /ipc command
+    default: op
+  bungeeipc.command.ipc.command:
+    description: Ability to use the /ipc command subcommand
+    default: op
+  bungeeipc.command.ipc.command.player.console:
+    description: Ability to specify the console as the player in the /ipc command subcommand
+    default: op
+  bungeeipc.command.ipc.command.player.other:
+    description: Ability to specify another player as the player in the /ipc command subcommand
+    default: op
+  bungeeipc.command.ipc.status:
+    description: Ability to use the /ipc status subcommand
+    default: op
+  bungeeipc.command.ipc.reconnect:
+    description: Ability to use the /ipc reconnect subcommand
+    default: op
