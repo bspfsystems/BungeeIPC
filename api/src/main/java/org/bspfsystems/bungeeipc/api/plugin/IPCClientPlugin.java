@@ -19,9 +19,37 @@
 
 package org.bspfsystems.bungeeipc.api.plugin;
 
+import org.bspfsystems.bungeeipc.api.socket.IPCServerSocket;
+import org.bspfsystems.bungeeipc.api.socket.IPCSocket;
+
+/**
+ * Represents the client-side version of the {@link IPCPlugin}.
+ */
 public interface IPCClientPlugin extends IPCPlugin {
     
+    /**
+     * Gets whether the client-side connection is running or not.
+     * 
+     * @return <code>true</code> if the client {@link IPCSocket} is running,
+     *         <code>false</code> if it is stopped.
+     */
     boolean isClientRunning();
+    
+    /**
+     * Gets whether the client {@link IPCSocket} is connected to the
+     * {@link IPCServerSocket} or not.
+     * <p>
+     * This will always return <code>false</code> if
+     * {@link IPCClientPlugin#isClientRunning()} returns <code>false</code>.
+     * 
+     * @return <code>true</code> if the client {@link IPCSocket} is connected
+     *         to the {@link IPCServerSocket}, <code>false</code> if the client
+     *         is not connected or is not running.
+     */
     boolean isClientConnected();
+    
+    /**
+     * Restarts the client-side {@link IPCSocket}.
+     */
     void restartClient();
 }

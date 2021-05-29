@@ -21,8 +21,20 @@ package org.bspfsystems.bungeeipc.api.socket;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents the server side of the {@link IPCSocket}. This will run on the
+ * BungeeCord side of the IPC connection.
+ */
 public interface IPCServerSocket extends IPCSocket {
     
+    /**
+     * Gets the name of this {@link IPCServerSocket}.
+     * <p>
+     * This may or may not be the same name as the Minecraft server that is
+     * configured in BungeeCord, depending on the implementation.
+     * 
+     * @return The name of this {@link IPCServerSocket}.
+     */
     @NotNull
     String getName();
 }

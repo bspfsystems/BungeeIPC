@@ -19,9 +19,19 @@
 
 package org.bspfsystems.bungeeipc.api;
 
+import org.bspfsystems.bungeeipc.api.socket.IPCSocket;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents an object that will read {@link IPCMessage}s after they are
+ * received by {@link IPCSocket}s.
+ */
 public interface IPCReader {
     
+    /**
+     * Reads the specified {@link IPCMessage} and processes it.
+     * 
+     * @param message The {@link IPCMessage} to read and process.
+     */
     void readMessage(@NotNull IPCMessage message);
 }
