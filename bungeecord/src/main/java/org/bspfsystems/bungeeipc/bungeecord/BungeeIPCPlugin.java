@@ -21,25 +21,41 @@
 package org.bspfsystems.bungeeipc.bungeecord;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.md_5.bungee.api.ProxyServer;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.api.plugin.PluginManager;
+import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 import org.bspfsystems.bungeeipc.api.IPCMessage;
@@ -92,29 +108,195 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
         this.logger.log(Level.INFO, "//                                                                       //");
         this.logger.log(Level.INFO, "///////////////////////////////////////////////////////////////////////////");
         
-        final ProxyServer proxy = this.getProxy();
-        
-        final File configDirectory = new File(this.getDataFolder(), "IPC_Servers");
+        final File mainConfigFile = new File(this.getDataFolder(), "config.yml");
         try {
-            if (!configDirectory.exists()) {
-                this.logger.log(Level.SEVERE, "IPC Servers config directory does not exist at " + configDirectory.getPath());
-                proxy.stop();
-                return;
+            if (mainConfigFile.exists()) {
+                if (!mainConfigFile.isFile()) {
+                    this.logger.log(Level.SEVERE, "Main BungeeIPC configuration file is not a file: " + mainConfigFile.getPath());
+                    throw new RuntimeException("Main BungeeIPC configuration file is not a file: " + mainConfigFile.getPath());
+                }
+            } else {
+                if (!mainConfigFile.createNewFile()) {
+                    this.logger.log(Level.SEVERE, "Main BungeeIPC configuration file not created at " + mainConfigFile.getPath());
+                    throw new RuntimeException("Main BungeeIPC configuration file not created at " + mainConfigFile.getPath());
+                }
+                final InputStream defaultConfig = this.getResourceAsStream(mainConfigFile.getName());
+                final FileOutputStream outputStream = new FileOutputStream(mainConfigFile);
+                final byte[] buffer = new byte[4096];
+                int read;
+        
+                while ((read = defaultConfig.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, read);
+                }
+        
+                outputStream.flush();
+                outputStream.close();
+            }
+        } catch (SecurityException | IOException e) {
+            this.logger.log(Level.SEVERE, "Unable to load main BungeeIPC configuration file at " + mainConfigFile.getPath());
+            this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
+            throw new RuntimeException("Unable to load main BungeeIPC configuration file at " + mainConfigFile.getPath(), e);
+        }
+    
+        final ConfigurationProvider provider = ConfigurationProvider.getProvider(YamlConfiguration.class);
+        final Configuration mainConfig;
+        try {
+            mainConfig = provider.load(mainConfigFile);
+        } catch (IOException e) {
+            this.logger.log(Level.SEVERE, "Unable to load main BungeeIPC configuration.");
+            this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
+            throw new RuntimeException("Unable to load main BungeeIPC configuration.", e);
+        }
+        if (mainConfig == null) {
+            this.logger.log(Level.SEVERE, "Main BungeeIPC configuration not loaded, no Exception thrown.");
+            throw new RuntimeException("Main BungeeIPC configuration not loaded, no Exception thrown.");
+        }
+        
+        SSLServerSocketFactory sslServerSocketFactory = null;
+        ArrayList<String> tlsVersionWhitelist = null;
+        ArrayList<String> tlsCipherSuiteWhitelist = null;
+        
+        final boolean useSSL = mainConfig.getBoolean("use_ssl", false);
+        if (useSSL) {
+            
+            final String keyStoreFile = mainConfig.getString("key_store_file", null);
+            final String keyStorePassword = mainConfig.getString("key_store_password", null);
+            
+            if (keyStoreFile == null || keyStoreFile.trim().isEmpty()) {
+                this.logger.log(Level.SEVERE, "KeyStore file is null or empty: " + (keyStoreFile == null ? "null" : keyStoreFile));
+                throw new RuntimeException("KeyStore file is null or empty: " + (keyStoreFile == null ? "null" : keyStoreFile));
+            }
+    
+            if (keyStorePassword == null || keyStorePassword.trim().isEmpty()) {
+                this.logger.log(Level.SEVERE, "KeyStore password is null or empty: " + (keyStorePassword == null ? "null" : keyStorePassword));
+                throw new RuntimeException("KeyStore password is null or empty: " + (keyStorePassword == null ? "null" : keyStorePassword));
+            }
+            
+            String keyStoreInstance = mainConfig.getString("key_store_instance", "JKS");
+            if (keyStoreInstance == null || keyStoreInstance.trim().isEmpty()) {
+                keyStoreInstance = "JKS";
+            }
+            String keyManagerFactoryAlgorithm = mainConfig.getString("key_manager_factory_algorithm", "NewSunX509");
+            if (keyManagerFactoryAlgorithm == null || keyManagerFactoryAlgorithm.trim().isEmpty()) {
+                keyManagerFactoryAlgorithm = "NewSunX509";
+            }
+            String trustManagerFactoryAlgorithm = mainConfig.getString("trust_manager_factory_algorithm", "NewSunX509");
+            if (trustManagerFactoryAlgorithm == null || trustManagerFactoryAlgorithm.trim().isEmpty()) {
+                trustManagerFactoryAlgorithm = "NewSunX509";
+            }
+            String sslContextProtocol = mainConfig.getString("ssl_context_protocol", "TLS");
+            if (sslContextProtocol == null || sslContextProtocol.trim().isEmpty()) {
+                sslContextProtocol = "TLS";
+            }
+    
+            List<?> tlsVersionWhitelistRaw = mainConfig.getList("tls_version_whitelist", null);
+            tlsVersionWhitelist = new ArrayList<String>();
+            
+            if (tlsVersionWhitelistRaw == null || tlsVersionWhitelistRaw.isEmpty()) {
+                tlsVersionWhitelist.add("TLSv1.1");
+                tlsVersionWhitelist.add("TLSv1.2");
+            } else {
+                for (final Object object : tlsVersionWhitelistRaw) {
+                    if (object == null) {
+                        continue;
+                    }
+    
+                    final String tlsVersion;
+                    if (object instanceof String) {
+                        tlsVersion = (String) object;
+                    } else {
+                        tlsVersion = object.toString();
+                    }
+                    
+                    if (tlsVersion.trim().isEmpty()) {
+                        continue;
+                    }
+                    tlsVersionWhitelist.add(tlsVersion);
+                }
+            }
+            
+            if (tlsVersionWhitelist.isEmpty()) {
+                tlsVersionWhitelist.add("TLSv1.1");
+                tlsVersionWhitelist.add("TLSv1.2");
+            }
+            
+            List<?> tlsCipherSuiteWhitelistRaw = mainConfig.getList("tls_cipher_suite_whitelist", null);
+            tlsCipherSuiteWhitelist = new ArrayList<String>();
+            
+            if (tlsCipherSuiteWhitelistRaw == null || tlsCipherSuiteWhitelistRaw.isEmpty()) {
+                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_CBC_SHA256");
+                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_128_CBC_SHA256");
+                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
+                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_128_GCM_SHA256");
+            } else {
+                for (final Object object : tlsCipherSuiteWhitelistRaw) {
+                    if (object == null) {
+                        continue;
+                    }
+                    
+                    final String tlsCipherSuite;
+                    if (object instanceof String) {
+                        tlsCipherSuite = (String) object;
+                    } else {
+                        tlsCipherSuite = object.toString();
+                    }
+                    
+                    if (tlsCipherSuite.trim().isEmpty()) {
+                        continue;
+                    }
+                    tlsCipherSuiteWhitelist.add(tlsCipherSuite);
+                }
+            }
+            
+            if (tlsCipherSuiteWhitelist.isEmpty()) {
+                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_CBC_SHA256");
+                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_128_CBC_SHA256");
+                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
+                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_128_GCM_SHA256");
+            }
+            
+            try {
+                final KeyStore keyStore = KeyStore.getInstance(keyStoreInstance);
+                keyStore.load(new FileInputStream(keyStoreFile), keyStorePassword.toCharArray());
+                
+                final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(keyManagerFactoryAlgorithm);
+                keyManagerFactory.init(keyStore, keyStorePassword.toCharArray());
+                
+                final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(trustManagerFactoryAlgorithm);
+                trustManagerFactory.init(keyStore);
+                
+                final SSLContext sslContext = SSLContext.getInstance(sslContextProtocol);
+                sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+                
+                sslServerSocketFactory = sslContext.getServerSocketFactory();
+            } catch (KeyStoreException | SecurityException | IOException | NoSuchAlgorithmException | CertificateException | UnrecoverableKeyException | KeyManagementException e) {
+                this.logger.log(Level.SEVERE, "Unable to create SSLServerSocketFactory.");
+                this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
+                throw new RuntimeException("Unable to create SSLServerSocketFactory.", e);
+            }
+        }
+        
+        final File serverConfigDirectory = new File(this.getDataFolder(), "IPC_Servers");
+        try {
+            if (!serverConfigDirectory.exists()) {
+                this.logger.log(Level.SEVERE, "IPC Servers configuration directory does not exist at " + serverConfigDirectory.getPath());
+                throw new RuntimeException("IPC Servers configuration directory does not exist at " + serverConfigDirectory.getPath());
+            } else if (!serverConfigDirectory.isDirectory()) {
+                this.logger.log(Level.SEVERE, "IPC Servers configuration directory is not a directory: " + serverConfigDirectory.getPath());
+                throw new RuntimeException("IPC Servers configuration directory is not a directory: " + serverConfigDirectory.getPath());
             }
         } catch (SecurityException e) {
-            this.logger.log(Level.SEVERE, "Unable to validate existence of IPC Servers config directory at " + configDirectory.getPath(), e);
-            proxy.stop();
-            return;
+            this.logger.log(Level.SEVERE, "Unable to validate existence of IPC Servers configuration directory at " + serverConfigDirectory.getPath());
+            this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
+            throw new RuntimeException("Unable to validate existence of IPC Servers configuration directory at " + serverConfigDirectory.getPath(), e);
         }
         
-        final Iterator<File> iterator = (new ArrayList<File>(Arrays.asList(configDirectory.listFiles()))).iterator();
+        final Iterator<File> iterator = (Arrays.asList(serverConfigDirectory.listFiles())).iterator();
         if (!iterator.hasNext()) {
-            this.logger.log(Level.SEVERE, "No IPCServerSocket config files found in the IPC Servers config directory.");
-            proxy.stop();
-            return;
+            this.logger.log(Level.SEVERE, "No IPCServerSocket configuration files found in the IPC Servers configuration directory.");
+            throw new RuntimeException("No IPCServerSocket configuration files found in the IPC Servers configuration directory.");
         }
         
-        final ConfigurationProvider provider = ConfigurationProvider.getProvider(YamlConfiguration.class);
         this.serverSockets = new ConcurrentHashMap<String, IPCServerSocket>();
         final HashSet<String> connections = new HashSet<String>();
         final Collection<InetAddress> localAddresses = new ArrayList<InetAddress>();
@@ -125,56 +307,48 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
             }
         } catch (SocketException e) {
             this.logger.log(Level.SEVERE, "Unable to load all local network interfaces.");
-            proxy.stop();
-            return;
+            this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
+            throw new RuntimeException("Unable to load all local network interfaces.", e);
         }
         
         while (iterator.hasNext()) {
             
-            final File configFile = iterator.next();
+            final File serverConfigFile = iterator.next();
             final BungeeIPCServerSocket serverSocket;
             try {
-                serverSocket = new BungeeIPCServerSocket(this, provider.load(configFile), localAddresses);
-            } catch (IOException e) {
-                this.logger.log(Level.SEVERE, "Stopping the proxy.");
-                this.logger.log(Level.SEVERE, "Failure while attempting to load the IPCServerSocket config file at " + configFile.getPath());
-                this.logger.log(Level.SEVERE, "IOException thrown.", e);
-                proxy.stop();
-                return;
-            } catch (IllegalArgumentException e) {
-                this.logger.log(Level.SEVERE, "Stopping the proxy.");
-                this.logger.log(Level.SEVERE, "Failure while attempting to load the IPCServerSocket config file at " + configFile.getPath());
-                this.logger.log(Level.SEVERE, "IllegalArgumentException thrown.", e);
-                proxy.stop();
-                return;
+                serverSocket = new BungeeIPCServerSocket(this, provider.load(serverConfigFile), localAddresses, sslServerSocketFactory, tlsVersionWhitelist, tlsCipherSuiteWhitelist);
+            } catch (IOException | IllegalArgumentException e) {
+                this.logger.log(Level.SEVERE, "Failure while attempting to load the IPCServerSocket configuration file at " + serverConfigFile.getPath());
+                this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
+                throw new RuntimeException("Failure while attempting to load the IPCServerSocket configuration file at " + serverConfigFile.getPath(), e);
             }
             
-            final String configFileName = configFile.getName().substring(0, configFile.getName().lastIndexOf(".")).toLowerCase();
+            final String configFileName = serverConfigFile.getName().substring(0, serverConfigFile.getName().lastIndexOf(".")).toLowerCase();
             final String serverName = serverSocket.getName();
             if (!configFileName.equals(serverName)) {
-                this.logger.log(Level.SEVERE, "Stopping the proxy.");
-                this.logger.log(Level.SEVERE, "IPCServerSocket config file name and server name mismatch.");
-                this.logger.log(Level.SEVERE, "IPCServerSocket config file name : " + configFileName);
-                this.logger.log(Level.SEVERE, "IPCServerSocket name: " + serverName);
-                proxy.stop();
-                return;
+                this.logger.log(Level.SEVERE, "IPCServerSocket configuration file name and server name mismatch.");
+                this.logger.log(Level.SEVERE, "Configuration file name : " + configFileName);
+                this.logger.log(Level.SEVERE, "Name within the configuration: " + serverName);
+                this.logger.log(Level.SEVERE, "Configuration file path: " + serverConfigFile.getPath());
+                throw new RuntimeException("IPCServerSocket and configuration file name mismatch for IPCServerSocket configuration file at " + serverConfigFile.getPath());
             }
             
             final String connection = serverSocket.getAddress().getHostAddress() + ":" + serverSocket.getPort();
             if (!connections.add(connection)) {
-                this.logger.log(Level.SEVERE, "Stopping the proxy.");
-                this.logger.log(Level.SEVERE, "Non-unique connection.");
+                this.logger.log(Level.SEVERE, "Non-unique IPC connection.");
                 this.logger.log(Level.SEVERE, "IPCServerSocket name: " + serverName);
-                proxy.stop();
-                return;
+                this.logger.log(Level.SEVERE, "Hostname/IP Address: " + serverSocket.getAddress().getHostAddress());
+                this.logger.log(Level.SEVERE, "Port: " + serverSocket.getPort());
+                this.logger.log(Level.SEVERE, "Configuration file path: " + serverConfigFile.getPath());
+                throw new RuntimeException("IPCServerSocket configuration contains non-unique connection information (hostname/IP and port) for IPCServerSocket configuration file at " + serverConfigFile.getPath());
             }
             
             if (this.serverSockets.containsKey(serverName)) {
-                this.logger.log(Level.SEVERE, "Stopping the proxy.");
                 this.logger.log(Level.SEVERE, "IPCServerSocket previously defined and added.");
                 this.logger.log(Level.SEVERE, "Please check all configurations for duplicates.");
-                proxy.stop();
-                return;
+                this.logger.log(Level.SEVERE, "Duplicate IPCServerSocket name: " + serverName);
+                this.logger.log(Level.SEVERE, "Configuration file path: " + serverConfigFile.getPath());
+                throw new RuntimeException("IPCServerSocket configuration contains non-unique server name for IPCServerSocket configuration file at " + serverConfigFile.getPath());
             }
             
             this.serverSockets.put(serverName, serverSocket);
@@ -185,7 +359,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
         }
         
         this.onlineStatuses = new ConcurrentHashMap<String, AtomicBoolean>();
-        for (final ServerInfo serverInfo : proxy.getServers().values()) {
+        for (final ServerInfo serverInfo : this.getProxy().getServers().values()) {
             this.onlineStatuses.put(serverInfo.getName(), new AtomicBoolean(false));
         }
         
@@ -230,9 +404,10 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     
     @Override
     public void sendMessage(@NotNull final IPCMessage message) {
+        
         if (message.getChannel().equals(IPCMessage.BROADCAST_SERVER)) {
             this.broadcastMessage(message);
-        } else if (message.getServer().equals(PROXY_SERVER)) {
+        } else if (message.getServer().equals(BungeeIPCPlugin.PROXY_SERVER)) {
             this.receiveMessage(message);
         } else if (!this.serverSockets.containsKey(message.getServer())) {
             this.logger.log(Level.WARNING, "Server name " + message.getServer() + " is not registered to this IPC Plugin.");
@@ -243,7 +418,8 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     
     @Override
     public void receiveMessage(@NotNull final IPCMessage message) {
-        if (message.getServer().equals(PROXY_SERVER)) {
+        
+        if (message.getServer().equals(BungeeIPCPlugin.PROXY_SERVER)) {
             if (!this.readers.containsKey(message.getChannel())) {
                 this.logger.log(Level.WARNING, "IPC message destined for the BungeeCord proxy, but the channel is not specified.");
                 this.logger.log(Level.WARNING, "IPC message channel: " + message.getChannel());
@@ -282,6 +458,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     
     @Override
     public void restartServer(@NotNull final String name) {
+        
         this.validateNotBlank(name, "Server name cannot be blank!");
         this.validateServer(name, "Server is not registered to the BungeeCord proxy!");
         this.serverSockets.get(name).stop();
@@ -290,6 +467,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     
     @Override
     public void broadcastMessage(@NotNull final IPCMessage message) {
+        
         if (!message.getChannel().equals(IPCMessage.BROADCAST_SERVER)) {
             this.logger.log(Level.WARNING, "Cannot broadcast IPC message when the server is not the broadcast server.");
             this.logger.log(Level.WARNING, "IPC message server: " + message.getServer());

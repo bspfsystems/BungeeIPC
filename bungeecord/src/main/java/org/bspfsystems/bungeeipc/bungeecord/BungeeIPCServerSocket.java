@@ -27,16 +27,20 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import net.md_5.bungee.api.scheduler.TaskScheduler;
 import net.md_5.bungee.config.Configuration;
 import org.bspfsystems.bungeeipc.api.IPCMessage;
 import org.bspfsystems.bungeeipc.api.socket.IPCServerSocket;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class BungeeIPCServerSocket implements IPCServerSocket {
     
@@ -47,6 +51,10 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
     private final InetAddress address;
     private final int port;
     
+    private final SSLServerSocketFactory sslServerSocketFactory;
+    private final ArrayList<String> tlsVersionWhitelist;
+    private final ArrayList<String> tlsCipherSuiteWhitelist;
+    
     private DataOutputStream toBukkit;
     private ServerSocket serverSocket;
     private Socket socket;
@@ -56,7 +64,7 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
     private final AtomicBoolean connected;
     private final AtomicInteger taskId;
     
-    BungeeIPCServerSocket(@NotNull final BungeeIPCPlugin ipcPlugin, @NotNull final Configuration config, @NotNull final Collection<InetAddress> localAddresses) {
+    BungeeIPCServerSocket(@NotNull final BungeeIPCPlugin ipcPlugin, @NotNull final Configuration config, @NotNull final Collection<InetAddress> localAddresses, @Nullable final SSLServerSocketFactory sslServerSocketFactory, @Nullable final ArrayList<String> tlsVersionWhitelist, @Nullable final ArrayList<String> tlsCipherSuiteWhitelist) {
         
         this.ipcPlugin = ipcPlugin;
         this.logger = this.ipcPlugin.getLogger();
@@ -64,11 +72,11 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         final String nameValue = config.getString("server_name", null);
         final String addressValue = config.getString("ip_address", null);
         final int portValue = config.getInt("port", -1);
-        
-        validateNotNull(nameValue);
-        validateNotNull(addressValue);
-        validateNotBlank(nameValue, "Server name cannot be blank!");
-        validateNotBlank(addressValue, "IP address cannot be blank!");
+    
+        BungeeIPCServerSocket.validateNotNull(nameValue);
+        BungeeIPCServerSocket.validateNotNull(addressValue);
+        BungeeIPCServerSocket.validateNotBlank(nameValue, "Server name cannot be blank!");
+        BungeeIPCServerSocket.validateNotBlank(addressValue, "IP address cannot be blank!");
         if (portValue == -1) {
             throw new IllegalArgumentException("Port must be specified in the config.");
         }
@@ -87,6 +95,10 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         if (!localAddresses.contains(this.address)) {
             throw new IllegalArgumentException("Cannot use network address that is not on the local system.");
         }
+        
+        this.sslServerSocketFactory = sslServerSocketFactory;
+        this.tlsVersionWhitelist = tlsVersionWhitelist;
+        this.tlsCipherSuiteWhitelist = tlsCipherSuiteWhitelist;
         
         this.scheduler = this.ipcPlugin.getProxy().getScheduler();
         this.running = new AtomicBoolean(false);
@@ -116,7 +128,19 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
     public void run() {
         
         try {
-            this.serverSocket = new ServerSocket(this.port, 2, this.address);
+            if (this.sslServerSocketFactory != null) {
+                if (this.tlsVersionWhitelist == null || this.tlsCipherSuiteWhitelist == null) {
+                    this.logger.log(Level.SEVERE, "SSL is enabled, but the TLS whitelists are null.");
+                    this.logger.log(Level.SEVERE, "Unable to set up IPC server.");
+                    throw new RuntimeException("SSL is enabled, but the TLS whitelists are null.");
+                }
+                
+                this.serverSocket = this.sslServerSocketFactory.createServerSocket(this.port, 2, this.address);
+                ((SSLServerSocket) this.serverSocket).setEnabledProtocols(this.tlsVersionWhitelist.toArray(new String[] {}));
+                ((SSLServerSocket) this.serverSocket).setEnabledCipherSuites(this.tlsCipherSuiteWhitelist.toArray(new String[] {}));
+            } else {
+                this.serverSocket = new ServerSocket(this.port, 2, this.address);
+            }
         } catch (IOException e) {
             this.logger.log(Level.SEVERE, "IOException thrown while setting up the IPC server.", e);
             throw new RuntimeException("IOException thrown while setting up the IPC server.", e);
@@ -256,7 +280,7 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
     }
     
     private static void validateNotNull(@NotNull final String value) {
-        // Do nothing, JetBrains annotations do the work.
+        // Do nothing, JetBrains annotations does the work.
     }
     
     private static void validateNotBlank(@NotNull final String value, @NotNull final String message) {
