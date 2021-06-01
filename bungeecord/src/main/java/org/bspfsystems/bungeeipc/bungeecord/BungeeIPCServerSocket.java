@@ -75,8 +75,8 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
     
         BungeeIPCServerSocket.validateNotNull(nameValue);
         BungeeIPCServerSocket.validateNotNull(addressValue);
-        BungeeIPCServerSocket.validateNotBlank(nameValue, "Server name cannot be blank!");
-        BungeeIPCServerSocket.validateNotBlank(addressValue, "IP address cannot be blank!");
+        BungeeIPCServerSocket.validateNotBlank(nameValue, "Server name cannot be blank.");
+        BungeeIPCServerSocket.validateNotBlank(addressValue, "IP address cannot be blank.");
         if (portValue == -1) {
             throw new IllegalArgumentException("Port must be specified in the config.");
         }
@@ -99,6 +99,19 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         this.sslServerSocketFactory = sslServerSocketFactory;
         this.tlsVersionWhitelist = tlsVersionWhitelist;
         this.tlsCipherSuiteWhitelist = tlsCipherSuiteWhitelist;
+    
+        if (this.sslServerSocketFactory != null) {
+            if (this.tlsVersionWhitelist == null) {
+                this.logger.log(Level.SEVERE, "SSL is enabled, but the TLS version whitelist is null.");
+                this.logger.log(Level.SEVERE, "Unable to set up the IPC Server.");
+                throw new RuntimeException("SSL is enabled, but the TLS version whitelist is null.");
+            }
+            if (this.tlsCipherSuiteWhitelist == null) {
+                this.logger.log(Level.SEVERE, "SSL is enabled, but the TLS cipher suite whitelist is null.");
+                this.logger.log(Level.SEVERE, "Unable to set up the IPC Server.");
+                throw new RuntimeException("SSL is enabled, but the TLS cipher suite whitelist is null.");
+            }
+        }
         
         this.scheduler = this.ipcPlugin.getProxy().getScheduler();
         this.running = new AtomicBoolean(false);
@@ -129,12 +142,6 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         
         try {
             if (this.sslServerSocketFactory != null) {
-                if (this.tlsVersionWhitelist == null || this.tlsCipherSuiteWhitelist == null) {
-                    this.logger.log(Level.SEVERE, "SSL is enabled, but the TLS whitelists are null.");
-                    this.logger.log(Level.SEVERE, "Unable to set up IPC server.");
-                    throw new RuntimeException("SSL is enabled, but the TLS whitelists are null.");
-                }
-                
                 this.serverSocket = this.sslServerSocketFactory.createServerSocket(this.port, 2, this.address);
                 ((SSLServerSocket) this.serverSocket).setEnabledProtocols(this.tlsVersionWhitelist.toArray(new String[] {}));
                 ((SSLServerSocket) this.serverSocket).setEnabledCipherSuites(this.tlsCipherSuiteWhitelist.toArray(new String[] {}));

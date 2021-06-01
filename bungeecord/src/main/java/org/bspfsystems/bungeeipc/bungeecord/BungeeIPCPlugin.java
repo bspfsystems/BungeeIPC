@@ -22,7 +22,6 @@ package org.bspfsystems.bungeeipc.bungeecord;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +49,6 @@ import java.util.logging.Logger;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocketFactory;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -120,22 +118,23 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
                     this.logger.log(Level.SEVERE, "Main BungeeIPC configuration file not created at " + mainConfigFile.getPath());
                     throw new RuntimeException("Main BungeeIPC configuration file not created at " + mainConfigFile.getPath());
                 }
+                
                 final InputStream defaultConfig = this.getResourceAsStream(mainConfigFile.getName());
                 final FileOutputStream outputStream = new FileOutputStream(mainConfigFile);
                 final byte[] buffer = new byte[4096];
-                int read;
+                int bytesRead;
         
-                while ((read = defaultConfig.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, read);
+                while ((bytesRead = defaultConfig.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
                 }
         
                 outputStream.flush();
                 outputStream.close();
             }
         } catch (SecurityException | IOException e) {
-            this.logger.log(Level.SEVERE, "Unable to load main BungeeIPC configuration file at " + mainConfigFile.getPath());
+            this.logger.log(Level.SEVERE, "Unable to load the main BungeeIPC configuration file at " + mainConfigFile.getPath());
             this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
-            throw new RuntimeException("Unable to load main BungeeIPC configuration file at " + mainConfigFile.getPath(), e);
+            throw new RuntimeException("Unable to load the main BungeeIPC configuration file at " + mainConfigFile.getPath(), e);
         }
     
         final ConfigurationProvider provider = ConfigurationProvider.getProvider(YamlConfiguration.class);
@@ -143,9 +142,9 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
         try {
             mainConfig = provider.load(mainConfigFile);
         } catch (IOException e) {
-            this.logger.log(Level.SEVERE, "Unable to load main BungeeIPC configuration.");
+            this.logger.log(Level.SEVERE, "Unable to load the main BungeeIPC configuration.");
             this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
-            throw new RuntimeException("Unable to load main BungeeIPC configuration.", e);
+            throw new RuntimeException("Unable to load the main BungeeIPC configuration.", e);
         }
         if (mainConfig == null) {
             this.logger.log(Level.SEVERE, "Main BungeeIPC configuration not loaded, no Exception thrown.");
@@ -189,60 +188,38 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
                 sslContextProtocol = "TLS";
             }
     
-            List<?> tlsVersionWhitelistRaw = mainConfig.getList("tls_version_whitelist", null);
+            final List<String> tlsVersionWhitelistRaw = mainConfig.getStringList("tls_version_whitelist");
             tlsVersionWhitelist = new ArrayList<String>();
-            
-            if (tlsVersionWhitelistRaw == null || tlsVersionWhitelistRaw.isEmpty()) {
+    
+            if (tlsVersionWhitelistRaw.isEmpty()) {
                 tlsVersionWhitelist.add("TLSv1.2");
             } else {
-                for (final Object object : tlsVersionWhitelistRaw) {
-                    if (object == null) {
+                for (final String version : tlsVersionWhitelistRaw) {
+                    if (version == null || version.trim().isEmpty()) {
                         continue;
                     }
-    
-                    final String tlsVersion;
-                    if (object instanceof String) {
-                        tlsVersion = (String) object;
-                    } else {
-                        tlsVersion = object.toString();
-                    }
-                    
-                    if (tlsVersion.trim().isEmpty()) {
-                        continue;
-                    }
-                    tlsVersionWhitelist.add(tlsVersion);
+                    tlsVersionWhitelist.add(version);
                 }
             }
-            
+    
             if (tlsVersionWhitelist.isEmpty()) {
                 tlsVersionWhitelist.add("TLSv1.2");
             }
-            
-            List<?> tlsCipherSuiteWhitelistRaw = mainConfig.getList("tls_cipher_suite_whitelist", null);
+    
+            final List<String> tlsCipherSuiteWhitelistRaw = mainConfig.getStringList("tls_cipher_suite_whitelist");
             tlsCipherSuiteWhitelist = new ArrayList<String>();
-            
-            if (tlsCipherSuiteWhitelistRaw == null || tlsCipherSuiteWhitelistRaw.isEmpty()) {
+    
+            if (tlsCipherSuiteWhitelistRaw.isEmpty()) {
                 tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
             } else {
-                for (final Object object : tlsCipherSuiteWhitelistRaw) {
-                    if (object == null) {
+                for (final String cipherSuite : tlsCipherSuiteWhitelistRaw) {
+                    if (cipherSuite == null || cipherSuite.trim().isEmpty()) {
                         continue;
                     }
-                    
-                    final String tlsCipherSuite;
-                    if (object instanceof String) {
-                        tlsCipherSuite = (String) object;
-                    } else {
-                        tlsCipherSuite = object.toString();
-                    }
-                    
-                    if (tlsCipherSuite.trim().isEmpty()) {
-                        continue;
-                    }
-                    tlsCipherSuiteWhitelist.add(tlsCipherSuite);
+                    tlsCipherSuiteWhitelist.add(cipherSuite);
                 }
             }
-            
+    
             if (tlsCipherSuiteWhitelist.isEmpty()) {
                 tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
             }

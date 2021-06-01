@@ -26,56 +26,83 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import org.bspfsystems.bungeeipc.api.IPCMessage;
 import org.bspfsystems.bungeeipc.api.socket.IPCSocket;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class BukkitIPCSocket implements IPCSocket {
     
     private final BukkitIPCPlugin ipcPlugin;
     private final Logger logger;
-    private final BukkitScheduler scheduler;
     
     private final InetAddress address;
     private final int port;
     
+    private final SSLSocketFactory sslSocketFactory;
+    private final ArrayList<String> tlsVersionWhitelist;
+    private final ArrayList<String> tlsCipherSuiteWhitelist;
+    
     private DataOutputStream toBungee;
     private Socket socket;
     
+    private final BukkitScheduler scheduler;
     private final AtomicBoolean running;
     private final AtomicBoolean connected;
     private final AtomicInteger taskId;
     
-    BukkitIPCSocket(@NotNull final BukkitIPCPlugin ipcPlugin, @NotNull final YamlConfiguration config) {
+    BukkitIPCSocket(@NotNull final BukkitIPCPlugin ipcPlugin, @NotNull final YamlConfiguration config, @Nullable final SSLSocketFactory sslSocketFactory, @Nullable final ArrayList<String> tlsVersionWhitelist, @Nullable final ArrayList<String> tlsCipherSuiteWhitelist) {
         
         this.ipcPlugin = ipcPlugin;
         this.logger = this.ipcPlugin.getLogger();
-        this.scheduler = this.ipcPlugin.getServer().getScheduler();
         
-        if (!config.contains("ip_address")) {
-            throw new IllegalArgumentException("IPC Client config missing IP address.");
-        }
-        if (!config.contains("port")) {
-            throw new IllegalArgumentException("IPC Client config missing port.");
-        }
+        final String addressValue = config.getString("ip_address", null);
+        final int portValue = config.getInt("port", -1);
         
-        try {
-            this.address = InetAddress.getByName(config.getString("ip_address"));
-        } catch (UnknownHostException e) {
-            throw new IllegalArgumentException("Unable to decipher IP address from " + config.getString("ip_address"), e);
+        BukkitIPCSocket.validateNotNull(addressValue);
+        BukkitIPCSocket.validateNotBlank(addressValue, "IP address cannot be blank.");
+        if (portValue == -1) {
+            throw new IllegalArgumentException("Port must be specified in the config.");
         }
-        
-        this.port = config.getInt("port");
-        if (this.port < 1024 || this.port > 65535) {
+        if (portValue < 1024 || portValue > 65535) {
             throw new IllegalArgumentException("Port must be between 1024 and 65535, inclusive.");
         }
         
+        try {
+            this.address = InetAddress.getByName(addressValue);
+        } catch (UnknownHostException e) {
+            throw new IllegalArgumentException("Unable to decipher IP address from config value.", e);
+        }
+        this.port = portValue;
+        
+        
+        this.sslSocketFactory = sslSocketFactory;
+        this.tlsVersionWhitelist = tlsVersionWhitelist;
+        this.tlsCipherSuiteWhitelist = tlsCipherSuiteWhitelist;
+        
+        if (this.sslSocketFactory != null) {
+            if (this.tlsVersionWhitelist == null) {
+                this.logger.log(Level.SEVERE, "SSL is enabled, but the TLS version whitelist is null.");
+                this.logger.log(Level.SEVERE, "Unable to set up the IPC Client.");
+                throw new RuntimeException("SSL is enabled, but the TLS version whitelist is null.");
+            }
+            if (this.tlsCipherSuiteWhitelist == null) {
+                this.logger.log(Level.SEVERE, "SSL is enabled, but the TLS cipher suite whitelist is null.");
+                this.logger.log(Level.SEVERE, "Unable to set up the IPC Client.");
+                throw new RuntimeException("SSL is enabled, but the TLS cipher suite whitelist is null.");
+            }
+        }
+    
+        this.scheduler = this.ipcPlugin.getServer().getScheduler();
         this.running = new AtomicBoolean(false);
         this.connected = new AtomicBoolean(false);
         this.taskId = new AtomicInteger(-1);
@@ -104,7 +131,16 @@ final class BukkitIPCSocket implements IPCSocket {
         
         try {
             this.logger.log(Level.INFO, "Attempting to connect to the IPC server...");
-            this.socket = new Socket(this.address, this.port);
+            
+            if (this.sslSocketFactory != null) {
+                this.socket = this.sslSocketFactory.createSocket(this.address, this.port);
+                ((SSLSocket) this.socket).setEnabledProtocols(this.tlsVersionWhitelist.toArray(new String[] {}));
+                ((SSLSocket) this.socket).setEnabledCipherSuites(this.tlsCipherSuiteWhitelist.toArray(new String[] {}));
+                ((SSLSocket) this.socket).startHandshake();
+            } else {
+                this.socket = new Socket(this.address, this.port);
+            }
+            
             this.connected.set(true);
             this.logger.log(Level.INFO, "Connected to the IPC server.");
         } catch (IOException e) {
@@ -125,7 +161,7 @@ final class BukkitIPCSocket implements IPCSocket {
             
             while(this.connected.get()) {
                 final IPCMessage message = IPCMessage.read(fromBungee.readUTF());
-                this.ipcPlugin.getServer().getScheduler().runTask(this.ipcPlugin, () -> ipcPlugin.receiveMessage(message));
+                this.scheduler.runTask(this.ipcPlugin, () -> ipcPlugin.receiveMessage(message));
             }
         } catch (IOException e) {
             
@@ -198,7 +234,7 @@ final class BukkitIPCSocket implements IPCSocket {
     
     @Override
     public synchronized void sendMessage(@NotNull final IPCMessage message) {
-        this.scheduler.runTaskAsynchronously(this.ipcPlugin, () -> send(message));
+        this.scheduler.runTaskAsynchronously(this.ipcPlugin, () -> this.send(message));
     }
     
     private synchronized void send(@NotNull final IPCMessage message) {
@@ -220,6 +256,16 @@ final class BukkitIPCSocket implements IPCSocket {
         } catch (IOException e) {
             this.logger.log(Level.WARNING, "Cannot send IPC message to Bungee proxy.");
             this.logger.log(Level.WARNING, "IOException thrown.", e);
+        }
+    }
+    
+    private static void validateNotNull(@NotNull final String value) {
+        // Do nothing, JetBrains annotations does the work.
+    }
+    
+    private static void validateNotBlank(@NotNull final String value, @NotNull final String message) {
+        if (value.trim().isEmpty()) {
+            throw new IllegalArgumentException(message);
         }
     }
 }

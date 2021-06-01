@@ -1,6 +1,6 @@
 ################################################################################
 ################################################################################
-##                           BungeeIPC for BungeeCord                         ##
+##                             BungeeIPC for Bukkit                           ##
 ##                                                                            ##
 ## SOURCE CODE: https://github.com/bspfsystems/BungeeIPC/                     ##
 ## BUGS / ISSUES: https://github.com/bspfsystems/BungeeIPC/issues/            ##
@@ -10,7 +10,7 @@
 ## can obtain an updated version of the default config.yml file from          ##
 ## https://bspfsystems.org/config-files/bungeeipc/bukkit/                     ##
 ##                                                                            ##
-## IMPORTANT NOTE: The below settings must be mirrored in the Bukkit          ##
+## IMPORTANT NOTE: The below settings must be mirrored in the BungeeCord      ##
 ##                 plugin's configuration, otherwise the connection has a     ##
 ##                 good chance of failing.                                    ##
 ################################################################################
@@ -35,18 +35,6 @@ use_ssl: false
 #                            Basic SSL/TLS settings                            #
 #               These can be ignored if use_ssl is set to false                #
 ################################################################################
-
-# The KeyStore file location
-#
-# - It is highly recommended to use the fully-qualified path to the KeyStore file.
-# - If no file path is specified, an exception will be thrown.
-key_store_file: ""
-
-# The KeyStore password
-#
-# - It is highly recommended not to use a blank password.
-# - If no password is specified, an exception will be thrown.
-key_store_password: ""
 
 # The SSLContext protocol
 #
@@ -76,30 +64,3 @@ tls_version_whitelist:
 #   - "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
 tls_cipher_suite_whitelist:
   - "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
-
-################################################################################
-#                          Advanced SSL/TLS settings                           #
-#               These can be ignored if use_ssl is set to false                #
-#                                                                              #
-#                                   NOTICE:                                    #
-#                     UNLESS YOU KNOW WHAT YOU ARE DOING,                      #
-#                  IT IS BEST TO LEAVE THESE SETTINGS ALONE.                   #
-################################################################################
-
-# The KeyStore instance
-#
-# - Which instance of the KeyStore you want to use.
-# - If no instance is specified, "JKS" will be used.
-key_store_instance: "JKS"
-
-# The KeyManagerFactory algorithm
-#
-# - The algorithm of the KeyManagerFactory you wish to use.
-# - If no algorithm is specified, "NewSunX509" will be used.
-key_manager_factory_algorithm: "NewSunX509"
-
-# The TrustManagerFactory algorithm
-#
-# - The algorithm of the TrustManagerFactory you wish to use.
-# - If no algorithm is specified, "NewSunX509" will be used.
-trust_manager_factory_algorithm: "NewSunX509"

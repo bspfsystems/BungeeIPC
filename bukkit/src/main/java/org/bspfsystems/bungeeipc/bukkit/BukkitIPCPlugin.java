@@ -21,10 +21,18 @@
 package org.bspfsystems.bungeeipc.bukkit;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
 import org.bspfsystems.bungeeipc.api.IPCMessage;
 import org.bspfsystems.bungeeipc.api.IPCReader;
 import org.bspfsystems.bungeeipc.api.plugin.IPCClientPlugin;
@@ -72,49 +80,151 @@ public final class BukkitIPCPlugin extends JavaPlugin implements IPCClientPlugin
         this.logger.log(Level.INFO, "//                                                                       //");
         this.logger.log(Level.INFO, "///////////////////////////////////////////////////////////////////////////");
         
-        final Server server = this.getServer();
-        
-        final File configDirectory = new File(this.getDataFolder(), "IPC_Client");
+        final File mainConfigFile = new File(this.getDataFolder(), "config.yml");
         try {
-            if (!configDirectory.exists()) {
-                this.logger.log(Level.SEVERE, "IPCSocket config directory does not exist at " + configDirectory.getPath());
-                server.shutdown();
-                return;
+            if (mainConfigFile.exists()) {
+                if (!mainConfigFile.isFile()) {
+                    this.logger.log(Level.SEVERE, "Main BungeeIPC configuration file is not a file: " + mainConfigFile.getPath());
+                    throw new RuntimeException("Main BungeeIPC configuration file is not a file: " + mainConfigFile.getPath());
+                }
+            } else {
+                if (!mainConfigFile.createNewFile()) {
+                    this.logger.log(Level.SEVERE, "Main BungeeIPC configuration file not created at " + mainConfigFile.getPath());
+                    throw new RuntimeException("Main BungeeIPC configuration file not created at " + mainConfigFile.getPath());
+                }
+                
+                final InputStream defaultConfig = this.getResource(mainConfigFile.getName());
+                final FileOutputStream outputStream = new FileOutputStream(mainConfigFile);
+                final byte[] buffer = new byte[4096];
+                int bytesRead;
+                
+                while ((bytesRead = defaultConfig.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+                
+                outputStream.flush();
+                outputStream.close();
             }
-        } catch (SecurityException e) {
-            this.logger.log(Level.SEVERE, "Cannot validate existence of IPCSocket config directory at " + configDirectory.getPath(), e);
-            server.shutdown();
-            return;
+        } catch (SecurityException | IOException e) {
+            this.logger.log(Level.SEVERE, "Unable to load the main BungeeIPC configuration file at " + mainConfigFile.getPath());
+            this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
+            throw new RuntimeException("Unable to load the main BungeeIPC configuration file at " + mainConfigFile.getPath(), e);
         }
         
-        final File configFile = new File(configDirectory, "ipc_client.yml");
+        final YamlConfiguration mainConfig = new YamlConfiguration();
         try {
-            if (!configFile.exists()) {
-                this.logger.log(Level.SEVERE, "IPCSocket config file does not exist at " + configFile.getPath());
-                server.shutdown();
-                return;
+            mainConfig.load(mainConfigFile);
+        } catch (IOException | InvalidConfigurationException | IllegalArgumentException e) {
+            this.logger.log(Level.SEVERE, "Unable to load the main BungeeIPC configuration.");
+            this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
+            throw new RuntimeException("Unable to load the main BungeeIPC configuration.", e);
+        }
+        
+        SSLSocketFactory sslSocketFactory = null;
+        ArrayList<String> tlsVersionWhitelist = null;
+        ArrayList<String> tlsCipherSuiteWhitelist = null;
+        
+        final boolean useSSL = mainConfig.getBoolean("use_ssl", false);
+        if (useSSL) {
+            
+            String sslContextProtocol = mainConfig.getString("ssl_context_protocol", "TLS");
+            if (sslContextProtocol == null || sslContextProtocol.trim().isEmpty()) {
+                sslContextProtocol = "TLS";
+            }
+            
+            final List<String> tlsVersionWhitelistRaw = mainConfig.getStringList("tls_version_whitelist");
+            tlsVersionWhitelist = new ArrayList<String>();
+            
+            if (tlsVersionWhitelistRaw.isEmpty()) {
+                tlsVersionWhitelist.add("TLSv1.2");
+            } else {
+                for (final String version : tlsVersionWhitelistRaw) {
+                    if (version == null || version.trim().isEmpty()) {
+                        continue;
+                    }
+                    tlsVersionWhitelist.add(version);
+                }
+            }
+            
+            if (tlsVersionWhitelist.isEmpty()) {
+                tlsVersionWhitelist.add("TLSv1.2");
+            }
+            
+            final List<String> tlsCipherSuiteWhitelistRaw = mainConfig.getStringList("tls_cipher_suite_whitelist");
+            tlsCipherSuiteWhitelist = new ArrayList<String>();
+            
+            if (tlsCipherSuiteWhitelistRaw.isEmpty()) {
+                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
+            } else {
+                for (final String cipherSuite : tlsCipherSuiteWhitelistRaw) {
+                    if (cipherSuite == null || cipherSuite.trim().isEmpty()) {
+                        continue;
+                    }
+                    tlsCipherSuiteWhitelist.add(cipherSuite);
+                }
+            }
+            
+            if (tlsCipherSuiteWhitelist.isEmpty()) {
+                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
+            }
+    
+            try {
+                final SSLContext sslContext = SSLContext.getInstance(sslContextProtocol);
+                sslContext.init(null, null, null);
+                
+                sslSocketFactory = sslContext.getSocketFactory();
+            } catch (NoSuchAlgorithmException | KeyManagementException e) {
+                this.logger.log(Level.SEVERE, "Unable to create SSLSocketFactory.");
+                this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + "thrown.", e);
+                throw new RuntimeException("Unable to create SSLSocketFactory.", e);
+            }
+        }
+        
+        final File clientConfigDirectory = new File(this.getDataFolder(), "IPC_Client");
+        try {
+            if (!clientConfigDirectory.exists()) {
+                this.logger.log(Level.SEVERE, "IPC Client configuration directory does not exist at " + clientConfigDirectory.getPath());
+                throw new RuntimeException("IPC Client configuration directory does not exist at " + clientConfigDirectory.getPath());
+            } else if (!clientConfigDirectory.isDirectory()) {
+                this.logger.log(Level.SEVERE, "IPC Client configuration directory is not a directory: " + clientConfigDirectory.getPath());
+                throw new RuntimeException("IPC Client configuration directory is not a directory: " + clientConfigDirectory.getPath());
             }
         } catch (SecurityException e) {
-            this.logger.log(Level.SEVERE, "Cannot validate existence of IPCSocket config file at " + configFile.getPath(), e);
-            server.shutdown();
-            return;
+            this.logger.log(Level.SEVERE, "Cannot validate existence of IPC Client configuration directory at " + clientConfigDirectory.getPath());
+            this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
+            throw new RuntimeException("Cannot validate existence of IPC Client configuration directory at " + clientConfigDirectory.getPath(), e);
+        }
+        
+        final File clientConfigFile = new File(clientConfigDirectory, "ipc_client.yml");
+        try {
+            if (!clientConfigFile.exists()) {
+                this.logger.log(Level.SEVERE, "IPC Client configuration file does not exist at " + clientConfigFile.getPath());
+                throw new RuntimeException("IPC Client configuration file does not exist at " + clientConfigFile.getPath());
+            } else if (!clientConfigFile.isFile()) {
+                this.logger.log(Level.SEVERE, "IPC Client configuration file is not a file: " + clientConfigFile.getPath());
+                throw new RuntimeException("IPC Client configuration file is not a file: " + clientConfigFile.getPath());
+            }
+        } catch (SecurityException e) {
+            this.logger.log(Level.SEVERE, "Cannot validate existence of IPC Client configuration file at " + clientConfigFile.getPath());
+            this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
+            throw new RuntimeException("Cannot validate existence of IPC Client configuration file at " + clientConfigFile.getPath(), e);
         }
         
         final YamlConfiguration config = new YamlConfiguration();
         try {
-            config.load(configFile);
+            config.load(clientConfigFile);
         } catch (IOException | InvalidConfigurationException | IllegalArgumentException e) {
-            this.logger.log(Level.SEVERE, "Unable to load IPCSocket config.", e);
-            server.shutdown();
-            return;
+            this.logger.log(Level.SEVERE, "Unable to load IPC Client configuration.");
+            this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
+            throw new RuntimeException("Unable to load IPC Client configuration.", e);
         }
         
         try {
-            this.socket = new BukkitIPCSocket(this, config);
+            this.socket = new BukkitIPCSocket(this, config, sslSocketFactory, tlsVersionWhitelist, tlsCipherSuiteWhitelist);
         } catch (IllegalArgumentException e) {
-            this.logger.log(Level.SEVERE, "Unable to create IPCSocket.", e);
-            server.shutdown();
-            return;
+            this.logger.log(Level.SEVERE, "Unable to create IPC Client.");
+            this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
+            throw new RuntimeException("Unable to create an IPC Client.", e);
         }
         
         this.socket.start();
@@ -125,8 +235,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements IPCClientPlugin
         final PluginCommand ipcCommand = this.getCommand("ipc");
         if (ipcCommand == null) {
             this.logger.log(Level.SEVERE, "Cannot find /ipc command.");
-            server.shutdown();
-            return;
+            throw new RuntimeException("Cannot find the /ipc command.");
         }
         final IPCTabExecutor ipcTabExecutor = new IPCTabExecutor(this);
         ipcCommand.setExecutor(ipcTabExecutor);
