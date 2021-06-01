@@ -55,9 +55,8 @@ ssl_context_protocol: "TLS"
 # - This is separate from the item above in that the above will allow all TLS
 #   versions, but this is a whitelist of which versions are actually able to be
 #   used.
-# - If this list is null or empty, TLSv1.1 and TLSv1.2 will be whitelisted.
+# - If this list is null or empty, only TLSv1.2 will be whitelisted.
 tls_version_whitelist:
-  - "TLSv1.1"
   - "TLSv1.2"
 
 # The Cipher Suites
@@ -68,15 +67,9 @@ tls_version_whitelist:
 #   should be used for BungeeIPC.
 # - If this list is null or empty, the following cipher suites will be used by
 #   default:
-#   - "TLS_DHE_RSA_WITH_AES_256_CBC_SHA256"
-#   - "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256"
 #   - "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
-#   - "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256"
 tls_cipher_suite_whitelist:
-  - "TLS_DHE_RSA_WITH_AES_256_CBC_SHA256"
-  - "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256"
   - "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
-  - "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256"
 
 ################################################################################
 #                          Advanced SSL/TLS settings                           #

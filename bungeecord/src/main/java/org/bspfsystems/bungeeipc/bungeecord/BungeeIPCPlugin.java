@@ -193,7 +193,6 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
             tlsVersionWhitelist = new ArrayList<String>();
             
             if (tlsVersionWhitelistRaw == null || tlsVersionWhitelistRaw.isEmpty()) {
-                tlsVersionWhitelist.add("TLSv1.1");
                 tlsVersionWhitelist.add("TLSv1.2");
             } else {
                 for (final Object object : tlsVersionWhitelistRaw) {
@@ -216,7 +215,6 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
             }
             
             if (tlsVersionWhitelist.isEmpty()) {
-                tlsVersionWhitelist.add("TLSv1.1");
                 tlsVersionWhitelist.add("TLSv1.2");
             }
             
@@ -224,10 +222,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
             tlsCipherSuiteWhitelist = new ArrayList<String>();
             
             if (tlsCipherSuiteWhitelistRaw == null || tlsCipherSuiteWhitelistRaw.isEmpty()) {
-                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_CBC_SHA256");
-                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_128_CBC_SHA256");
                 tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
-                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_128_GCM_SHA256");
             } else {
                 for (final Object object : tlsCipherSuiteWhitelistRaw) {
                     if (object == null) {
@@ -249,10 +244,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
             }
             
             if (tlsCipherSuiteWhitelist.isEmpty()) {
-                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_CBC_SHA256");
-                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_128_CBC_SHA256");
                 tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
-                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_128_GCM_SHA256");
             }
             
             try {
