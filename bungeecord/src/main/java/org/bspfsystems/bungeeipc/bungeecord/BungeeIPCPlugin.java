@@ -179,9 +179,9 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
             if (keyManagerFactoryAlgorithm == null || keyManagerFactoryAlgorithm.trim().isEmpty()) {
                 keyManagerFactoryAlgorithm = "NewSunX509";
             }
-            String trustManagerFactoryAlgorithm = mainConfig.getString("trust_manager_factory_algorithm", "NewSunX509");
+            String trustManagerFactoryAlgorithm = mainConfig.getString("trust_manager_factory_algorithm", "SunX509");
             if (trustManagerFactoryAlgorithm == null || trustManagerFactoryAlgorithm.trim().isEmpty()) {
-                trustManagerFactoryAlgorithm = "NewSunX509";
+                trustManagerFactoryAlgorithm = "SunX509";
             }
             String sslContextProtocol = mainConfig.getString("ssl_context_protocol", "TLS");
             if (sslContextProtocol == null || sslContextProtocol.trim().isEmpty()) {

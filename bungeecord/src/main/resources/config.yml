@@ -101,5 +101,5 @@ key_manager_factory_algorithm: "NewSunX509"
 # The TrustManagerFactory algorithm
 #
 # - The algorithm of the TrustManagerFactory you wish to use.
-# - If no algorithm is specified, "NewSunX509" will be used.
-trust_manager_factory_algorithm: "NewSunX509"
+# - If no algorithm is specified, "SunX509" will be used.
+trust_manager_factory_algorithm: "SunX509"
