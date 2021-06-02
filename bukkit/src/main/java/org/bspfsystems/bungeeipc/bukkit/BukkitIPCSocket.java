@@ -26,11 +26,15 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import org.bspfsystems.bungeeipc.api.IPCMessage;
@@ -38,7 +42,6 @@ import org.bspfsystems.bungeeipc.api.socket.IPCSocket;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 final class BukkitIPCSocket implements IPCSocket {
     
@@ -60,12 +63,12 @@ final class BukkitIPCSocket implements IPCSocket {
     private final AtomicBoolean connected;
     private final AtomicInteger taskId;
     
-    BukkitIPCSocket(@NotNull final BukkitIPCPlugin ipcPlugin, @NotNull final YamlConfiguration config, @Nullable final SSLSocketFactory sslSocketFactory, @Nullable final ArrayList<String> tlsVersionWhitelist, @Nullable final ArrayList<String> tlsCipherSuiteWhitelist) {
+    BukkitIPCSocket(@NotNull final BukkitIPCPlugin ipcPlugin, @NotNull final YamlConfiguration config) {
         
         this.ipcPlugin = ipcPlugin;
         this.logger = this.ipcPlugin.getLogger();
         
-        final String addressValue = config.getString("ip_address", null);
+        final String addressValue = config.getString("bungeecord_ip", "localhost");
         final int portValue = config.getInt("port", -1);
         
         BukkitIPCSocket.validateNotNull(addressValue);
@@ -83,24 +86,69 @@ final class BukkitIPCSocket implements IPCSocket {
             throw new IllegalArgumentException("Unable to decipher IP address from config value.", e);
         }
         this.port = portValue;
+    
+        SSLSocketFactory sslSocketFactory = null;
+        ArrayList<String> tlsVersionWhitelist = null;
+        ArrayList<String> tlsCipherSuiteWhitelist = null;
         
+        if (config.getBoolean("use_ssl", false)) {
+        
+            String sslContextProtocol = config.getString("ssl_context_protocol", "TLS");
+            if (sslContextProtocol == null || sslContextProtocol.trim().isEmpty()) {
+                sslContextProtocol = "TLS";
+            }
+        
+            final List<String> tlsVersionWhitelistRaw = config.getStringList("tls_version_whitelist");
+            tlsVersionWhitelist = new ArrayList<String>();
+        
+            if (tlsVersionWhitelistRaw.isEmpty()) {
+                tlsVersionWhitelist.add("TLSv1.2");
+            } else {
+                for (final String version : tlsVersionWhitelistRaw) {
+                    if (version == null || version.trim().isEmpty()) {
+                        continue;
+                    }
+                    tlsVersionWhitelist.add(version);
+                }
+            }
+        
+            if (tlsVersionWhitelist.isEmpty()) {
+                tlsVersionWhitelist.add("TLSv1.2");
+            }
+        
+            final List<String> tlsCipherSuiteWhitelistRaw = config.getStringList("tls_cipher_suite_whitelist");
+            tlsCipherSuiteWhitelist = new ArrayList<String>();
+        
+            if (tlsCipherSuiteWhitelistRaw.isEmpty()) {
+                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
+            } else {
+                for (final String cipherSuite : tlsCipherSuiteWhitelistRaw) {
+                    if (cipherSuite == null || cipherSuite.trim().isEmpty()) {
+                        continue;
+                    }
+                    tlsCipherSuiteWhitelist.add(cipherSuite);
+                }
+            }
+        
+            if (tlsCipherSuiteWhitelist.isEmpty()) {
+                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
+            }
+        
+            try {
+                final SSLContext sslContext = SSLContext.getInstance(sslContextProtocol);
+                sslContext.init(null, null, null);
+            
+                sslSocketFactory = sslContext.getSocketFactory();
+            } catch (NoSuchAlgorithmException | KeyManagementException e) {
+                this.logger.log(Level.SEVERE, "Unable to create SSLSocketFactory.");
+                this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + "thrown.", e);
+                throw new IllegalArgumentException("Unable to create SSLSocketFactory.", e);
+            }
+        }
         
         this.sslSocketFactory = sslSocketFactory;
         this.tlsVersionWhitelist = tlsVersionWhitelist;
         this.tlsCipherSuiteWhitelist = tlsCipherSuiteWhitelist;
-        
-        if (this.sslSocketFactory != null) {
-            if (this.tlsVersionWhitelist == null) {
-                this.logger.log(Level.SEVERE, "SSL is enabled, but the TLS version whitelist is null.");
-                this.logger.log(Level.SEVERE, "Unable to set up the IPC Client.");
-                throw new RuntimeException("SSL is enabled, but the TLS version whitelist is null.");
-            }
-            if (this.tlsCipherSuiteWhitelist == null) {
-                this.logger.log(Level.SEVERE, "SSL is enabled, but the TLS cipher suite whitelist is null.");
-                this.logger.log(Level.SEVERE, "Unable to set up the IPC Client.");
-                throw new RuntimeException("SSL is enabled, but the TLS cipher suite whitelist is null.");
-            }
-        }
     
         this.scheduler = this.ipcPlugin.getServer().getScheduler();
         this.running = new AtomicBoolean(false);
@@ -148,7 +196,7 @@ final class BukkitIPCSocket implements IPCSocket {
             this.logger.log(Level.INFO, "Unable to connect to IPC server.");
             this.logger.log(Level.INFO, "IP Address  - " + this.address.getHostAddress());
             this.logger.log(Level.INFO, "Port Number - " + this.port);
-            this.logger.log(Level.INFO, e.getClass().getSimpleName() + " thrown.", e);
+            this.logger.log(Level.CONFIG, e.getClass().getSimpleName() + " thrown.", e);
             
             this.taskId.set(this.scheduler.runTaskLaterAsynchronously(this.ipcPlugin, this, 40).getTaskId());
             return;
@@ -168,7 +216,7 @@ final class BukkitIPCSocket implements IPCSocket {
             this.logger.log(Level.INFO, "IPC connection broken.");
             this.logger.log(Level.INFO, "IP Address  - " + this.address.getHostAddress());
             this.logger.log(Level.INFO, "Port Number - " + this.port);
-            this.logger.log(Level.INFO, e.getClass().getSimpleName() + " thrown.", e);
+            this.logger.log(Level.CONFIG, e.getClass().getSimpleName() + " thrown.", e);
     
             try {
                 if (this.toBungee != null) {

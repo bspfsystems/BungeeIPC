@@ -31,3 +31,6 @@ permissions:
   bungeeipc.command.ipc.reconnect:
     description: Ability to use the /ipc reconnect subcommand
     default: op
+  bungeeipc.command.ipc.reload:
+    description: Ability to use the /ipc reload subcommand
+    default: op

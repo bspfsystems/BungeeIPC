@@ -1,13 +1,14 @@
 ################################################################################
 ################################################################################
-##                             BungeeIPC for Bukkit                           ##
+##                                                                            ##
+##                 BungeeIPC Client Configuration for Bukkit                  ##
 ##                                                                            ##
 ## SOURCE CODE: https://github.com/bspfsystems/BungeeIPC/                     ##
 ## BUGS / ISSUES: https://github.com/bspfsystems/BungeeIPC/issues/            ##
 ## API JAVADOCS: https://javadoc.io/doc/org.bspfsystems/<something>           ##
 ##                                                                            ##
 ## New configuration items will not be added to this file automatically. You  ##
-## can obtain an updated version of the default config.yml file from          ##
+## can obtain an updated version of the default ipc-client.yml file from      ##
 ## https://bspfsystems.org/config-files/bungeeipc/bukkit/                     ##
 ##                                                                            ##
 ################################################################################
@@ -39,8 +40,9 @@ bungeecord_ip: ""
 #   configuration that you have on any other Minecraft servers that are
 #   connected to the same BungeeCord proxy and running BungeeIPC.
 # - The port number must be between 1024 and 65536 (inclusive).
-# - If no port number is specified, an exception will be thrown.
-port: 
+# - If no port number is specified, or -1 is specified (the default), then an
+#   exception will be thrown.
+port: -1
 
 ################################################################################
 #                           Global SSL/TLS Settings                            #

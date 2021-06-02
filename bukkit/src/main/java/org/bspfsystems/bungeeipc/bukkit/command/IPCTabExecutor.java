@@ -47,7 +47,7 @@ public final class IPCTabExecutor implements TabExecutor {
         }
         
         final ArrayList<String> argList = new ArrayList<String>(Arrays.asList(args));
-        final String subCommand = argList.remove(0).toLowerCase();
+        final String subCommand = argList.remove(0);
         
         if (subCommand.equalsIgnoreCase("command")) {
     
@@ -94,26 +94,24 @@ public final class IPCTabExecutor implements TabExecutor {
                 sender.sendMessage(this.getPermissionMessage(command));
                 return true;
             }
-            if (argList.isEmpty()) {
-                
-                sender.sendMessage("§r§8================================================================§r");
-                sender.sendMessage("§r§fIPC Client Status§r");
-                sender.sendMessage("§r§8----------------------------------------------------------------§r");
-                
-                if (this.ipcPlugin.isClientConnected()) {
-                    sender.sendMessage("§r§aConnection Completed§r");
-                } else if (this.ipcPlugin.isClientRunning()) {
-                    sender.sendMessage("§r§6Connection Available§r");
-                } else {
-                    sender.sendMessage("§r§cNot Connected§r");
-                }
-                
-                sender.sendMessage("§r§8================================================================§r");
-                
-            } else {
+            if (!argList.isEmpty()) {
                 sender.sendMessage("§r§cSyntax: /ipc status§r");
+                return true;
             }
-            
+    
+            sender.sendMessage("§r§8================================================================§r");
+            sender.sendMessage("§r§fIPC Client Status§r");
+            sender.sendMessage("§r§8----------------------------------------------------------------§r");
+    
+            if (this.ipcPlugin.isClientConnected()) {
+                sender.sendMessage("§r§aConnection Completed§r");
+            } else if (this.ipcPlugin.isClientRunning()) {
+                sender.sendMessage("§r§6Connection Available§r");
+            } else {
+                sender.sendMessage("§r§cNot Connected§r");
+            }
+    
+            sender.sendMessage("§r§8================================================================§r");
             return true;
             
         } else if (subCommand.equalsIgnoreCase("reconnect")) {
@@ -122,14 +120,28 @@ public final class IPCTabExecutor implements TabExecutor {
                 sender.sendMessage(this.getPermissionMessage(command));
                 return true;
             }
-            if (argList.isEmpty()) {
-                sender.sendMessage("§r§bRestarting IPC connection. Please run /ipc status (if possible) in a few seconds to verify that the reconnect finished successfully.§r");
-                this.ipcPlugin.restartClient();
-                return true;
-            } else {
+            if (!argList.isEmpty()) {
                 sender.sendMessage("§r§cSyntax: /ipc reconnect§r");
+                return true;
             }
+    
+            sender.sendMessage("§r§bRestarting the IPC Client connection. Please run /ipc status (if possible) in a few seconds to verify that the reconnect finished successfully.§r");
+            this.ipcPlugin.restartClient();
+            return true;
+    
+        } else if (subCommand.equalsIgnoreCase("reload")) {
             
+            if (!sender.hasPermission("bungeeipc.command.ipc.reload")) {
+                sender.sendMessage(this.getPermissionMessage(command));
+                return true;
+            }
+            if (!argList.isEmpty()) {
+                sender.sendMessage("§r§cSyntax: /ipc reload§r");
+                return true;
+            }
+    
+            sender.sendMessage("§r§Reloading the IPC Client configuration. Please run /ipc status (if possible) in a few seconds to verify that the reload and reconnect finished successfully.§r");
+            this.ipcPlugin.reloadConfig(sender);
             return true;
             
         } else {
@@ -153,6 +165,9 @@ public final class IPCTabExecutor implements TabExecutor {
         if (sender.hasPermission("bungeeipc.command.ipc.reconnect")) {
             completions.add("reconnect");
         }
+        if (sender.hasPermission("bungeeipc.command.ipc.reload")) {
+            completions.add("reload");
+        }
         
         if (argList.isEmpty()) {
             return completions;
@@ -173,8 +188,9 @@ public final class IPCTabExecutor implements TabExecutor {
         final boolean permissionCommand = sender.hasPermission("bungeeipc.command.ipc.command");
         final boolean permissionStatus = sender.hasPermission("bungeeipc.command.ipc.status");
         final boolean permissionReconnect = sender.hasPermission("bungeeipc.command.ipc.reconnect");
+        final boolean permissionReload = sender.hasPermission("bungeeipc.command.ipc.reload");
         
-        if (!permissionCommand && !permissionStatus && !permissionReconnect) {
+        if (!permissionCommand && !permissionStatus && !permissionReconnect && !permissionReload) {
             sender.sendMessage(this.getPermissionMessage(command));
             return true;
         }
@@ -190,6 +206,9 @@ public final class IPCTabExecutor implements TabExecutor {
         }
         if (permissionReconnect) {
             sender.sendMessage("§r §f-§r §b/ipc reconnect§r");
+        }
+        if (permissionReload) {
+            sender.sendMessage("§r §f-§r §b/ipc reload§r");
         }
         
         return true;
