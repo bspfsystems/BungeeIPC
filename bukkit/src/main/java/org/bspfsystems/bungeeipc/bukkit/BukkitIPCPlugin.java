@@ -37,7 +37,6 @@ import org.bspfsystems.bungeeipc.api.IPCMessage;
 import org.bspfsystems.bungeeipc.api.IPCReader;
 import org.bspfsystems.bungeeipc.api.plugin.IPCClientPlugin;
 import org.bspfsystems.bungeeipc.bukkit.command.IPCTabExecutor;
-import org.bukkit.Server;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;

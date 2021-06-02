@@ -148,7 +148,7 @@ final class BukkitIPCSocket implements IPCSocket {
             this.logger.log(Level.INFO, "Unable to connect to IPC server.");
             this.logger.log(Level.INFO, "IP Address  - " + this.address.getHostAddress());
             this.logger.log(Level.INFO, "Port Number - " + this.port);
-            this.logger.log(Level.CONFIG, "IOException thrown.", e);
+            this.logger.log(Level.INFO, "IOException thrown.", e);
             
             this.taskId.set(this.scheduler.runTaskLaterAsynchronously(this.ipcPlugin, this, 40).getTaskId());
             return;
@@ -168,7 +168,7 @@ final class BukkitIPCSocket implements IPCSocket {
             this.logger.log(Level.INFO, "IPC connection broken.");
             this.logger.log(Level.INFO, "IP Address  - " + this.address.getHostAddress());
             this.logger.log(Level.INFO, "Port Number - " + this.port);
-            this.logger.log(Level.CONFIG, "IOException thrown.", e);
+            this.logger.log(Level.INFO, "IOException thrown.", e);
     
             try {
                 if (this.toBungee != null) {
