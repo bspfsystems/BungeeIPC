@@ -150,7 +150,7 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
             }
         } catch (IOException e) {
             this.logger.log(Level.SEVERE, "IOException thrown while setting up the IPC server.", e);
-            throw new RuntimeException("IOException thrown while setting up the IPC server.", e);
+            throw new RuntimeException(e.getClass().getSimpleName() + " thrown while setting up the IPC server.", e);
         }
         
         while (this.running.get()) {
@@ -175,6 +175,7 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
                 this.logger.log(Level.INFO, "Server Name - " + this.name);
                 this.logger.log(Level.INFO, "IP Address  - " + this.address.getHostAddress());
                 this.logger.log(Level.INFO, "Port Number - " + this.port);
+                this.logger.log(Level.INFO, e.getClass().getSimpleName() + " thrown.", e);
                 
                 try {
                     if (this.toBukkit != null) {
@@ -183,7 +184,7 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
                 } catch (IOException e1) {
                     this.logger.log(Level.WARNING, "Failure for IPC server " + this.name + ".");
                     this.logger.log(Level.WARNING, "Unable to close the DataOutputStream after the IPC connection was broken.");
-                    this.logger.log(Level.WARNING, "IOException thrown.", e1);
+                    this.logger.log(Level.WARNING, e1.getClass().getSimpleName() + " thrown.", e1);
                 }
                 
                 try {
@@ -193,7 +194,7 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
                 } catch (IOException e1) {
                     this.logger.log(Level.WARNING, "Failure for IPC server " + this.name + ".");
                     this.logger.log(Level.WARNING, "Unable to close the Socket after the connection was broken.");
-                    this.logger.log(Level.WARNING, "IOException thrown.", e1);
+                    this.logger.log(Level.WARNING, e1.getClass().getSimpleName() + " thrown.", e1);
                 }
                 
                 this.connected.set(false);
@@ -215,7 +216,7 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         } catch (IOException e) {
             this.logger.log(Level.WARNING, "Failure for IPC server " + this.name + ".");
             this.logger.log(Level.WARNING, "Unable to close the DataOutputStream during shutdown.");
-            this.logger.log(Level.WARNING, "IOException thrown.", e);
+            this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
         }
         
         try {
@@ -225,7 +226,7 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         } catch (IOException e) {
             this.logger.log(Level.WARNING, "Failure for IPC server " + this.name + ".");
             this.logger.log(Level.WARNING, "Unable to close the Socket during shutdown.");
-            this.logger.log(Level.WARNING, "IOException thrown.", e);
+            this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
         }
         
         try {
@@ -235,7 +236,7 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         } catch (IOException e) {
             this.logger.log(Level.WARNING, "Failure for IPC server " + this.name + ".");
             this.logger.log(Level.WARNING, "Unable to close the ServerSocket during shutdown.");
-            this.logger.log(Level.WARNING, "IOException thrown.", e);
+            this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
         }
     
         this.running.set(false);
@@ -267,7 +268,7 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
             this.toBukkit.writeUTF(message.write());
         } catch(IOException e) {
             this.logger.log(Level.WARNING, "Cannot send IPC message to Bukkit server " + this.name);
-            this.logger.log(Level.WARNING, "IOException thrown.", e);
+            this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
         }
     }
     

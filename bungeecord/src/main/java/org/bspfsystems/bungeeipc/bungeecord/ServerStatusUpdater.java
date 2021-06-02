@@ -68,7 +68,7 @@ final class ServerStatusUpdater implements Runnable {
             this.scheduler.runAsync(this.ipcPlugin, () -> ipcPlugin.setOnlineStatus(server.getName(), true));
             return;
         } catch (IOException e) {
-            this.logger.log(Level.CONFIG, "IOException while updating status.", e);
+            this.logger.log(Level.CONFIG, e.getClass().getSimpleName() + " thrown while updating status.", e);
         }
         this.scheduler.runAsync(this.ipcPlugin, () -> ipcPlugin.setOnlineStatus(server.getName(), false));
     }

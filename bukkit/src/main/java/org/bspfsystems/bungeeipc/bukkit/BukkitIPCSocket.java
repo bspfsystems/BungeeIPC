@@ -148,7 +148,7 @@ final class BukkitIPCSocket implements IPCSocket {
             this.logger.log(Level.INFO, "Unable to connect to IPC server.");
             this.logger.log(Level.INFO, "IP Address  - " + this.address.getHostAddress());
             this.logger.log(Level.INFO, "Port Number - " + this.port);
-            this.logger.log(Level.INFO, "IOException thrown.", e);
+            this.logger.log(Level.INFO, e.getClass().getSimpleName() + " thrown.", e);
             
             this.taskId.set(this.scheduler.runTaskLaterAsynchronously(this.ipcPlugin, this, 40).getTaskId());
             return;
@@ -168,7 +168,7 @@ final class BukkitIPCSocket implements IPCSocket {
             this.logger.log(Level.INFO, "IPC connection broken.");
             this.logger.log(Level.INFO, "IP Address  - " + this.address.getHostAddress());
             this.logger.log(Level.INFO, "Port Number - " + this.port);
-            this.logger.log(Level.INFO, "IOException thrown.", e);
+            this.logger.log(Level.INFO, e.getClass().getSimpleName() + " thrown.", e);
     
             try {
                 if (this.toBungee != null) {
@@ -177,7 +177,7 @@ final class BukkitIPCSocket implements IPCSocket {
             } catch (IOException e1) {
                 this.logger.log(Level.WARNING, "Failure for IPC client.");
                 this.logger.log(Level.WARNING, "Unable to close the DataOutputStream after the IPC connection was broken.");
-                this.logger.log(Level.WARNING, "IOException thrown.", e1);
+                this.logger.log(Level.WARNING, e1.getClass().getSimpleName() + " thrown.", e1);
             }
     
             try {
@@ -187,7 +187,7 @@ final class BukkitIPCSocket implements IPCSocket {
             } catch (IOException e1) {
                 this.logger.log(Level.WARNING, "Failure for IPC client.");
                 this.logger.log(Level.WARNING, "Unable to close the Socket after the IPC connection was broken.");
-                this.logger.log(Level.WARNING, "IOException thrown.", e1);
+                this.logger.log(Level.WARNING, e1.getClass().getSimpleName() + " thrown.", e1);
             }
     
             this.running.set(false);
@@ -213,7 +213,7 @@ final class BukkitIPCSocket implements IPCSocket {
         } catch (IOException e) {
             this.logger.log(Level.WARNING, "Failure for IPC client.");
             this.logger.log(Level.WARNING, "Unable to close the DataOutputStream during shutdown.");
-            this.logger.log(Level.WARNING, "IOException thrown.", e);
+            this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
         }
     
         try {
@@ -223,7 +223,7 @@ final class BukkitIPCSocket implements IPCSocket {
         } catch (IOException e) {
             this.logger.log(Level.WARNING, "Failure for IPC client.");
             this.logger.log(Level.WARNING, "Unable to close the Socket during shutdown.");
-            this.logger.log(Level.WARNING, "IOException thrown.", e);
+            this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
         }
     
         this.running.set(false);
@@ -255,7 +255,7 @@ final class BukkitIPCSocket implements IPCSocket {
             this.toBungee.writeUTF(message.write());
         } catch (IOException e) {
             this.logger.log(Level.WARNING, "Cannot send IPC message to Bungee proxy.");
-            this.logger.log(Level.WARNING, "IOException thrown.", e);
+            this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
         }
     }
     

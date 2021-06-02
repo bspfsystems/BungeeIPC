@@ -62,7 +62,7 @@ final class BungeeBukkitIPCReader implements IPCReader {
                 } catch (IllegalArgumentException e) {
                     this.logger.log(Level.WARNING, "Unable to decipher command sender UUID.");
                     this.logger.log(Level.WARNING, "Incoming value: " + senderId);
-                    this.logger.log(Level.WARNING, "IllegalArgumentException thrown.", e);
+                    this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
                     return;
                 }
                 sender = this.ipcPlugin.getServer().getPlayer(playerId);
