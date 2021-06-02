@@ -164,18 +164,18 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
                 final DataInputStream fromBukkit = new DataInputStream(this.socket.getInputStream());
                 this.toBukkit = new DataOutputStream(this.socket.getOutputStream());
                 
-                while(this.connected.get()) {
+                while (this.connected.get()) {
                     
                     final IPCMessage message = IPCMessage.read(fromBukkit.readUTF());
                     this.scheduler.runAsync(this.ipcPlugin, () -> ipcPlugin.receiveMessage(message));
                 }
-            } catch(IOException e) {
+            } catch (IOException e) {
                 
                 this.logger.log(Level.INFO, "IPC connection broken.");
                 this.logger.log(Level.INFO, "Server Name - " + this.name);
                 this.logger.log(Level.INFO, "IP Address  - " + this.address.getHostAddress());
                 this.logger.log(Level.INFO, "Port Number - " + this.port);
-                this.logger.log(Level.INFO, e.getClass().getSimpleName() + " thrown.", e);
+                this.logger.log(Level.CONFIG, e.getClass().getSimpleName() + " thrown.", e);
                 
                 try {
                     if (this.toBukkit != null) {

@@ -245,7 +245,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
             }
         }
         
-        final File serverConfigDirectory = new File(this.getDataFolder(), "IPC_Servers");
+        final File serverConfigDirectory = new File(this.getDataFolder(), "ipcservers");
         try {
             if (!serverConfigDirectory.exists()) {
                 this.logger.log(Level.SEVERE, "IPC Servers configuration directory does not exist at " + serverConfigDirectory.getPath());

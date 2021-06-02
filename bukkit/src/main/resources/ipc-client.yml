@@ -1,6 +1,6 @@
 ################################################################################
 ################################################################################
-##                           BungeeIPC for BungeeCord                         ##
+##                             BungeeIPC for Bukkit                           ##
 ##                                                                            ##
 ## SOURCE CODE: https://github.com/bspfsystems/BungeeIPC/                     ##
 ## BUGS / ISSUES: https://github.com/bspfsystems/BungeeIPC/issues/            ##
@@ -10,14 +10,44 @@
 ## can obtain an updated version of the default config.yml file from          ##
 ## https://bspfsystems.org/config-files/bungeeipc/bukkit/                     ##
 ##                                                                            ##
-## IMPORTANT: Please take note of which settings should be mirrored in the    ##
-##            Bukkit plugin's configuration file, as the connection is        ##
-##            likely to fail if they are not mirrored.                        ##
 ################################################################################
 ################################################################################
 
 ################################################################################
+#                          Client Connection Settings                          #
+################################################################################
+
+# The hostname or IP address of the BungeeCord server
+#
+# - This should be the hostname or IP address that the BungeeIPC plugin is
+#   configured for on the BungeeCord proxy. This may or may not be the same as
+#   the address that players use to connect to BungeeCord (public vs. private
+#   networking for the backend Minecraft servers).
+# - If you are using SSL/TLS, it is highly recommended to use the same hostname
+#   as the server certificate, as there may be hostname validation when the SSL
+#   handshake occurs.
+# - If no hostname or IP address is specified, "localhost" will be used
+#   (127.0.0.1).
+bungeecord_ip: ""
+
+# The port to connect to on the BungeeCord server
+#
+# - This should be the port number that the BungeeIPC plugins is configured for
+#   on the BungeeCord proxy. The combination of the above hostname/IP address
+#   and this port number should not match the address that players use to
+#   connect to BungeeCord, nor should it match any other IPC Client
+#   configuration that you have on any other Minecraft servers that are
+#   connected to the same BungeeCord proxy and running BungeeIPC.
+# - The port number must be between 1024 and 65536 (inclusive).
+# - If no port number is specified, an exception will be thrown.
+port: 
+
+################################################################################
 #                           Global SSL/TLS Settings                            #
+#                                                                              #
+# IMPORTANT: Please take note of which settings should be mirrored in the      #
+#            BungeeCord plugin's configuration file, as the connection is      #
+#            likely to fail if they are not mirrored.                          #
 ################################################################################
 
 # Whether to use SSL/TLS or not
@@ -36,23 +66,6 @@ use_ssl: false
 #                            Basic SSL/TLS settings                            #
 #               These can be ignored if use_ssl is set to false                #
 ################################################################################
-
-# The KeyStore file location
-#
-# - This is not required to be mirrored; however, due to limitations within
-#   JSSE, it is recommended to mirror the KeyStore file name (path to the file
-#   can be different).
-# - It is highly recommended to use the fully-qualified path to the KeyStore file.
-# - If no file path is specified, an exception will be thrown.
-key_store_file: ""
-
-# The KeyStore password
-#
-# - This is not required to be mirrored; however, due to limitations within
-#   JSSE, it is recommended to mirror this.
-# - It is highly recommended not to use a blank password.
-# - If no password is specified, an exception will be thrown.
-key_store_password: ""
 
 # The SSLContext protocol
 #
@@ -91,33 +104,3 @@ tls_version_whitelist:
 #   - "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
 tls_cipher_suite_whitelist:
   - "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
-
-################################################################################
-#                          Advanced SSL/TLS settings                           #
-#               These can be ignored if use_ssl is set to false                #
-#                                                                              #
-#                                   NOTICE:                                    #
-#                     UNLESS YOU KNOW WHAT YOU ARE DOING,                      #
-#                  IT IS BEST TO LEAVE THESE SETTINGS ALONE.                   #
-################################################################################
-
-# The KeyStore instance
-#
-# - Highly recommended to be mirrored.
-# - Which instance of the KeyStore you want to use.
-# - If no instance is specified, "JKS" will be used.
-key_store_instance: "JKS"
-
-# The KeyManagerFactory algorithm
-#
-# - Highly recommended to be mirrored.
-# - The algorithm of the KeyManagerFactory you wish to use.
-# - If no algorithm is specified, "NewSunX509" will be used.
-key_manager_factory_algorithm: "NewSunX509"
-
-# The TrustManagerFactory algorithm
-#
-# - Highly recommended to be mirrored.
-# - The algorithm of the TrustManagerFactory you wish to use.
-# - If no algorithm is specified, "SunX509" will be used.
-trust_manager_factory_algorithm: "SunX509"
