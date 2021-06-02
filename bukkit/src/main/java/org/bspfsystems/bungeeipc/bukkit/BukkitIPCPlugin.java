@@ -36,11 +36,14 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitScheduler;
 import org.jetbrains.annotations.NotNull;
 
 public final class BukkitIPCPlugin extends JavaPlugin implements IPCClientPlugin {
     
     private Logger logger;
+    
+    private BukkitScheduler scheduler;
     
     private BukkitIPCSocket socket;
     private ConcurrentHashMap<String, IPCReader> readers;
@@ -73,6 +76,8 @@ public final class BukkitIPCPlugin extends JavaPlugin implements IPCClientPlugin
         this.logger.log(Level.INFO, "// along with this program.  If not, see <http://www.gnu.org/licenses/>. //");
         this.logger.log(Level.INFO, "//                                                                       //");
         this.logger.log(Level.INFO, "///////////////////////////////////////////////////////////////////////////");
+        
+        this.scheduler = this.getServer().getScheduler();
         
         this.readers = new ConcurrentHashMap<String, IPCReader>();
         this.addReader("SERVER_COMMAND", new BungeeBukkitIPCReader(this));
@@ -157,7 +162,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements IPCClientPlugin
         this.socket.stop();
         
         
-        this.getServer().getScheduler().runTaskLaterAsynchronously(this, this::startClient, 40);
+        this.scheduler.runTaskLaterAsynchronously(this, this::startClient, 40);
     }
     
     private void startClient() {
@@ -181,95 +186,101 @@ public final class BukkitIPCPlugin extends JavaPlugin implements IPCClientPlugin
         }
         this.socket = null;
         
-        final File clientConfigDirectory = new File(this.getDataFolder(), "ipcclient");
-        try {
-            if (!clientConfigDirectory.exists()) {
-                if (!clientConfigDirectory.mkdirs()) {
+        this.scheduler.runTaskAsynchronously(this, () -> {
+    
+            final File clientConfigDirectory = new File(this.getDataFolder(), "ipcclient");
+            try {
+                if (!clientConfigDirectory.exists()) {
+                    if (!clientConfigDirectory.mkdirs()) {
+                        sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
+                        this.logger.log(Level.WARNING, "IPC Client configuration directory not created at " + clientConfigDirectory.getPath());
+                        this.logger.log(Level.WARNING, "IPC Client will not be started.");
+                        return;
+                    }
+                } else if (!clientConfigDirectory.isDirectory()) {
                     sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
-                    this.logger.log(Level.WARNING, "IPC Client configuration directory not created at " + clientConfigDirectory.getPath());
+                    this.logger.log(Level.WARNING, "IPC Client configuration directory is not a directory: " + clientConfigDirectory.getPath());
                     this.logger.log(Level.WARNING, "IPC Client will not be started.");
                     return;
                 }
-            } else if (!clientConfigDirectory.isDirectory()) {
+            } catch (SecurityException e) {
                 sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
-                this.logger.log(Level.WARNING, "IPC Client configuration directory is not a directory: " + clientConfigDirectory.getPath());
+                this.logger.log(Level.WARNING, "Cannot validate existence of IPC Client configuration directory at " + clientConfigDirectory.getPath());
                 this.logger.log(Level.WARNING, "IPC Client will not be started.");
+                this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
                 return;
             }
-        } catch (SecurityException e) {
-            sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
-            this.logger.log(Level.WARNING, "Cannot validate existence of IPC Client configuration directory at " + clientConfigDirectory.getPath());
-            this.logger.log(Level.WARNING, "IPC Client will not be started.");
-            this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
-            return;
-        }
     
-        final File clientConfigFile = new File(clientConfigDirectory, "ipc-client.yml");
-        try {
-            if (clientConfigFile.exists()) {
-                if (!clientConfigFile.isFile()) {
-                    sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
-                    this.logger.log(Level.WARNING, "IPC Client configuration file is not a file: " + clientConfigFile.getPath());
+            final File clientConfigFile = new File(clientConfigDirectory, "ipc-client.yml");
+            try {
+                if (clientConfigFile.exists()) {
+                    if (!clientConfigFile.isFile()) {
+                        sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
+                        this.logger.log(Level.WARNING, "IPC Client configuration file is not a file: " + clientConfigFile.getPath());
+                        this.logger.log(Level.WARNING, "IPC Client will not be started.");
+                        return;
+                    }
+                } else {
+                    if (!clientConfigFile.createNewFile()) {
+                        sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
+                        this.logger.log(Level.WARNING, "IPC Client configuration file not created at " + clientConfigFile.getPath());
+                        this.logger.log(Level.WARNING, "IPC Client will not be started.");
+                        return;
+                    }
+            
+                    final InputStream defaultConfig = this.getResource(clientConfigFile.getName());
+                    final FileOutputStream outputStream = new FileOutputStream(clientConfigFile);
+                    final byte[] buffer = new byte[4096];
+                    int bytesRead;
+            
+                    while ((bytesRead = defaultConfig.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+            
+                    outputStream.flush();
+                    outputStream.close();
+            
+                    sender.sendMessage("§r§cThe IPC Client configuration file did not exist; a copy of the default has been made and placed in the correct location.§r");
+                    sender.sendMessage("§r§cPlease update the configuration as required for the installation, and then run§r §b/ipc reload§r§c.§r");
+                    this.logger.log(Level.WARNING, "IPC Client configuration file did not exist at " + clientConfigFile.getPath());
                     this.logger.log(Level.WARNING, "IPC Client will not be started.");
+                    this.logger.log(Level.WARNING, "Please update the configuration as required for your installation, and then run \"/ipc reload\".");
                     return;
                 }
-            } else {
-                if (!clientConfigFile.createNewFile()) {
-                    sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
-                    this.logger.log(Level.WARNING, "IPC Client configuration file not created at " + clientConfigFile.getPath());
-                    this.logger.log(Level.WARNING, "IPC Client will not be started.");
-                    return;
-                }
-            
-                final InputStream defaultConfig = this.getResource(clientConfigFile.getName());
-                final FileOutputStream outputStream = new FileOutputStream(clientConfigFile);
-                final byte[] buffer = new byte[4096];
-                int bytesRead;
-            
-                while ((bytesRead = defaultConfig.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
-            
-                outputStream.flush();
-                outputStream.close();
-                
-                sender.sendMessage("§r§cThe IPC Client configuration file did not exist; a copy of the default has been made and placed in the correct location.§r");
-                sender.sendMessage("§r§cPlease update the configuration as required for the installation, and then run§r §b/ipc reload§r§c.§r");
-                this.logger.log(Level.WARNING, "IPC Client configuration file did not exist at " + clientConfigFile.getPath());
+            } catch (SecurityException | IOException e) {
+                sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
+                this.logger.log(Level.WARNING, "Unable to load the IPC Client configuration file at " + clientConfigFile.getPath());
                 this.logger.log(Level.WARNING, "IPC Client will not be started.");
-                this.logger.log(Level.WARNING, "Please update the configuration as required for your installation, and then run \"/ipc reload\".");
+                this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
                 return;
             }
-        } catch (SecurityException | IOException e) {
-            sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
-            this.logger.log(Level.WARNING, "Unable to load the IPC Client configuration file at " + clientConfigFile.getPath());
-            this.logger.log(Level.WARNING, "IPC Client will not be started.");
-            this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
-            return;
-        }
     
-        final YamlConfiguration clientConfig = new YamlConfiguration();
-        try {
-            clientConfig.load(clientConfigFile);
-        } catch (IOException | InvalidConfigurationException | IllegalArgumentException e) {
-            sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
-            this.logger.log(Level.WARNING, "Unable to load IPC Client configuration.");
-            this.logger.log(Level.WARNING, "IPC Client will not be started.");
-            this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
-            return;
-        }
+            final YamlConfiguration clientConfig = new YamlConfiguration();
+            try {
+                clientConfig.load(clientConfigFile);
+            } catch (IOException | InvalidConfigurationException | IllegalArgumentException e) {
+                sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
+                this.logger.log(Level.WARNING, "Unable to load IPC Client configuration.");
+                this.logger.log(Level.WARNING, "IPC Client will not be started.");
+                this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
+                return;
+            }
+            
+            this.scheduler.runTask(this, () -> {
     
-        try {
-            this.socket = new BukkitIPCSocket(this, clientConfig);
-        } catch (IllegalArgumentException e) {
-            sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
-            this.logger.log(Level.WARNING, "Unable to create IPC Client.");
-            this.logger.log(Level.WARNING, "IPC Client will not be started.");
-            this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
-            this.socket = null;
-            return;
-        }
+                try {
+                    this.socket = new BukkitIPCSocket(this, clientConfig);
+                } catch (IllegalArgumentException e) {
+                    sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
+                    this.logger.log(Level.WARNING, "Unable to create IPC Client.");
+                    this.logger.log(Level.WARNING, "IPC Client will not be started.");
+                    this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
+                    this.socket = null;
+                    return;
+                }
     
-        this.socket.start();
+                this.socket.start();
+            });
+        });
     }
 }
