@@ -140,7 +140,7 @@ public final class IPCTabExecutor implements TabExecutor {
                 return true;
             }
     
-            sender.sendMessage("§r§Reloading the IPC Client configuration. Please run /ipc status (if possible) in a few seconds to verify that the reload and reconnect finished successfully.§r");
+            sender.sendMessage("§r§6Reloading the BungeeIPC configuration. Please run§r §b/ipc status§r §6(if possible) in a few seconds to verify that the IPC Client has reloaded and reconnected finished successfully.§r");
             this.ipcPlugin.reloadConfig(sender);
             return true;
             

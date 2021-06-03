@@ -163,11 +163,19 @@ public final class IPCBCommand extends Command implements TabExecutor {
                 final ServerInfo server = this.ipcPlugin.getProxy().getServerInfo(serverName);
                 
                 if (server == null) {
-                    sender.sendMessage(new ComponentBuilder("Server ").color(ChatColor.RED).append(serverName).color(ChatColor.GOLD).append(" not found.").color(ChatColor.RED).create());
+                    final ComponentBuilder builder = new ComponentBuilder("Server ").color(ChatColor.RED);
+                    builder.append(serverName).color(ChatColor.GOLD);
+                    builder.append(" not found.").color(ChatColor.RED);
+                    sender.sendMessage(builder.create());
                 } else if (!server.canAccess(sender)) {
-                    sender.sendMessage(new ComponentBuilder("Server ").color(ChatColor.RED).append(serverName).color(ChatColor.GOLD).append(" not found.").color(ChatColor.RED).create());
+                    final ComponentBuilder builder = new ComponentBuilder("Server ").color(ChatColor.RED);
+                    builder.append(serverName).color(ChatColor.GOLD);
+                    builder.append(" not found.").color(ChatColor.RED);
+                    sender.sendMessage(builder.create());
                 } else {
-                    sender.sendMessage(new ComponentBuilder(" - ").color(ChatColor.WHITE).append(serverName).color(this.getColor(serverName)).create());
+                    final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
+                    builder.append(serverName).color(this.getColor(serverName));
+                    sender.sendMessage(builder.create());
                 }
                 sender.sendMessage(new ComponentBuilder("================================================================").color(ChatColor.DARK_GRAY).create());
             } else {
@@ -184,7 +192,7 @@ public final class IPCBCommand extends Command implements TabExecutor {
                 sender.sendMessage(new ComponentBuilder("Syntax: /ipcb reconnect <server>").color(ChatColor.RED).create());
                 return;
             }
-            
+    
             final String serverName = argList.remove(0);
             if (!this.ipcPlugin.isRegisteredServer(serverName)) {
                 final ComponentBuilder builder = new ComponentBuilder("Server ").color(ChatColor.RED);
@@ -200,13 +208,29 @@ public final class IPCBCommand extends Command implements TabExecutor {
                 sender.sendMessage(builder.create());
                 return;
             }
-            
+    
             this.ipcPlugin.restartServer(serverName);
             final ComponentBuilder builder = new ComponentBuilder("IPC server ").color(ChatColor.GREEN);
             builder.append(serverName).color(ChatColor.GOLD);
             builder.append(" has been reconnected.").color(ChatColor.GREEN);
             sender.sendMessage(builder.create());
+    
+        } else if (subCommand.equalsIgnoreCase("reload")) {
             
+            if (!sender.hasPermission("bungeeipc.command.ipcb.reload")) {
+                sender.sendMessage(new ComponentBuilder("You do not have permission to execute this command.").color(ChatColor.RED).create());
+                return;
+            }
+            if (argList.size() != 0) {
+                sender.sendMessage(new ComponentBuilder("Syntax: /ipcb reload").color(ChatColor.RED).create());
+                return;
+            }
+    
+            final ComponentBuilder builder = new ComponentBuilder("Reloading the BungeeIPC configuration. Please run ").color(ChatColor.GOLD);
+            builder.append("/ipcb reload").color(ChatColor.AQUA);
+            builder.append(" (if possible) in a few seconds to verify that the IPC Servers have reloaded and reconnected successfully.").color(ChatColor.GOLD);
+            sender.sendMessage(builder.create());
+            this.ipcPlugin.reloadConfig(sender);
         } else {
             this.sendSubCommands(sender);
         }
@@ -217,8 +241,9 @@ public final class IPCBCommand extends Command implements TabExecutor {
         final boolean permissionCommand = sender.hasPermission("bungeeipc.command.ipcb.command");
         final boolean permissionStatus = sender.hasPermission("bungeeipc.command.ipcb.status");
         final boolean permissionReconnect = sender.hasPermission("bungeeipc.command.ipcb.reconnect");
+        final boolean permissionReload = sender.hasPermission("bungeeipc.command.ipcb.reload");
         
-        if (!permissionCommand && !permissionStatus && !permissionReconnect) {
+        if (!permissionCommand && !permissionStatus && !permissionReconnect && !permissionReload) {
             sender.sendMessage(new ComponentBuilder("You do not have permission to execute this command.").color(ChatColor.RED).create());
             return;
         }
@@ -228,17 +253,25 @@ public final class IPCBCommand extends Command implements TabExecutor {
         
         if (permissionCommand) {
             final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
+            builder.append(" - ").color(ChatColor.WHITE);
             builder.append("/ipcb command <server> <sender> <command> [args...]").color(ChatColor.AQUA);
             sender.sendMessage(builder.create());
         }
         if (permissionStatus) {
             final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
+            builder.append(" - ").color(ChatColor.WHITE);
             builder.append("/ipcb status [server]").color(ChatColor.AQUA);
             sender.sendMessage(builder.create());
         }
         if (permissionReconnect) {
             final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
+            builder.append(" - ").color(ChatColor.WHITE);
             builder.append("/ipcb reconnect <server>").color(ChatColor.AQUA);
+            sender.sendMessage(builder.create());
+        }
+        if (permissionReload) {
+            final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
+            builder.append("/ipcb reload").color(ChatColor.AQUA);
             sender.sendMessage(builder.create());
         }
     }
@@ -298,6 +331,7 @@ public final class IPCBCommand extends Command implements TabExecutor {
         final boolean permissionCommand = sender.hasPermission("bungeeipc.command.ipcb.command");
         final boolean permissionStatus = sender.hasPermission("bungeeipc.command.ipcb.status");
         final boolean permissionReconnect = sender.hasPermission("bungeeipc.command.ipcb.reconnect");
+        final boolean permissionReload = sender.hasPermission("bungeeipc.command.ipcb.reload");
         
         if (permissionCommand) {
             completions.add("command");
@@ -307,6 +341,9 @@ public final class IPCBCommand extends Command implements TabExecutor {
         }
         if (permissionReconnect) {
             completions.add("reconnect");
+        }
+        if (permissionReload) {
+            completions.add("reload");
         }
         
         if (argList.isEmpty()) {
@@ -320,7 +357,10 @@ public final class IPCBCommand extends Command implements TabExecutor {
         }
         
         completions.clear();
-        if (!permissionCommand && !permissionStatus && !permissionReconnect) {
+        if (!permissionCommand && !permissionStatus && !permissionReconnect && !permissionReload) {
+            return completions;
+        }
+        if (subCommand.equalsIgnoreCase("reload")) {
             return completions;
         }
         

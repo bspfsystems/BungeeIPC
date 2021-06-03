@@ -26,7 +26,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -35,11 +37,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -50,9 +50,14 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.config.ListenerInfo;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.api.plugin.PluginManager;
+import net.md_5.bungee.api.scheduler.TaskScheduler;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
@@ -69,6 +74,8 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     private static final String PROXY_SERVER = "proxy";
     
     private Logger logger;
+    
+    private TaskScheduler scheduler;
     
     private ConcurrentHashMap<String, IPCServerSocket> serverSockets;
     private ConcurrentHashMap<String, IPCReader> readers;
@@ -106,226 +113,19 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
         this.logger.log(Level.INFO, "//                                                                       //");
         this.logger.log(Level.INFO, "///////////////////////////////////////////////////////////////////////////");
         
-        final File mainConfigFile = new File(this.getDataFolder(), "config.yml");
-        try {
-            if (mainConfigFile.exists()) {
-                if (!mainConfigFile.isFile()) {
-                    this.logger.log(Level.SEVERE, "Main BungeeIPC configuration file is not a file: " + mainConfigFile.getPath());
-                    throw new RuntimeException("Main BungeeIPC configuration file is not a file: " + mainConfigFile.getPath());
-                }
-            } else {
-                if (!mainConfigFile.createNewFile()) {
-                    this.logger.log(Level.SEVERE, "Main BungeeIPC configuration file not created at " + mainConfigFile.getPath());
-                    throw new RuntimeException("Main BungeeIPC configuration file not created at " + mainConfigFile.getPath());
-                }
-                
-                final InputStream defaultConfig = this.getResourceAsStream(mainConfigFile.getName());
-                final FileOutputStream outputStream = new FileOutputStream(mainConfigFile);
-                final byte[] buffer = new byte[4096];
-                int bytesRead;
+        this.scheduler = this.getProxy().getScheduler();
         
-                while ((bytesRead = defaultConfig.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
-        
-                outputStream.flush();
-                outputStream.close();
-            }
-        } catch (SecurityException | IOException e) {
-            this.logger.log(Level.SEVERE, "Unable to load the main BungeeIPC configuration file at " + mainConfigFile.getPath());
-            this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
-            throw new RuntimeException("Unable to load the main BungeeIPC configuration file at " + mainConfigFile.getPath(), e);
+        final PluginManager pluginManager = this.getProxy().getPluginManager();
+        final Plugin bungeeServerPlugin = pluginManager.getPlugin("cmd_server");
+        if (bungeeServerPlugin != null) {
+            pluginManager.unregisterCommands(bungeeServerPlugin);
         }
     
-        final ConfigurationProvider provider = ConfigurationProvider.getProvider(YamlConfiguration.class);
-        final Configuration mainConfig;
-        try {
-            mainConfig = provider.load(mainConfigFile);
-        } catch (IOException e) {
-            this.logger.log(Level.SEVERE, "Unable to load the main BungeeIPC configuration.");
-            this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
-            throw new RuntimeException("Unable to load the main BungeeIPC configuration.", e);
-        }
-        if (mainConfig == null) {
-            this.logger.log(Level.SEVERE, "Main BungeeIPC configuration not loaded, no Exception thrown.");
-            throw new RuntimeException("Main BungeeIPC configuration not loaded, no Exception thrown.");
-        }
-        
-        SSLServerSocketFactory sslServerSocketFactory = null;
-        ArrayList<String> tlsVersionWhitelist = null;
-        ArrayList<String> tlsCipherSuiteWhitelist = null;
-        
-        final boolean useSSL = mainConfig.getBoolean("use_ssl", false);
-        if (useSSL) {
-            
-            final String keyStoreFile = mainConfig.getString("key_store_file", null);
-            final String keyStorePassword = mainConfig.getString("key_store_password", null);
-            
-            if (keyStoreFile == null || keyStoreFile.trim().isEmpty()) {
-                this.logger.log(Level.SEVERE, "KeyStore file is null or empty: " + (keyStoreFile == null ? "null" : keyStoreFile));
-                throw new RuntimeException("KeyStore file is null or empty: " + (keyStoreFile == null ? "null" : keyStoreFile));
-            }
+        pluginManager.registerCommand(this, new IPCBCommand(this));
+        pluginManager.registerCommand(this, new ServerCommand(this));
     
-            if (keyStorePassword == null || keyStorePassword.trim().isEmpty()) {
-                this.logger.log(Level.SEVERE, "KeyStore password is null or empty: " + (keyStorePassword == null ? "null" : keyStorePassword));
-                throw new RuntimeException("KeyStore password is null or empty: " + (keyStorePassword == null ? "null" : keyStorePassword));
-            }
-            
-            String keyStoreInstance = mainConfig.getString("key_store_instance", "JKS");
-            if (keyStoreInstance == null || keyStoreInstance.trim().isEmpty()) {
-                keyStoreInstance = "JKS";
-            }
-            String keyManagerFactoryAlgorithm = mainConfig.getString("key_manager_factory_algorithm", "NewSunX509");
-            if (keyManagerFactoryAlgorithm == null || keyManagerFactoryAlgorithm.trim().isEmpty()) {
-                keyManagerFactoryAlgorithm = "NewSunX509";
-            }
-            String trustManagerFactoryAlgorithm = mainConfig.getString("trust_manager_factory_algorithm", "SunX509");
-            if (trustManagerFactoryAlgorithm == null || trustManagerFactoryAlgorithm.trim().isEmpty()) {
-                trustManagerFactoryAlgorithm = "SunX509";
-            }
-            String sslContextProtocol = mainConfig.getString("ssl_context_protocol", "TLS");
-            if (sslContextProtocol == null || sslContextProtocol.trim().isEmpty()) {
-                sslContextProtocol = "TLS";
-            }
-    
-            final List<String> tlsVersionWhitelistRaw = mainConfig.getStringList("tls_version_whitelist");
-            tlsVersionWhitelist = new ArrayList<String>();
-    
-            if (tlsVersionWhitelistRaw.isEmpty()) {
-                tlsVersionWhitelist.add("TLSv1.2");
-            } else {
-                for (final String version : tlsVersionWhitelistRaw) {
-                    if (version == null || version.trim().isEmpty()) {
-                        continue;
-                    }
-                    tlsVersionWhitelist.add(version);
-                }
-            }
-    
-            if (tlsVersionWhitelist.isEmpty()) {
-                tlsVersionWhitelist.add("TLSv1.2");
-            }
-    
-            final List<String> tlsCipherSuiteWhitelistRaw = mainConfig.getStringList("tls_cipher_suite_whitelist");
-            tlsCipherSuiteWhitelist = new ArrayList<String>();
-    
-            if (tlsCipherSuiteWhitelistRaw.isEmpty()) {
-                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
-            } else {
-                for (final String cipherSuite : tlsCipherSuiteWhitelistRaw) {
-                    if (cipherSuite == null || cipherSuite.trim().isEmpty()) {
-                        continue;
-                    }
-                    tlsCipherSuiteWhitelist.add(cipherSuite);
-                }
-            }
-    
-            if (tlsCipherSuiteWhitelist.isEmpty()) {
-                tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
-            }
-            
-            try {
-                final KeyStore keyStore = KeyStore.getInstance(keyStoreInstance);
-                keyStore.load(new FileInputStream(keyStoreFile), keyStorePassword.toCharArray());
-                
-                final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(keyManagerFactoryAlgorithm);
-                keyManagerFactory.init(keyStore, keyStorePassword.toCharArray());
-                
-                final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(trustManagerFactoryAlgorithm);
-                trustManagerFactory.init(keyStore);
-                
-                final SSLContext sslContext = SSLContext.getInstance(sslContextProtocol);
-                sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
-                
-                sslServerSocketFactory = sslContext.getServerSocketFactory();
-            } catch (KeyStoreException | SecurityException | IOException | NoSuchAlgorithmException | CertificateException | UnrecoverableKeyException | KeyManagementException e) {
-                this.logger.log(Level.SEVERE, "Unable to create SSLServerSocketFactory.");
-                this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
-                throw new RuntimeException("Unable to create SSLServerSocketFactory.", e);
-            }
-        }
-        
-        final File serverConfigDirectory = new File(this.getDataFolder(), "ipcservers");
-        try {
-            if (!serverConfigDirectory.exists()) {
-                this.logger.log(Level.SEVERE, "IPC Servers configuration directory does not exist at " + serverConfigDirectory.getPath());
-                throw new RuntimeException("IPC Servers configuration directory does not exist at " + serverConfigDirectory.getPath());
-            } else if (!serverConfigDirectory.isDirectory()) {
-                this.logger.log(Level.SEVERE, "IPC Servers configuration directory is not a directory: " + serverConfigDirectory.getPath());
-                throw new RuntimeException("IPC Servers configuration directory is not a directory: " + serverConfigDirectory.getPath());
-            }
-        } catch (SecurityException e) {
-            this.logger.log(Level.SEVERE, "Unable to validate existence of IPC Servers configuration directory at " + serverConfigDirectory.getPath());
-            this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
-            throw new RuntimeException("Unable to validate existence of IPC Servers configuration directory at " + serverConfigDirectory.getPath(), e);
-        }
-        
-        final Iterator<File> iterator = (Arrays.asList(serverConfigDirectory.listFiles())).iterator();
-        if (!iterator.hasNext()) {
-            this.logger.log(Level.SEVERE, "No IPCServerSocket configuration files found in the IPC Servers configuration directory.");
-            throw new RuntimeException("No IPCServerSocket configuration files found in the IPC Servers configuration directory.");
-        }
-        
-        this.serverSockets = new ConcurrentHashMap<String, IPCServerSocket>();
-        final HashSet<String> connections = new HashSet<String>();
-        final Collection<InetAddress> localAddresses = new ArrayList<InetAddress>();
-    
-        try {
-            for (final NetworkInterface iface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
-                localAddresses.addAll(Collections.list(iface.getInetAddresses()));
-            }
-        } catch (SocketException e) {
-            this.logger.log(Level.SEVERE, "Unable to load all local network interfaces.");
-            this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
-            throw new RuntimeException("Unable to load all local network interfaces.", e);
-        }
-        
-        while (iterator.hasNext()) {
-            
-            final File serverConfigFile = iterator.next();
-            final BungeeIPCServerSocket serverSocket;
-            try {
-                serverSocket = new BungeeIPCServerSocket(this, provider.load(serverConfigFile), localAddresses, sslServerSocketFactory, tlsVersionWhitelist, tlsCipherSuiteWhitelist);
-            } catch (IOException | IllegalArgumentException e) {
-                this.logger.log(Level.SEVERE, "Failure while attempting to load the IPCServerSocket configuration file at " + serverConfigFile.getPath());
-                this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
-                throw new RuntimeException("Failure while attempting to load the IPCServerSocket configuration file at " + serverConfigFile.getPath(), e);
-            }
-            
-            final String configFileName = serverConfigFile.getName().substring(0, serverConfigFile.getName().lastIndexOf(".")).toLowerCase();
-            final String serverName = serverSocket.getName();
-            if (!configFileName.equals(serverName)) {
-                this.logger.log(Level.SEVERE, "IPCServerSocket configuration file name and server name mismatch.");
-                this.logger.log(Level.SEVERE, "Configuration file name : " + configFileName);
-                this.logger.log(Level.SEVERE, "Name within the configuration: " + serverName);
-                this.logger.log(Level.SEVERE, "Configuration file path: " + serverConfigFile.getPath());
-                throw new RuntimeException("IPCServerSocket and configuration file name mismatch for IPCServerSocket configuration file at " + serverConfigFile.getPath());
-            }
-            
-            final String connection = serverSocket.getAddress().getHostAddress() + ":" + serverSocket.getPort();
-            if (!connections.add(connection)) {
-                this.logger.log(Level.SEVERE, "Non-unique IPC connection.");
-                this.logger.log(Level.SEVERE, "IPCServerSocket name: " + serverName);
-                this.logger.log(Level.SEVERE, "Hostname/IP Address: " + serverSocket.getAddress().getHostAddress());
-                this.logger.log(Level.SEVERE, "Port: " + serverSocket.getPort());
-                this.logger.log(Level.SEVERE, "Configuration file path: " + serverConfigFile.getPath());
-                throw new RuntimeException("IPCServerSocket configuration contains non-unique connection information (hostname/IP and port) for IPCServerSocket configuration file at " + serverConfigFile.getPath());
-            }
-            
-            if (this.serverSockets.containsKey(serverName)) {
-                this.logger.log(Level.SEVERE, "IPCServerSocket previously defined and added.");
-                this.logger.log(Level.SEVERE, "Please check all configurations for duplicates.");
-                this.logger.log(Level.SEVERE, "Duplicate IPCServerSocket name: " + serverName);
-                this.logger.log(Level.SEVERE, "Configuration file path: " + serverConfigFile.getPath());
-                throw new RuntimeException("IPCServerSocket configuration contains non-unique server name for IPCServerSocket configuration file at " + serverConfigFile.getPath());
-            }
-            
-            this.serverSockets.put(serverName, serverSocket);
-        }
-        
-        for (final IPCServerSocket serverSocket : this.serverSockets.values()) {
-            serverSocket.start();
-        }
+        this.readers = new ConcurrentHashMap<String, IPCReader>();
+        this.addReader("PROXY_COMMAND", new BungeeProxyIPCReader(this));
         
         this.onlineStatuses = new ConcurrentHashMap<String, AtomicBoolean>();
         for (final ServerInfo serverInfo : this.getProxy().getServers().values()) {
@@ -333,18 +133,9 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
         }
         
         this.serverStatusUpdater = new ServerStatusUpdater(this);
-        
-        final PluginManager pluginManager = this.getProxy().getPluginManager();
-        final Plugin bungeeServerPlugin = pluginManager.getPlugin("cmd_server");
-        if (bungeeServerPlugin != null) {
-            pluginManager.unregisterCommands(bungeeServerPlugin);
-        }
-        
-        pluginManager.registerCommand(this, new IPCBCommand(this));
-        pluginManager.registerCommand(this, new ServerCommand(this));
-        
-        this.readers = new ConcurrentHashMap<String, IPCReader>();
-        this.addReader("PROXY_COMMAND", new BungeeProxyIPCReader(this));
+    
+        this.serverSockets = new ConcurrentHashMap<String, IPCServerSocket>();
+        this.reloadConfig(this.getProxy().getConsole(), false);
     }
     
     @Override
@@ -407,31 +198,34 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     
     @Override
     public synchronized boolean isRegisteredServer(@NotNull final String name) {
-        this.validateNotBlank(name, "Server name cannot be blank!");
+        
+        this.validateNotBlank(name, "Server name cannot be blank.");
         return this.serverSockets.containsKey(name);
     }
     
     @Override
     public synchronized boolean isServerRunning(@NotNull final String name) {
-        this.validateNotBlank(name, "Server name cannot be blank!");
-        this.validateServer(name, "Server is not registered to the BungeeCord proxy!");
+        
+        this.validateNotBlank(name, "Server name cannot be blank.");
+        this.validateServer(name, "Server is not registered to the BungeeCord proxy.");
         return this.serverSockets.get(name).isRunning();
     }
     
     @Override
     public synchronized boolean isServerConnected(@NotNull final String name) {
-        this.validateNotBlank(name, "Server name cannot be blank!");
-        this.validateServer(name, "Server is not registered to the BungeeCord proxy!");
+        
+        this.validateNotBlank(name, "Server name cannot be blank.");
+        this.validateServer(name, "Server is not registered to the BungeeCord proxy.");
         return this.serverSockets.get(name).isConnected();
     }
     
     @Override
     public void restartServer(@NotNull final String name) {
         
-        this.validateNotBlank(name, "Server name cannot be blank!");
-        this.validateServer(name, "Server is not registered to the BungeeCord proxy!");
+        this.validateNotBlank(name, "Server name cannot be blank.");
+        this.validateServer(name, "Server is not registered to the BungeeCord proxy.");
         this.serverSockets.get(name).stop();
-        this.getProxy().getScheduler().schedule(this, () -> this.serverSockets.get(name).start(), 2L, TimeUnit.SECONDS);
+        this.scheduler.schedule(this, () -> this.serverSockets.get(name).start(), 2L, TimeUnit.SECONDS);
     }
     
     @Override
@@ -440,10 +234,11 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
         if (!message.getChannel().equals(IPCMessage.BROADCAST_SERVER)) {
             this.logger.log(Level.WARNING, "Cannot broadcast IPC message when the server is not the broadcast server.");
             this.logger.log(Level.WARNING, "IPC message server: " + message.getServer());
-        } else {
-            for (final IPCServerSocket serverSocket : this.serverSockets.values()) {
-                serverSocket.sendMessage(message);
-            }
+            return;
+        }
+        
+        for (final IPCServerSocket serverSocket : this.serverSockets.values()) {
+            serverSocket.sendMessage(message);
         }
     }
     
@@ -471,5 +266,383 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
         } else {
             return 1;
         }
+    }
+    
+    public void reloadConfig(@NotNull final CommandSender sender) {
+        this.reloadConfig(sender, true);
+    }
+    
+    private void reloadConfig(@NotNull final CommandSender sender, final boolean command) {
+        
+        for (final IPCServerSocket serverSocket : this.serverSockets.values()) {
+            serverSocket.stop();
+        }
+        this.serverSockets.clear();
+        
+        this.scheduler.runAsync(this, () -> {
+        
+            final ConfigurationProvider provider = ConfigurationProvider.getProvider(YamlConfiguration.class);
+            
+            File configFile = new File(this.getDataFolder(), "bungeeipc.yml");
+            try {
+                if (!configFile.exists() || !configFile.isFile()) {
+                    configFile = new File(this.getDataFolder(), "config.yml");
+                }
+                
+                if (configFile.exists()) {
+                    if (!configFile.isFile()) {
+                        
+                        if (command) {
+                            sender.sendMessage(new ComponentBuilder("An error has occurred while (re)loading the BungeeIPC configuration. Please try again. If this error persists, please report it to a server administrator.").color(ChatColor.RED).create());
+                        }
+                        
+                        this.logger.log(Level.WARNING, "BungeeIPC configuration file is not a file: " + configFile.getPath());
+                        this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
+                        return;
+                    }
+                } else {
+                    if (!configFile.createNewFile()) {
+                        
+                        if (command) {
+                            sender.sendMessage(new ComponentBuilder("An error has occurred while (re)loading the BungeeIPC configuration. Please try again. If this error persists, please report it to a server administrator.").color(ChatColor.RED).create());
+                        }
+                        
+                        this.logger.log(Level.WARNING, "BungeeIPC configuration file not created at " + configFile.getPath());
+                        this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
+                        return;
+                    }
+                
+                    final InputStream defaultConfig = this.getResourceAsStream(configFile.getName());
+                    final FileOutputStream outputStream = new FileOutputStream(configFile);
+                    final byte[] buffer = new byte[4096];
+                    int bytesRead;
+                
+                    while ((bytesRead = defaultConfig.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+                
+                    outputStream.flush();
+                    outputStream.close();
+                    
+                    if (command) {
+                        final ComponentBuilder builder1 = new ComponentBuilder("The BungeeIPC configuration file did not exist; a copy of the default has been made and placed in the correct location.").color(ChatColor.RED);
+                        final ComponentBuilder builder2 = new ComponentBuilder("Please update the configuration as required for the installation, and then run ").color(ChatColor.RED);
+                        builder2.append("/ipcb reload").color(ChatColor.AQUA);
+                        builder2.append(".").color(ChatColor.RED);
+                        sender.sendMessage(builder1.create());
+                        sender.sendMessage(builder2.create());
+                    }
+                    
+                    this.logger.log(Level.WARNING, "The BungeeIPC configuration file did not exist at " + configFile.getPath());
+                    this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
+                    this.logger.log(Level.WARNING, "Please update the configuration file as required for your installation, and then run \"/ipcb reload\".");
+                    return;
+                }
+            } catch (SecurityException | IOException e) {
+                
+                if (command) {
+                    sender.sendMessage(new ComponentBuilder("An error has occurred while (re)loading the BungeeIPC configuration. Please try again. If this error persists, please report it to a server administrator.").color(ChatColor.RED).create());
+                }
+                
+                this.logger.log(Level.WARNING, "Unable to load the BungeeIPC configuration file at " + configFile.getPath());
+                this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
+                this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
+                return;
+            }
+        
+            final Configuration config;
+            try {
+                config = provider.load(configFile);
+            } catch (IOException e) {
+                
+                if (command) {
+                    sender.sendMessage(new ComponentBuilder("An error has occurred while (re)loading the BungeeIPC configuration. Please try again. If this error persists, please report it to a server administrator.").color(ChatColor.RED).create());
+                }
+                
+                this.logger.log(Level.WARNING, "Unable to load the BungeeIPC configuration.");
+                this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
+                this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
+                return;
+            }
+            if (config == null) {
+                
+                if (command) {
+                    sender.sendMessage(new ComponentBuilder("An error has occurred while (re)loading the BungeeIPC configuration. Please try again. If this error persists, please report it to a server administrator.").color(ChatColor.RED).create());
+                }
+                
+                this.logger.log(Level.WARNING, "BungeeIPC configuration not loaded, no Exception thrown.");
+                this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
+                return;
+            }
+            
+            final SSLServerSocketFactory sslServerSocketFactory;
+            final ArrayList<String> tlsVersionWhitelist = new ArrayList<String>();
+            final ArrayList<String> tlsCipherSuiteWhitelist = new ArrayList<String>();
+            
+            if (!config.getBoolean("use_ssl", false)) {
+                sslServerSocketFactory = null;
+            } else {
+        
+                final String keyStoreFile = config.getString("key_store_file", null);
+                final String keyStorePassword = config.getString("key_store_password", null);
+        
+                if (keyStoreFile == null || keyStoreFile.trim().isEmpty()) {
+                    
+                    if (command) {
+                        final ComponentBuilder builder1 = new ComponentBuilder("Please check the BungeeIPC configuration file, specifically the \"key_store_file\" item, to verify it has the correct value.").color(ChatColor.RED);
+                        final ComponentBuilder builder2 = new ComponentBuilder("After confirming the value, please run ").color(ChatColor.RED);
+                        builder2.append("/ipcb reload").color(ChatColor.AQUA);
+                        builder2.append(" to reload the new value.").color(ChatColor.RED);
+                        sender.sendMessage(builder1.create());
+                        sender.sendMessage(builder2.create());
+                    }
+                    
+                    this.logger.log(Level.WARNING, "KeyStore file is null or empty: " + (keyStoreFile == null ? "null" : keyStoreFile));
+                    this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
+                    return;
+                }
+        
+                if (keyStorePassword == null || keyStorePassword.trim().isEmpty()) {
+                    
+                    if (command) {
+                        final ComponentBuilder builder1 = new ComponentBuilder("Please check the BungeeIPC configuration file, specifically the \"key_store_password\" item, to verify it has the correct value.").color(ChatColor.RED);
+                        final ComponentBuilder builder2 = new ComponentBuilder("After confirming the value, please run ").color(ChatColor.RED);
+                        builder2.append("/ipcb reload").color(ChatColor.AQUA);
+                        builder2.append(" to reload the new value.").color(ChatColor.RED);
+                        sender.sendMessage(builder1.create());
+                        sender.sendMessage(builder2.create());
+                    }
+                    
+                    this.logger.log(Level.WARNING, "KeyStore password is null or empty: " + (keyStorePassword == null ? "null" : keyStorePassword));
+                    this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
+                    return;
+                }
+        
+                String keyStoreInstance = config.getString("key_store_instance", "JKS");
+                if (keyStoreInstance == null || keyStoreInstance.trim().isEmpty()) {
+                    keyStoreInstance = "JKS";
+                }
+                String keyManagerFactoryAlgorithm = config.getString("key_manager_factory_algorithm", "NewSunX509");
+                if (keyManagerFactoryAlgorithm == null || keyManagerFactoryAlgorithm.trim().isEmpty()) {
+                    keyManagerFactoryAlgorithm = "NewSunX509";
+                }
+                String trustManagerFactoryAlgorithm = config.getString("trust_manager_factory_algorithm", "SunX509");
+                if (trustManagerFactoryAlgorithm == null || trustManagerFactoryAlgorithm.trim().isEmpty()) {
+                    trustManagerFactoryAlgorithm = "SunX509";
+                }
+                String sslContextProtocol = config.getString("ssl_context_protocol", "TLS");
+                if (sslContextProtocol == null || sslContextProtocol.trim().isEmpty()) {
+                    sslContextProtocol = "TLS";
+                }
+        
+                final List<String> tlsVersionWhitelistRaw = config.getStringList("tls_version_whitelist");
+                if (tlsVersionWhitelistRaw.isEmpty()) {
+                    tlsVersionWhitelist.add("TLSv1.2");
+                } else {
+                    for (final String version : tlsVersionWhitelistRaw) {
+                        if (version == null || version.trim().isEmpty()) {
+                            continue;
+                        }
+                        tlsVersionWhitelist.add(version);
+                    }
+                }
+        
+                if (tlsVersionWhitelist.isEmpty()) {
+                    tlsVersionWhitelist.add("TLSv1.2");
+                }
+        
+                final List<String> tlsCipherSuiteWhitelistRaw = config.getStringList("tls_cipher_suite_whitelist");
+                if (tlsCipherSuiteWhitelistRaw.isEmpty()) {
+                    tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
+                } else {
+                    for (final String cipherSuite : tlsCipherSuiteWhitelistRaw) {
+                        if (cipherSuite == null || cipherSuite.trim().isEmpty()) {
+                            continue;
+                        }
+                        tlsCipherSuiteWhitelist.add(cipherSuite);
+                    }
+                }
+        
+                if (tlsCipherSuiteWhitelist.isEmpty()) {
+                    tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
+                }
+        
+                try {
+                    final KeyStore keyStore = KeyStore.getInstance(keyStoreInstance);
+                    keyStore.load(new FileInputStream(keyStoreFile), keyStorePassword.toCharArray());
+            
+                    final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(keyManagerFactoryAlgorithm);
+                    keyManagerFactory.init(keyStore, keyStorePassword.toCharArray());
+            
+                    final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(trustManagerFactoryAlgorithm);
+                    trustManagerFactory.init(keyStore);
+            
+                    final SSLContext sslContext = SSLContext.getInstance(sslContextProtocol);
+                    sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+            
+                    sslServerSocketFactory = sslContext.getServerSocketFactory();
+                } catch (KeyStoreException | SecurityException | IOException | NoSuchAlgorithmException | CertificateException | UnrecoverableKeyException | KeyManagementException e) {
+                    
+                    if (command) {
+                        sender.sendMessage(new ComponentBuilder("An error has occurred while (re)loading the BungeeIPC configuration. Please try again. If this error persists, please report it to a server administrator.").color(ChatColor.RED).create());
+                    }
+                    
+                    this.logger.log(Level.WARNING, "Unable to create SSLServerSocketFactory.");
+                    this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
+                    this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
+                    return;
+                }
+            }
+            
+            final Configuration serversConfig = config.getSection("servers");
+            if (serversConfig == null || serversConfig.getKeys().isEmpty()) {
+                
+                if (command) {
+                    final ComponentBuilder builder1 = new ComponentBuilder("The BungeeIPC configuration has been reloaded successfully.").color(ChatColor.GREEN);
+                    final ComponentBuilder builder2 = new ComponentBuilder("There are no IPC Servers configured. If this is correct, you can ignore this message.").color(ChatColor.GOLD);
+                    final ComponentBuilder builder3 = new ComponentBuilder("If this is not correct, please update the configuration as required, and then run ").color(ChatColor.GOLD);
+                    builder3.append("/ipcb reload").color(ChatColor.AQUA);
+                    builder3.append(" to reload the updated configuration.").color(ChatColor.GOLD);
+                    sender.sendMessage(builder1.create());
+                    sender.sendMessage(builder2.create());
+                    sender.sendMessage(builder3.create());
+                }
+                
+                this.logger.log(Level.INFO, "BungeeIPC configuration file has been reloaded.");
+                this.logger.log(Level.INFO, "No IPC Servers defined, nothing to start.");
+                return;
+            }
+            
+            final HashSet<String> connections = new HashSet<String>();
+            final Collection<InetAddress> localAddresses = new ArrayList<InetAddress>();
+            
+            for (final ListenerInfo listenerInfo : this.getProxy().getConfig().getListeners()) {
+                final SocketAddress address = listenerInfo.getSocketAddress();
+                if (address == null) {
+                    continue;
+                }
+                if (!(address instanceof InetSocketAddress)) {
+                    continue;
+                }
+                
+                final InetSocketAddress hostAddress = (InetSocketAddress) address;
+                connections.add(hostAddress.getAddress().getHostAddress() + ":" + hostAddress.getPort());
+            }
+            
+        
+            try {
+                for (final NetworkInterface iface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                    localAddresses.addAll(Collections.list(iface.getInetAddresses()));
+                }
+            } catch (SocketException e) {
+                
+                if (command) {
+                    sender.sendMessage(new ComponentBuilder("An error has occurred while (re)loading the BungeeIPC configuration. Please try again. If this error persists, please report it to a server administrator.").color(ChatColor.RED).create());
+                }
+                
+                this.logger.log(Level.WARNING, "Unable to load all local network interfaces.");
+                this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
+                this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
+                return;
+            }
+            
+            this.scheduler.runAsync(this, () -> {
+    
+                for (final String serverName : serversConfig.getKeys()) {
+        
+                    final Configuration serverConfig = serversConfig.getSection(serverName);
+                    final BungeeIPCServerSocket serverSocket;
+                    try {
+                        serverSocket = new BungeeIPCServerSocket(this, serverName, serverConfig, localAddresses, sslServerSocketFactory, tlsVersionWhitelist, tlsCipherSuiteWhitelist);
+                    } catch (IllegalArgumentException e) {
+                        
+                        if (command) {
+                            final ComponentBuilder builder1 = new ComponentBuilder("An error has occurred while (re)loading one of the IPC Servers. Please check the BungeeIPC configuration section for the IPC Server ").color(ChatColor.RED);
+                            builder1.append(serverName).color(ChatColor.AQUA);
+                            builder1.append(".").color(ChatColor.RED);
+                            final ComponentBuilder builder2 = new ComponentBuilder("After updating the configuration section as needed, please run ").color(ChatColor.GOLD);
+                            builder2.append("/ipcb reload").color(ChatColor.AQUA);
+                            builder2.append(" to reload the updated configuration.").color(ChatColor.GOLD);
+                            final ComponentBuilder builder3 = new ComponentBuilder("If you believe the configuration has no issues, or this error persists after updating and reloading, please report it to a server administrator.").color(ChatColor.RED);
+                            sender.sendMessage(builder1.create());
+                            sender.sendMessage(builder2.create());
+                            sender.sendMessage(builder3.create());
+                        }
+            
+                        this.logger.log(Level.WARNING, "Failure while attempting to create IPCServerSocket " + serverName + ".");
+                        this.logger.log(Level.WARNING, "IPC Server " + serverName + " will not be started.");
+                        this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
+                        continue;
+                    }
+        
+                    final String connection = serverSocket.getAddress().getHostAddress() + ":" + serverSocket.getPort();
+                    if (!connections.add(connection)) {
+                        
+                        if (command) {
+                            final ComponentBuilder builder1 = new ComponentBuilder("An error has occurred while (re)loading one of the IPC Servers. Please check the BungeeIPC configuration section for the IPC Server ").color(ChatColor.RED);
+                            builder1.append(serverName).color(ChatColor.AQUA);
+                            builder1.append(".").color(ChatColor.RED);
+                            final ComponentBuilder builder2 = new ComponentBuilder("This appears to be an issue with ").color(ChatColor.RED);
+                            builder2.append("non-unique connection information (hostname/IP address and port combination are used somewhere else)").color(ChatColor.AQUA);
+                            builder2.append(". Please update the BungeeIPC configuration to remove this conflict.").color(ChatColor.RED);
+                            final ComponentBuilder builder3 = new ComponentBuilder("After updating the configuration section as needed, please run ").color(ChatColor.GOLD);
+                            builder3.append("/ipcb reload").color(ChatColor.AQUA);
+                            builder3.append(" to reload the updated configuration.").color(ChatColor.GOLD);
+                            final ComponentBuilder builder4 = new ComponentBuilder("If you believe the configuration has no issues, or this error persists after updating and reloading, please report it to a server administrator.").color(ChatColor.RED);
+                            sender.sendMessage(builder1.create());
+                            sender.sendMessage(builder2.create());
+                            sender.sendMessage(builder3.create());
+                            sender.sendMessage(builder4.create());
+                        }
+            
+                        this.logger.log(Level.WARNING, "Non-unique IPC connection.");
+                        this.logger.log(Level.WARNING, "IPCServerSocket name: " + serverName);
+                        this.logger.log(Level.WARNING, "Hostname/IP Address: " + serverSocket.getAddress().getHostAddress());
+                        this.logger.log(Level.WARNING, "Port: " + serverSocket.getPort());
+                        this.logger.log(Level.WARNING, "IPC Server " + serverName + " will not be started.");
+                        continue;
+                    }
+        
+                    if (this.serverSockets.containsKey(serverName)) {
+                        
+                        if (command) {
+                            final ComponentBuilder builder1 = new ComponentBuilder("An error has occurred while (re)loading one of the IPC Servers. Please check the BungeeIPC configuration section for the IPC Server ").color(ChatColor.RED);
+                            builder1.append(serverName).color(ChatColor.AQUA);
+                            builder1.append(".").color(ChatColor.RED);
+                            final ComponentBuilder builder2 = new ComponentBuilder("This appears to be an issue with ").color(ChatColor.RED);
+                            builder2.append("non-unique IPC Server names").color(ChatColor.AQUA);
+                            builder2.append(". Please update the BungeeIPC configuration to remove this conflict.").color(ChatColor.RED);
+                            final ComponentBuilder builder3 = new ComponentBuilder("After updating the configuration section as needed, please run ").color(ChatColor.GOLD);
+                            builder3.append("/ipcb reload").color(ChatColor.AQUA);
+                            builder3.append(" to reload the updated configuration.").color(ChatColor.GOLD);
+                            final ComponentBuilder builder4 = new ComponentBuilder("If you believe the configuration has no issues, or this error persists after updating and reloading, please report it to a server administrator.").color(ChatColor.RED);
+                            sender.sendMessage(builder1.create());
+                            sender.sendMessage(builder2.create());
+                            sender.sendMessage(builder3.create());
+                            sender.sendMessage(builder4.create());
+                        }
+            
+                        this.logger.log(Level.WARNING, "IPCServerSocket previously defined and added.");
+                        this.logger.log(Level.WARNING, "Please check all configurations for duplicates.");
+                        this.logger.log(Level.WARNING, "Duplicate IPCServerSocket name: " + serverName);
+                        this.logger.log(Level.WARNING, "IPC Server " + serverName + " will not be started.");
+                        continue;
+                    }
+        
+                    this.serverSockets.put(serverName, serverSocket);
+                }
+    
+                for (final IPCServerSocket serverSocket : this.serverSockets.values()) {
+                    serverSocket.start();
+                }
+                
+                if (command) {
+                    final ComponentBuilder builder = new ComponentBuilder("The BungeeIPC configuration has been reloaded. Please run ").color(ChatColor.GREEN);
+                    builder.append("/ipcb status").color(ChatColor.AQUA);
+                    builder.append(" in a few seconds to verify that the IPC Servers have reloaded and reconnected successfully.").color(ChatColor.GREEN);
+                    sender.sendMessage(builder.create());
+                }
+            });
+        });
     }
 }

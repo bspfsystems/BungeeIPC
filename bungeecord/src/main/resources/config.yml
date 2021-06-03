@@ -1,6 +1,7 @@
 ################################################################################
 ################################################################################
-##                           BungeeIPC for BungeeCord                         ##
+##                                                                            ##
+##                   BungeeIPC Configuration for BungeeCord                   ##
 ##                                                                            ##
 ## SOURCE CODE: https://github.com/bspfsystems/BungeeIPC/                     ##
 ## BUGS / ISSUES: https://github.com/bspfsystems/BungeeIPC/issues/            ##
@@ -8,13 +9,59 @@
 ##                                                                            ##
 ## New configuration items will not be added to this file automatically. You  ##
 ## can obtain an updated version of the default config.yml file from          ##
-## https://bspfsystems.org/config-files/bungeeipc/bukkit/                     ##
+## https://bspfsystems.org/config-files/bungeeipc/bungeecord/                 ##
 ##                                                                            ##
-## IMPORTANT: Please take note of which settings should be mirrored in the    ##
-##            Bukkit plugin's configuration file, as the connection is        ##
-##            likely to fail if they are not mirrored.                        ##
+## This file may also be named "bungeeipc.yml". If both "bungeeipc.yml" and   ##
+## "config.yml" are present in this plugin's configuration directory,         ##
+## the "bungeeipc.yml" file will be preferred over the "config.yml" file.     ##
+##                                                                            ##
+## IMPORTANT: Please take note of which settings (SSL/TLS settings) should be ##
+##            mirrored in the Bukkit plugin's configuration file, as the      ##
+##            connection is likely to fail if they are not mirrored.          ##
+##                                                                            ##
 ################################################################################
 ################################################################################
+
+################################################################################
+#                          IPC Servers Configuration                           #
+################################################################################
+
+# Section to define the IPC Servers
+#
+# - This section is where the IPCServers are configured, including server names,
+#   hostnames/IP addresses, and ports.
+# - The minimum information required for a server is the name of the server and
+#   the port that it will bind to. Optionally, you may also include the hostname
+#   or IP address that the specific server is to bind to (IP address is
+#   preferred for binding).
+# - The server names MUST match one of the server names configured in
+#   BungeeCord's config.yml (or bungee.yml) configuration file.
+# - If no hostname or IP address is supplied, "localhost" (or 127.0.0.1) will be
+#   used.
+# - If a hostname/IP address is specified, it does not have to be the same one
+#   that players use to connect to BungeeCord. Depending on how you implement
+#   your BungeeCord network, you may have a public IP that is used for players
+#   to connect to, and then private IP address(es) and networking for the
+#   connections from BungeeCord to the backend Minecraft servers.
+# - If no port is specified, an error will be presented when this configuration
+#   file is loaded, and the respective IPC Server will not start.
+# - Port numbers must be between 1024 and 65535 (inclusive). Failure to abide by
+#   this will result in an error and the respective IPC Server will not start.
+# - The IP address and port combination that is specified for a server must not
+#   match the connection information that players use to connect to BungeeCord,
+#   nor can it match any other combination of other IPC Servers. The IP address
+#   may be the same for all, but the ports must all be different for any cases
+#   where the IP address is the same.
+#
+# - Example server configuration:
+#
+#   servers:
+#     testserver1:
+#       bind_address: 127.0.0.1
+#       bind_port: 12345
+#     testserver2:
+#       bind_port: 55555
+servers:
 
 ################################################################################
 #                           Global SSL/TLS Settings                            #
@@ -33,23 +80,18 @@
 use_ssl: false
 
 ################################################################################
-#                            Basic SSL/TLS settings                            #
-#               These can be ignored if use_ssl is set to false                #
+#                            Basic SSL/TLS Settings                            #
+#              These will be ignored if use_ssl is set to "false"              #
 ################################################################################
 
 # The KeyStore file location
 #
-# - This is not required to be mirrored; however, due to limitations within
-#   JSSE, it is recommended to mirror the KeyStore file name (path to the file
-#   can be different).
 # - It is highly recommended to use the fully-qualified path to the KeyStore file.
 # - If no file path is specified, an exception will be thrown.
 key_store_file: ""
 
 # The KeyStore password
 #
-# - This is not required to be mirrored; however, due to limitations within
-#   JSSE, it is recommended to mirror this.
 # - It is highly recommended not to use a blank password.
 # - If no password is specified, an exception will be thrown.
 key_store_password: ""
@@ -93,8 +135,8 @@ tls_cipher_suite_whitelist:
   - "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
 
 ################################################################################
-#                          Advanced SSL/TLS settings                           #
-#               These can be ignored if use_ssl is set to false                #
+#                          Advanced SSL/TLS Settings                           #
+#              These can be ignored if use_ssl is set to "false"               #
 #                                                                              #
 #                                   NOTICE:                                    #
 #                     UNLESS YOU KNOW WHAT YOU ARE DOING,                      #
@@ -103,21 +145,18 @@ tls_cipher_suite_whitelist:
 
 # The KeyStore instance
 #
-# - Highly recommended to be mirrored.
 # - Which instance of the KeyStore you want to use.
 # - If no instance is specified, "JKS" will be used.
 key_store_instance: "JKS"
 
 # The KeyManagerFactory algorithm
 #
-# - Highly recommended to be mirrored.
 # - The algorithm of the KeyManagerFactory you wish to use.
 # - If no algorithm is specified, "NewSunX509" will be used.
 key_manager_factory_algorithm: "NewSunX509"
 
 # The TrustManagerFactory algorithm
 #
-# - Highly recommended to be mirrored.
 # - The algorithm of the TrustManagerFactory you wish to use.
 # - If no algorithm is specified, "SunX509" will be used.
 trust_manager_factory_algorithm: "SunX509"

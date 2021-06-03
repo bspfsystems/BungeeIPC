@@ -1,21 +1,29 @@
 ################################################################################
 ################################################################################
 ##                                                                            ##
-##                 BungeeIPC Client Configuration for Bukkit                  ##
+##                     BungeeIPC Configuration for Bukkit                     ##
 ##                                                                            ##
 ## SOURCE CODE: https://github.com/bspfsystems/BungeeIPC/                     ##
 ## BUGS / ISSUES: https://github.com/bspfsystems/BungeeIPC/issues/            ##
 ## API JAVADOCS: https://javadoc.io/doc/org.bspfsystems/<something>           ##
 ##                                                                            ##
 ## New configuration items will not be added to this file automatically. You  ##
-## can obtain an updated version of the default ipc-client.yml file from      ##
+## can obtain an updated version of the default config.yml file from          ##
 ## https://bspfsystems.org/config-files/bungeeipc/bukkit/                     ##
+##                                                                            ##
+## This file may also be named "bukkitipc.yml". If both "bukkitipc.yml" and   ##
+## "config.yml" are present in this plugin's configuration directory,         ##
+## the "bungeeipc.yml" file will be preferred over the "config.yml" file.     ##
+##                                                                            ##
+## IMPORTANT: Please take note of which settings (SSL/TLS settings) should be ##
+##            mirrored in the Bungee plugin's configuration file, as the      ##
+##            connection is likely to fail if they are not mirrored.          ##
 ##                                                                            ##
 ################################################################################
 ################################################################################
 
 ################################################################################
-#                          Client Connection Settings                          #
+#                           IPC Client Configuration                           #
 ################################################################################
 
 # The hostname or IP address of the BungeeCord server
@@ -66,7 +74,7 @@ use_ssl: false
 
 ################################################################################
 #                            Basic SSL/TLS settings                            #
-#               These can be ignored if use_ssl is set to false                #
+#              These will be ignored if use_ssl is set to "false"              #
 ################################################################################
 
 # The SSLContext protocol

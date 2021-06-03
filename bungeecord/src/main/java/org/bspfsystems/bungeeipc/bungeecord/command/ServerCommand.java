@@ -138,7 +138,10 @@ public final class ServerCommand extends Command implements TabExecutor {
         
         final ServerInfo server = this.ipcPlugin.getProxy().getServerInfo(serverName);
         if (server == null) {
-            player.sendMessage(new ComponentBuilder("Server ").color(ChatColor.RED).append(serverName).color(ChatColor.GOLD).append(" not found.").color(ChatColor.RED).create());
+            final ComponentBuilder builder = new ComponentBuilder("Server ").color(ChatColor.RED);
+            builder.append(serverName).color(ChatColor.GOLD);
+            builder.append(" not found.").color(ChatColor.RED);
+            player.sendMessage(builder.create());
         } else if (!server.canAccess(player)) {
             player.sendMessage(new ComponentBuilder("YOu do not have permission to access that server.").color(ChatColor.RED).create());
         } else {

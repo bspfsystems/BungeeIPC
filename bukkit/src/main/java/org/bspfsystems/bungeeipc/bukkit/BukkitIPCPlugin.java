@@ -24,9 +24,15 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
 import org.bspfsystems.bungeeipc.api.IPCMessage;
 import org.bspfsystems.bungeeipc.api.IPCReader;
 import org.bspfsystems.bungeeipc.api.plugin.IPCClientPlugin;
@@ -91,7 +97,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements IPCClientPlugin
         ipcCommand.setExecutor(ipcTabExecutor);
         ipcCommand.setTabCompleter(ipcTabExecutor);
         
-        this.reloadConfig(this.getServer().getConsoleSender());
+        this.reloadConfig(this.getServer().getConsoleSender(), false);
     }
     
     @Override
@@ -180,6 +186,10 @@ public final class BukkitIPCPlugin extends JavaPlugin implements IPCClientPlugin
     }
     
     public void reloadConfig(@NotNull final CommandSender sender) {
+        this.reloadConfig(sender, true);
+    }
+    
+    private void reloadConfig(@NotNull final CommandSender sender, final boolean command) {
         
         if (this.socket != null) {
             this.socket.stop();
@@ -187,49 +197,40 @@ public final class BukkitIPCPlugin extends JavaPlugin implements IPCClientPlugin
         this.socket = null;
         
         this.scheduler.runTaskAsynchronously(this, () -> {
+            
     
-            final File clientConfigDirectory = new File(this.getDataFolder(), "ipcclient");
+            File configFile = new File(this.getDataFolder(), "bukkitipc.yml");
             try {
-                if (!clientConfigDirectory.exists()) {
-                    if (!clientConfigDirectory.mkdirs()) {
-                        sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
-                        this.logger.log(Level.WARNING, "IPC Client configuration directory not created at " + clientConfigDirectory.getPath());
-                        this.logger.log(Level.WARNING, "IPC Client will not be started.");
-                        return;
-                    }
-                } else if (!clientConfigDirectory.isDirectory()) {
-                    sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
-                    this.logger.log(Level.WARNING, "IPC Client configuration directory is not a directory: " + clientConfigDirectory.getPath());
-                    this.logger.log(Level.WARNING, "IPC Client will not be started.");
-                    return;
+                
+                if (!configFile.exists() || !configFile.isFile()) {
+                    configFile = new File(this.getDataFolder(), "config.yml");
                 }
-            } catch (SecurityException e) {
-                sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
-                this.logger.log(Level.WARNING, "Cannot validate existence of IPC Client configuration directory at " + clientConfigDirectory.getPath());
-                this.logger.log(Level.WARNING, "IPC Client will not be started.");
-                this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
-                return;
-            }
-    
-            final File clientConfigFile = new File(clientConfigDirectory, "ipc-client.yml");
-            try {
-                if (clientConfigFile.exists()) {
-                    if (!clientConfigFile.isFile()) {
-                        sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
-                        this.logger.log(Level.WARNING, "IPC Client configuration file is not a file: " + clientConfigFile.getPath());
+                
+                if (configFile.exists()) {
+                    if (!configFile.isFile()) {
+                        
+                        if (command) {
+                            sender.sendMessage("§r§cAn error has occurred while (re)loading the BungeeIPC configuration. Please try again. If this error persists, please report it to a server administrator.§r");
+                        }
+                        
+                        this.logger.log(Level.WARNING, "BungeeIPC configuration file is not a file: " + configFile.getPath());
                         this.logger.log(Level.WARNING, "IPC Client will not be started.");
                         return;
                     }
                 } else {
-                    if (!clientConfigFile.createNewFile()) {
-                        sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
-                        this.logger.log(Level.WARNING, "IPC Client configuration file not created at " + clientConfigFile.getPath());
+                    if (!configFile.createNewFile()) {
+                        
+                        if (command) {
+                            sender.sendMessage("§r§cAn error has occurred while (re)loading the BungeeIPC configuration. Please try again. If this error persists, please report it to a server administrator.§r");
+                        }
+                        
+                        this.logger.log(Level.WARNING, "BungeeIPC configuration file not created at " + configFile.getPath());
                         this.logger.log(Level.WARNING, "IPC Client will not be started.");
                         return;
                     }
             
-                    final InputStream defaultConfig = this.getResource(clientConfigFile.getName());
-                    final FileOutputStream outputStream = new FileOutputStream(clientConfigFile);
+                    final InputStream defaultConfig = this.getResource(configFile.getName());
+                    final FileOutputStream outputStream = new FileOutputStream(configFile);
                     final byte[] buffer = new byte[4096];
                     int bytesRead;
             
@@ -239,39 +240,117 @@ public final class BukkitIPCPlugin extends JavaPlugin implements IPCClientPlugin
             
                     outputStream.flush();
                     outputStream.close();
-            
-                    sender.sendMessage("§r§cThe IPC Client configuration file did not exist; a copy of the default has been made and placed in the correct location.§r");
-                    sender.sendMessage("§r§cPlease update the configuration as required for the installation, and then run§r §b/ipc reload§r§c.§r");
-                    this.logger.log(Level.WARNING, "IPC Client configuration file did not exist at " + clientConfigFile.getPath());
+                    
+                    if (command) {
+                        sender.sendMessage("§r§cThe BungeeIPC configuration file did not exist; a copy of the default has been made and placed in the correct location.§r");
+                        sender.sendMessage("§r§cPlease update the configuration as required for the installation, and then run§r §b/ipc reload§r§c.§r");
+                    }
+                    
+                    this.logger.log(Level.WARNING, "BungeeIPC configuration file did not exist at " + configFile.getPath());
                     this.logger.log(Level.WARNING, "IPC Client will not be started.");
                     this.logger.log(Level.WARNING, "Please update the configuration as required for your installation, and then run \"/ipc reload\".");
                     return;
                 }
             } catch (SecurityException | IOException e) {
-                sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
-                this.logger.log(Level.WARNING, "Unable to load the IPC Client configuration file at " + clientConfigFile.getPath());
+                
+                if (command) {
+                    sender.sendMessage("§r§cAn error has occurred while (re)loading the BungeeIPC configuration. Please try again. If this error persists, please report it to a server administrator.§r");
+                }
+                
+                this.logger.log(Level.WARNING, "Unable to load the BungeeIPC configuration file at " + configFile.getPath());
                 this.logger.log(Level.WARNING, "IPC Client will not be started.");
                 this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
                 return;
             }
     
-            final YamlConfiguration clientConfig = new YamlConfiguration();
+            final YamlConfiguration config = new YamlConfiguration();
             try {
-                clientConfig.load(clientConfigFile);
+                config.load(configFile);
             } catch (IOException | InvalidConfigurationException | IllegalArgumentException e) {
-                sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
-                this.logger.log(Level.WARNING, "Unable to load IPC Client configuration.");
+                
+                if (command) {
+                    sender.sendMessage("§r§cAn error has occurred while (re)loading the BungeeIPC configuration. Please try again. If this error persists, please report it to a server administrator.§r");
+                }
+                
+                this.logger.log(Level.WARNING, "Unable to load BungeeIPC configuration.");
                 this.logger.log(Level.WARNING, "IPC Client will not be started.");
                 this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
                 return;
+            }
+    
+            final SSLSocketFactory sslSocketFactory;
+            final ArrayList<String> tlsVersionWhitelist = new ArrayList<String>();
+            final ArrayList<String> tlsCipherSuiteWhitelist = new ArrayList<String>();
+    
+            if (!config.getBoolean("use_ssl", false)) {
+                sslSocketFactory = null;
+            } else {
+        
+                String sslContextProtocol = config.getString("ssl_context_protocol", "TLS");
+                if (sslContextProtocol == null || sslContextProtocol.trim().isEmpty()) {
+                    sslContextProtocol = "TLS";
+                }
+        
+                final List<String> tlsVersionWhitelistRaw = config.getStringList("tls_version_whitelist");
+                if (tlsVersionWhitelistRaw.isEmpty()) {
+                    tlsVersionWhitelist.add("TLSv1.2");
+                } else {
+                    for (final String version : tlsVersionWhitelistRaw) {
+                        if (version == null || version.trim().isEmpty()) {
+                            continue;
+                        }
+                        tlsVersionWhitelist.add(version);
+                    }
+                }
+        
+                if (tlsVersionWhitelist.isEmpty()) {
+                    tlsVersionWhitelist.add("TLSv1.2");
+                }
+        
+                final List<String> tlsCipherSuiteWhitelistRaw = config.getStringList("tls_cipher_suite_whitelist");
+                if (tlsCipherSuiteWhitelistRaw.isEmpty()) {
+                    tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
+                } else {
+                    for (final String cipherSuite : tlsCipherSuiteWhitelistRaw) {
+                        if (cipherSuite == null || cipherSuite.trim().isEmpty()) {
+                            continue;
+                        }
+                        tlsCipherSuiteWhitelist.add(cipherSuite);
+                    }
+                }
+        
+                if (tlsCipherSuiteWhitelist.isEmpty()) {
+                    tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
+                }
+        
+                try {
+                    final SSLContext sslContext = SSLContext.getInstance(sslContextProtocol);
+                    sslContext.init(null, null, null);
+            
+                    sslSocketFactory = sslContext.getSocketFactory();
+                } catch (NoSuchAlgorithmException | KeyManagementException e) {
+                    
+                    if (command) {
+                        sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
+                    }
+                    
+                    this.logger.log(Level.WARNING, "Unable to create SSLSocketFactory.");
+                    this.logger.log(Level.WARNING, "IPC Client will not be started.");
+                    this.logger.log(Level.WARNING, e.getClass().getSimpleName() + "thrown.", e);
+                    return;
+                }
             }
             
             this.scheduler.runTask(this, () -> {
     
                 try {
-                    this.socket = new BukkitIPCSocket(this, clientConfig);
+                    this.socket = new BukkitIPCSocket(this, config, sslSocketFactory, tlsVersionWhitelist, tlsCipherSuiteWhitelist);
                 } catch (IllegalArgumentException e) {
-                    sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
+                    
+                    if (command) {
+                        sender.sendMessage("§r§cAn error has occurred while (re)loading the IPC Client configuration. Please try again. If this error persists, please report it to a server administrator.§r");
+                    }
+                    
                     this.logger.log(Level.WARNING, "Unable to create IPC Client.");
                     this.logger.log(Level.WARNING, "IPC Client will not be started.");
                     this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
@@ -280,6 +359,10 @@ public final class BukkitIPCPlugin extends JavaPlugin implements IPCClientPlugin
                 }
     
                 this.socket.start();
+                
+                if (command) {
+                    sender.sendMessage("§r§aThe BungeeIPC configuration has been reloaded. Please run§r §b/ipc status§r §ain a few seconds to verify that the IPC Client has reloaded and reconnected successfully.§r");
+                }
             });
         });
     }

@@ -64,18 +64,15 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
     private final AtomicBoolean connected;
     private final AtomicInteger taskId;
     
-    BungeeIPCServerSocket(@NotNull final BungeeIPCPlugin ipcPlugin, @NotNull final Configuration config, @NotNull final Collection<InetAddress> localAddresses, @Nullable final SSLServerSocketFactory sslServerSocketFactory, @Nullable final ArrayList<String> tlsVersionWhitelist, @Nullable final ArrayList<String> tlsCipherSuiteWhitelist) {
+    BungeeIPCServerSocket(@NotNull final BungeeIPCPlugin ipcPlugin, @NotNull final String name, @NotNull final Configuration config, @NotNull final Collection<InetAddress> localAddresses, @Nullable final SSLServerSocketFactory sslServerSocketFactory, @NotNull final ArrayList<String> tlsVersionWhitelist, @NotNull final ArrayList<String> tlsCipherSuiteWhitelist) {
         
         this.ipcPlugin = ipcPlugin;
         this.logger = this.ipcPlugin.getLogger();
         
-        final String nameValue = config.getString("server_name", null);
-        final String addressValue = config.getString("ip_address", null);
-        final int portValue = config.getInt("port", -1);
+        final String addressValue = config.getString("bind_address", "localhost");
+        final int portValue = config.getInt("bind_port", -1);
     
-        BungeeIPCServerSocket.validateNotNull(nameValue);
-        BungeeIPCServerSocket.validateNotNull(addressValue);
-        BungeeIPCServerSocket.validateNotBlank(nameValue, "Server name cannot be blank.");
+        BungeeIPCServerSocket.validateNotBlank(name, "Server name cannot be blank.");
         BungeeIPCServerSocket.validateNotBlank(addressValue, "IP address cannot be blank.");
         if (portValue == -1) {
             throw new IllegalArgumentException("Port must be specified in the config.");
@@ -84,7 +81,7 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
             throw new IllegalArgumentException("Port must be between 1024 and 65535 (inclusive).");
         }
         
-        this.name = nameValue;
+        this.name = name;
         try {
             this.address = InetAddress.getByName(addressValue);
         } catch (UnknownHostException e) {
@@ -99,19 +96,6 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         this.sslServerSocketFactory = sslServerSocketFactory;
         this.tlsVersionWhitelist = tlsVersionWhitelist;
         this.tlsCipherSuiteWhitelist = tlsCipherSuiteWhitelist;
-    
-        if (this.sslServerSocketFactory != null) {
-            if (this.tlsVersionWhitelist == null) {
-                this.logger.log(Level.SEVERE, "SSL is enabled, but the TLS version whitelist is null.");
-                this.logger.log(Level.SEVERE, "Unable to set up the IPC Server.");
-                throw new RuntimeException("SSL is enabled, but the TLS version whitelist is null.");
-            }
-            if (this.tlsCipherSuiteWhitelist == null) {
-                this.logger.log(Level.SEVERE, "SSL is enabled, but the TLS cipher suite whitelist is null.");
-                this.logger.log(Level.SEVERE, "Unable to set up the IPC Server.");
-                throw new RuntimeException("SSL is enabled, but the TLS cipher suite whitelist is null.");
-            }
-        }
         
         this.scheduler = this.ipcPlugin.getProxy().getScheduler();
         this.running = new AtomicBoolean(false);
@@ -171,10 +155,10 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
                 }
             } catch (IOException e) {
                 
-                this.logger.log(Level.INFO, "IPC connection broken.");
-                this.logger.log(Level.INFO, "Server Name - " + this.name);
-                this.logger.log(Level.INFO, "IP Address  - " + this.address.getHostAddress());
-                this.logger.log(Level.INFO, "Port Number - " + this.port);
+                this.logger.log(Level.INFO, "IPC server " + this.name + " connection broken.");
+                this.logger.log(Level.CONFIG, "Server Name - " + this.name);
+                this.logger.log(Level.CONFIG, "IP Address  - " + this.address.getHostAddress());
+                this.logger.log(Level.CONFIG, "Port Number - " + this.port);
                 this.logger.log(Level.CONFIG, e.getClass().getSimpleName() + " thrown.", e);
                 
                 try {
@@ -247,7 +231,7 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
     
     @Override
     public synchronized void sendMessage(@NotNull final IPCMessage message) {
-        this.scheduler.runAsync(this.ipcPlugin, () -> send(message));
+        this.scheduler.runAsync(this.ipcPlugin, () -> this.send(message));
     }
     
     private synchronized void send(@NotNull final IPCMessage message) {
@@ -287,12 +271,8 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         return this.port;
     }
     
-    private static void validateNotNull(@NotNull final String value) {
-        // Do nothing, JetBrains annotations does the work.
-    }
-    
-    private static void validateNotBlank(@NotNull final String value, @NotNull final String message) {
-        if (value.trim().isEmpty()) {
+    private static void validateNotBlank(@Nullable final String value, @NotNull final String message) {
+        if (value != null && value.trim().isEmpty()) {
             throw new IllegalArgumentException(message);
         }
     }
