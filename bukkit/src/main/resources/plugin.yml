@@ -1,8 +1,8 @@
-name: BukkitIPCPlugin
+name: IPCPlugin
 main: org.bspfsystems.bungeeipc.bukkit.BukkitIPCPlugin
 author: mciolkosz
 website: https://github.com/bspfsystems/BungeeIPC/
-version: 1.0.0
+version: 1.0.1
 
 commands:
   ipc:
