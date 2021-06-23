@@ -6,7 +6,7 @@ BungeeIPC is an API and set of plugins meant for BungeeCord proxies and their ba
 
 You can download the latest version of the plugins from [here](https://github.com/bspfsystems/BungeeIPC/releases/latest/). Please be sure to grab both the Bukkit and BungeeCord `.jar` files.
 
-The latest release is 1.0.2.<br />
+The latest release is 1.0.3.<br />
 The latest snapshot is 1.0.3-SNAPSHOT.
 
 ## Build from Source
