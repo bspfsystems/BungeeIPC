@@ -1,6 +1,6 @@
 /*
- * This file is part of the BungeeIPC plugins for
- * BungeeCord and Bukkit servers for Minecraft.
+ * This file is part of the BungeeIPC plugins for Bukkit servers and
+ * BungeeCord proxies for Minecraft.
  *
  * Copyright (C) 2020-2021 BSPF Systems, LLC (https://bspfsystems.org/)
  *

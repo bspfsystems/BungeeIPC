@@ -5,7 +5,7 @@
 ##                                                                            ##
 ## SOURCE CODE: https://github.com/bspfsystems/BungeeIPC/                     ##
 ## BUGS / ISSUES: https://github.com/bspfsystems/BungeeIPC/issues/            ##
-## API JAVADOCS: https://javadoc.io/doc/org.bspfsystems/<something>           ##
+## API JAVADOCS: https://bspfsystems.org/docs/bungeeipc/                      ##
 ##                                                                            ##
 ## New configuration items will not be added to this file automatically. You  ##
 ## can obtain an updated version of the default config.yml file from          ##
@@ -13,7 +13,7 @@
 ##                                                                            ##
 ## This file may also be named "bukkitipc.yml". If both "bukkitipc.yml" and   ##
 ## "config.yml" are present in this plugin's configuration directory,         ##
-## the "bungeeipc.yml" file will be preferred over the "config.yml" file.     ##
+## the "bukkitipc.yml" file will be preferred over the "config.yml" file.     ##
 ##                                                                            ##
 ## IMPORTANT: Please take note of which settings (SSL/TLS settings) should be ##
 ##            mirrored in the Bungee plugin's configuration file, as the      ##

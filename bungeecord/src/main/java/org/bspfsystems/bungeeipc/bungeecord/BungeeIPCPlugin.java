@@ -1,6 +1,6 @@
 /*
- * This file is part of the BungeeIPC plugins for
- * BungeeCord and Bukkit servers for Minecraft.
+ * This file is part of the BungeeIPC plugins for Bukkit servers and
+ * BungeeCord proxies for Minecraft.
  *
  * Copyright (C) 2020-2021 BSPF Systems, LLC (https://bspfsystems.org/)
  *
@@ -95,7 +95,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     
         this.logger.log(Level.INFO, "///////////////////////////////////////////////////////////////////////////");
         this.logger.log(Level.INFO, "//                                                                       //");
-        this.logger.log(Level.INFO, "// BungeeIPC BungeeCord/Bukkit plugin for Minecraft                      //");
+        this.logger.log(Level.INFO, "// BungeeIPC Bukkit/BungeeCord plugin for Minecraft                      //");
         this.logger.log(Level.INFO, "// Copyright (C) 2020-2021 BSPF Systems, LLC (https://bspfsystems.org/)  //");
         this.logger.log(Level.INFO, "//                                                                       //");
         this.logger.log(Level.INFO, "// This program is free software: you can redistribute it and/or modify  //");
@@ -133,8 +133,27 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
         }
         
         this.serverStatusUpdater = new ServerStatusUpdater(this);
-    
         this.serverSockets = new ConcurrentHashMap<String, IPCServerSocket>();
+    
+        try {
+            if (!this.getDataFolder().exists()) {
+                if (!this.getDataFolder().mkdirs()) {
+                    this.logger.log(Level.WARNING, "BungeeIPC data directory not created at " + this.getDataFolder().getPath());
+                    this.logger.log(Level.WARNING, "IPC Client will not be started.");
+                    return;
+                }
+            } else if (!this.getDataFolder().isDirectory()) {
+                this.logger.log(Level.WARNING, "BungeeIPC data directory is not a directory: " + this.getDataFolder().getPath());
+                this.logger.log(Level.WARNING, "IPC Client will not be started.");
+                return;
+            }
+        } catch (SecurityException e) {
+            this.logger.log(Level.WARNING, "Unable to validate if the BungeeIPC data directory has been properly created at " + this.getDataFolder().getPath());
+            this.logger.log(Level.WARNING, "IPC Client will not be started.");
+            this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
+            return;
+        }
+        
         this.reloadConfig(this.getProxy().getConsole(), false);
     }
     

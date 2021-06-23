@@ -1,6 +1,6 @@
 <!--
-  ~ This file is part of the BungeeIPC plugins for
-  ~ BungeeCord and Bukkit servers for Minecraft.
+  ~ This file is part of the BungeeIPC plugins for Bukkit servers and
+  ~ BungeeCord proxies for Minecraft.
   ~
   ~ Copyright 2020-2021 BSPF Systems, LLC
   ~ 
@@ -22,7 +22,7 @@
 
     <groupId>org.bspfsystems.bungeeipc</groupId>
     <artifactId>bungeeipc-parent</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>BungeeIPC</name>
@@ -95,36 +95,6 @@
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
     </repositories>
-
-    <profiles>
-        <profile>
-            <id>all</id>
-            <activation>
-                <property>
-                    <name>all</name>
-                    <value>true</value>
-                </property>
-            </activation>
-        </profile>
-        <profile>
-            <id>latest</id>
-            <activation>
-                <property>
-                    <name>latest</name>
-                    <value>true</value>
-                </property>
-            </activation>
-        </profile>
-        <profile>
-            <id>recent</id>
-            <activation>
-                <property>
-                    <name>recent</name>
-                    <value>true</value>
-                </property>
-            </activation>
-        </profile>
-    </profiles>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
