@@ -255,7 +255,7 @@ If you are not sure, you can always redact or otherwise change the data.
 Issues such as "I need help" or "It doesn't work" will not be addressed and/or will be closed with no assistance given. These type of issues do not have any meaningful details to properly address the problem. Other issues that will not be addressed and/or closed without help include (but are not limited to):
 - How to install BungeeIPC (explained in README)
 - How to configure BungeeIPC (explained in README and default configuration)
-- How to set use BungeeIPC as a dependency (explained in README)
+- How to use BungeeIPC as a dependency (explained in README)
 - How to create plugins
 - How to set up a development environment
 - How to install plugins
