@@ -4,7 +4,7 @@ BungeeIPC is an API and set of plugins meant for BungeeCord proxies and their ba
 
 ## Download
 
-You can download the latest version of the plugins from [here](https://github.com/bspfsystems/BungeeIPC/releases/latest/). Please be sure to grab both the Bukkit and BungeeCord `.jar` files.
+You can download the latest version of the plugins from [here](https://github.com/bspfsystems/BungeeIPC/releases/latest/). Please be sure to download both the Bukkit and BungeeCord `.jar` files.
 
 The latest release is 1.0.3.<br />
 The latest snapshot is 1.0.3-SNAPSHOT.
@@ -28,7 +28,7 @@ cd BungeeIPC/
 mvn clean install
 ```
 
-The `.jar` files will be located in `bukkit/target/` for the Bukkit plugin, and the `bungeecord/target` for the BungeeCord plugin.
+The `.jar` files will be located in the `bukkit/target/` folder for the Bukkit plugin, and the `bungeecord/target/` folder for the BungeeCord plugin.
 
 ## Installation
 
@@ -40,11 +40,11 @@ The currently-supported versions of Bukkit are:
 The currently-supported versions of BungeeCord are:
 - 1.8.x thru 1.16.x
 
-_Please Note: These plugins may work with other version of Bukkit and/or BungeeCord, but they are not guaranteed to._
+_Please Note: These plugins may work with other versions of Bukkit and/or BungeeCord, but they are not guaranteed to._
 
 ### Configuration
 
-A default configuration file (`config.yml`) will be created when you start the proxy/server for the first time after installing the plugin. You can then edit the configuration file as needed, and then run the reload command to reload the configuration file:<br />
+A default configuration file (`config.yml`) will be created in the respective plugin's data folder when you start the server/proxy for the first time after installing the plugin. You can then edit the configuration file as needed, and then run the reload command to reload the configuration file:
 - `/ipc reload` for Bukkit
 - `/ipcb reload` for BungeeCord
 
@@ -69,16 +69,15 @@ The value in free and open source software is that it can be audited by the comm
 The main purpose of BungeeIPC is to facilitate BungeeCord-Bukkit server communications in downstream plugins.<br />
 There are some standalone features that can be used in-game, in the form of commands. The list of commands and their respective descriptions and permission nodes can be seen below.
 
-### BungeeCord vs. Bukkit
+### Bukkit vs. BungeeCord
 
 Some commands have (nearly-)identical functionality between the Bukkit and BungeeCord plugins. While running the commands from a console session will not require differentiation, an in-game player will require that:
-
 - `/ipc <command>` will run the command on the Bukkit server that the player is currently playing on.
 - `/ipcb <command>` will run the command on the BungeeCord proxy.
 
 Additionally, the permissions for the commands differ in the same way. Bukkit's permission nodes will be `bungeeipc.command.ipc[.<node>]`, whereas BungeeCord will use `bungeeipc.command.ipcb[.<node>]`.
 
-Only the Bukkit-based commands, descriptions, and permission nodes will be shown in the following section. If any command description differs between Bukkit and BungeeCord, the BungeeCord information will be appended in _italics_. Wherever you see a command or permission node below in the below section, you can replace `/ipc` and `.ipc.` with `/ipcb` and `.ipcb.`, respectively.
+Only the Bukkit-based commands, descriptions, and permission nodes will be shown in the following section. If any command differs between Bukkit and BungeeCord, the BungeeCord information will be appended in _italics_. Wherever you see a command or permission node below in the below section, you can replace `/ipc` and `.ipc.` with `/ipcb` and `.ipcb.`, respectively.
 
 ### Common Commands
 
@@ -121,11 +120,11 @@ These commands only exist with the BungeeCord plugin, and do not have an equival
 
 ## API Usage / Downstream Dependencies
 
-The main purpose of BungeeIPC is to facilitate sending messages between BungeeCord and Bukkit for downstream plugins. An API has been created that can be used by the downstream plugins to access the capabilities in BungeeIPC.
+The main purpose of BungeeIPC is to facilitate sending messages between BungeeCord and Bukkit for downstream plugins. An API has been created that can be used by any downstream plugins to access the capabilities in BungeeIPC.
 
 ### Adding as a Dependency
 
-To add BungeeIPC as a dependency to your project, use one of the following common methods (you can use others if they exist, these are the common ones):
+To add BungeeIPC as a dependency to your project, use one of the following common methods (you may use others that exist, these are the common ones):
 
 **Maven:**<br />
 Include the following in your `pom.xml` file:<br />
@@ -184,11 +183,11 @@ bungeeipc_version = 1.0.3-SNAPSHOT
 
 ### Inside the Plugin
 
-Inside your Plugin code, you can gain access to the basic BungeeIPC plugin functionality via the following means:
+Inside your Plugin code, you can gain access to the common BungeeIPC plugin functions via the following means:
 - Bukkit: `IPCPlugin ipcPlugin = (IPCPlugin) Bukkit.getPluginManager().getPlugin("IPCPlugin");`
 - BungeeCord: `IPCPlugin ipcPlugin = (IPCPlugin) ProxyServer.getPluginManager().getPlugin("IPCPlugin");`
 
-For client- or server-specific API calls, you can obtain the specific type of Plugin:
+For Bukkit- or BungeeCord-specific API calls, you can obtain the specific type of Plugin:
 - Bukkit: `IPCClientPlugin ipcClientPlugin = (IPCClientPlugin) Bukkit.getPluginManager().getPlugin("IPCPlugin");`
 - BungeeCord: `IPCServerPlugin ipcServerPlugin = (IPCServerPlugin) ProxyServer.getPluginManager().getPlugin("IPCPlugin");`
 
@@ -200,7 +199,7 @@ The API Javadocs can be found [here](https://bspfsystems.org/docs/bungeeipc/), h
 
 ### Pull Requests
 
-Contributions to the project are welcome. BungeeIPC is a free and open source project, created in the hopes that the community would find ways to improve it. If you make any changes or improvements or enhancements to BungeeIPC, we ask that you submit a Pull Request to merge the changes back upstream. We would enjoy the opportunity to give those improvements back to the wider community.
+Contributions to the project are welcome. BungeeIPC is a free and open source software project, created in the hopes that the community would find ways to improve it. If you make any improvements or other enhancements to BungeeIPC, we ask that you submit a Pull Request to merge the changes back upstream. We would enjoy the opportunity to give those improvements back to the wider community.
 
 Various types of contributions are welcome, including (but not limited to):
 - Security updates / patches
@@ -215,7 +214,7 @@ For licensing questions, please see the Licensing section.
 
 BungeeIPC somewhat follows the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html). This is not the definitive coding style of the project. Generally, it is best to try to copy the style of coding found in the class that you are editing.
 
-BungeeIPC is split up into a few modules:
+BungeeIPC contains a few modules:
 - **API** - The public API used by other downstream plugins to access the functionality in the plugin. Except for a few cases, there are no implementations within the API itself, and the Bukkit and BungeeCord plugins provide the API.
 - **Bukkit** - The Bukkit implementation of the API, which can be run by the Bukkit server and provides the IPC functionality of the API.
 - **BungeeCord** - The BungeeCord implementation of the API, which can be run by the BungeeCord proxy and provides the IPC functionality of the API.
