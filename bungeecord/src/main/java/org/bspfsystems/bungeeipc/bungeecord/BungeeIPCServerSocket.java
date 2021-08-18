@@ -37,8 +37,8 @@ import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import net.md_5.bungee.api.scheduler.TaskScheduler;
 import net.md_5.bungee.config.Configuration;
-import org.bspfsystems.bungeeipc.api.IPCMessage;
-import org.bspfsystems.bungeeipc.api.socket.IPCServerSocket;
+import org.bspfsystems.bungeeipc.api.common.IPCMessage;
+import org.bspfsystems.bungeeipc.api.server.IPCServerSocket;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

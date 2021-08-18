@@ -17,21 +17,27 @@
  * limitations under the License.
  */
 
-package org.bspfsystems.bungeeipc.api;
+package org.bspfsystems.bungeeipc.api.server;
 
-import org.bspfsystems.bungeeipc.api.socket.IPCSocket;
+import org.bspfsystems.bungeeipc.api.common.IPCMessage;
+import org.bspfsystems.bungeeipc.api.common.IPCSocket;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents an object that will read {@link IPCMessage}s after they are
- * received by {@link IPCSocket}s.
+ * Represents a client connection for {@link IPCMessage}s. The
+ * {@link IPCServerSocket} is usually used on the {@link IPCServerPlugin} side
+ * of the connection (the BungeeCord proxy).
  */
-public interface IPCReader {
+public interface IPCServerSocket extends IPCSocket {
     
     /**
-     * Reads the specified {@link IPCMessage} and processes it.
+     * Gets the name of this {@link IPCServerSocket}.
+     * <p>
+     * This may or may not be the same name as the Minecraft server that is
+     * configured in BungeeCord, depending on the implementation.
      * 
-     * @param message The {@link IPCMessage} to read and process.
+     * @return The name of this {@link IPCServerSocket}.
      */
-    void readMessage(@NotNull IPCMessage message);
+    @NotNull
+    String getName();
 }

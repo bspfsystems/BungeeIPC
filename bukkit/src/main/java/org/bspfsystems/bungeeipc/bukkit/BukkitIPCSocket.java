@@ -33,14 +33,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import org.bspfsystems.bungeeipc.api.IPCMessage;
-import org.bspfsystems.bungeeipc.api.socket.IPCSocket;
+import org.bspfsystems.bungeeipc.api.common.IPCMessage;
+import org.bspfsystems.bungeeipc.api.client.IPCClientSocket;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class BukkitIPCSocket implements IPCSocket {
+final class BukkitIPCSocket implements IPCClientSocket {
     
     private final BukkitIPCPlugin ipcPlugin;
     private final Logger logger;

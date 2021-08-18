@@ -17,10 +17,8 @@
  * limitations under the License.
  */
 
-package org.bspfsystems.bungeeipc.api.plugin;
+package org.bspfsystems.bungeeipc.api.common;
 
-import org.bspfsystems.bungeeipc.api.IPCMessage;
-import org.bspfsystems.bungeeipc.api.IPCReader;
 import org.jetbrains.annotations.NotNull;
 
 /**

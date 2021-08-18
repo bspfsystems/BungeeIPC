@@ -33,9 +33,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import org.bspfsystems.bungeeipc.api.IPCMessage;
-import org.bspfsystems.bungeeipc.api.IPCReader;
-import org.bspfsystems.bungeeipc.api.plugin.IPCClientPlugin;
+import org.bspfsystems.bungeeipc.api.client.IPCClientSocket;
+import org.bspfsystems.bungeeipc.api.common.IPCMessage;
+import org.bspfsystems.bungeeipc.api.common.IPCReader;
+import org.bspfsystems.bungeeipc.api.client.IPCClientPlugin;
 import org.bspfsystems.bungeeipc.bukkit.command.IPCTabExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
@@ -51,7 +52,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements IPCClientPlugin
     
     private BukkitScheduler scheduler;
     
-    private BukkitIPCSocket socket;
+    private IPCClientSocket socket;
     private ConcurrentHashMap<String, IPCReader> readers;
     
     public BukkitIPCPlugin() {

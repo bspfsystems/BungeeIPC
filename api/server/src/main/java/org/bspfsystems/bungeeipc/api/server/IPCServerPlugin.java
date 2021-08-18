@@ -17,11 +17,11 @@
  * limitations under the License.
  */
 
-package org.bspfsystems.bungeeipc.api.plugin;
+package org.bspfsystems.bungeeipc.api.server;
 
-import org.bspfsystems.bungeeipc.api.IPCMessage;
-import org.bspfsystems.bungeeipc.api.socket.IPCServerSocket;
-import org.bspfsystems.bungeeipc.api.socket.IPCSocket;
+import org.bspfsystems.bungeeipc.api.common.IPCMessage;
+import org.bspfsystems.bungeeipc.api.common.IPCPlugin;
+import org.bspfsystems.bungeeipc.api.common.IPCSocket;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,9 +36,8 @@ public interface IPCServerPlugin extends IPCPlugin {
      * This name may or may not align with the Minecraft server names that are
      * configured in the BungeeCord proxy, depending on the implementation.
      * 
-     * @param name The name assigned to the {@link IPCServerSocket} that is
-     *             connected to the {@link IPCSocket} on the Minecraft server.
-     * @return <code>true</code> if an {@link IPCServerSocket }is registered
+     * @param name The name assigned to the {@link IPCServerSocket}.
+     * @return <code>true</code> if an {@link IPCServerSocket} is registered
      *         with the name, <code>false</code> otherwise.
      */
     boolean isRegisteredServer(@NotNull String name);
@@ -62,14 +61,15 @@ public interface IPCServerPlugin extends IPCPlugin {
      * <code>false</code>.
      * 
      * @param name The name of the {@link IPCServerSocket} to check.
-     * @return <code>true</code> if the {@link IPCSocket} has connected to the
-     *         {@link IPCServerSocket}, <code>false</code> if the connection has
-     *         not been completed or the {@link IPCServerSocket} is not running.
+     * @return <code>true</code> if the opposing {@link IPCSocket} has connected
+     *         to the {@link IPCServerSocket}, <code>false</code> if the
+     *         connection has not been completed or the {@link IPCServerSocket}
+     *         is not running.
      */
     boolean isServerConnected(@NotNull String name);
     
     /**
-     * Restarts the specified {@link IPCServerSocket}.This does not restart the
+     * Restarts the specified {@link IPCServerSocket}. This does not restart the
      * actual Minecraft server.
      * 
      * @param name The server to restart.

@@ -17,17 +17,13 @@
  * limitations under the License.
  */
 
-package org.bspfsystems.bungeeipc.api;
+package org.bspfsystems.bungeeipc.api.common;
 
 import java.util.ArrayList;
-import org.bspfsystems.bungeeipc.api.plugin.IPCServerPlugin;
-import org.bspfsystems.bungeeipc.api.socket.IPCServerSocket;
-import org.bspfsystems.bungeeipc.api.socket.IPCSocket;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a message that is sent between {@link IPCSocket}s (usually a
- * client-side {@link IPCSocket} and a server-side {@link IPCServerSocket}).
+ * Represents a message that is sent between {@link IPCSocket}s.
  * <p>
  * The {@link String} data stored in an {@link IPCMessage} has order maintained
  * via an {@link ArrayList}. The order that the data was added in will be the
@@ -49,9 +45,9 @@ public final class IPCMessage {
     /**
      * Constructs a new {@link IPCMessage} with no data.
      * 
-     * @param server The {@link IPCServerSocket} that the message is to be
-     *               sent to ("proxy" if it is to go to the
-     *               {@link IPCServerPlugin}).
+     * @param server The {@link IPCSocket} that the message is to be sent to
+     *               ("proxy" if it is to go to the BungeeCord proxy
+     *               {@link IPCPlugin}).
      * @param channel The channel that the message is to be read by.
      * @see IPCMessage#IPCMessage(String, String, ArrayList)
      */
@@ -61,10 +57,10 @@ public final class IPCMessage {
     
     /**
      * Constructs a new {@link IPCMessage} with the given data (may be empty).
-     * 
-     * @param server The {@link IPCServerSocket} that the message is to be
-     *               sent to ("proxy" if it is to go to the
-     *               {@link IPCServerPlugin}).
+     *
+     * @param server The {@link IPCSocket} that the message is to be sent to
+     *               ("proxy" if it is to go to the BungeeCord proxy
+     *               {@link IPCPlugin}).
      * @param channel The channel that the message is to be read by.
      * @param data The data to initialize the message with.
      */
@@ -82,11 +78,11 @@ public final class IPCMessage {
     }
     
     /**
-     * Gets the name of the {@link IPCServerSocket} to send this
-     * {@link IPCMessage} to.
+     * Gets the name of the {@link IPCSocket} to send this {@link IPCMessage}
+     * to.
      * 
-     * @return The name of the {@link IPCServerSocket} to send this
-     *         {@link IPCMessage} to.
+     * @return The name of the {@link IPCSocket} to send this {@link IPCMessage}
+     *         to.
      */
     @NotNull
     public String getServer() {

@@ -23,8 +23,8 @@ package org.bspfsystems.bungeeipc.bukkit;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.bspfsystems.bungeeipc.api.IPCMessage;
-import org.bspfsystems.bungeeipc.api.IPCReader;
+import org.bspfsystems.bungeeipc.api.common.IPCMessage;
+import org.bspfsystems.bungeeipc.api.common.IPCReader;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 

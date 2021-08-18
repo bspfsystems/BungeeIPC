@@ -30,7 +30,7 @@ import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
-import org.bspfsystems.bungeeipc.api.IPCMessage;
+import org.bspfsystems.bungeeipc.api.common.IPCMessage;
 import org.bspfsystems.bungeeipc.bungeecord.BungeeIPCPlugin;
 import org.jetbrains.annotations.NotNull;
 

@@ -23,7 +23,7 @@ package org.bspfsystems.bungeeipc.bukkit.command;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.bspfsystems.bungeeipc.api.IPCMessage;
+import org.bspfsystems.bungeeipc.api.common.IPCMessage;
 import org.bspfsystems.bungeeipc.bukkit.BukkitIPCPlugin;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;

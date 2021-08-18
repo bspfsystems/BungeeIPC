@@ -17,10 +17,10 @@
  * limitations under the License.
  */
 
-package org.bspfsystems.bungeeipc.api.plugin;
+package org.bspfsystems.bungeeipc.api.client;
 
-import org.bspfsystems.bungeeipc.api.socket.IPCServerSocket;
-import org.bspfsystems.bungeeipc.api.socket.IPCSocket;
+import org.bspfsystems.bungeeipc.api.common.IPCPlugin;
+import org.bspfsystems.bungeeipc.api.common.IPCSocket;
 
 /**
  * Represents the client-side version of the {@link IPCPlugin}.
@@ -36,15 +36,14 @@ public interface IPCClientPlugin extends IPCPlugin {
     boolean isClientRunning();
     
     /**
-     * Gets whether the client {@link IPCSocket} is connected to the
-     * {@link IPCServerSocket} or not.
+     * Gets whether the {@link IPCClientSocket} is connected or not.
      * <p>
      * This will always return <code>false</code> if
      * {@link IPCClientPlugin#isClientRunning()} returns <code>false</code>.
      * 
-     * @return <code>true</code> if the client {@link IPCSocket} is connected
-     *         to the {@link IPCServerSocket}, <code>false</code> if the client
-     *         is not connected or is not running.
+     * @return <code>true</code> if the client {@link IPCSocket} is connected,
+     *         <code>false</code> if the client is not connected or is not
+     *         running.
      */
     boolean isClientConnected();
     

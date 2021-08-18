@@ -1,4 +1,4 @@
 name: IPCPlugin
 main: org.bspfsystems.bungeeipc.bungeecord.BungeeIPCPlugin
-version: 1.0.3
+version: 2.0.0-SNAPSHOT
 author: mciolkosz

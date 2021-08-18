@@ -1,13 +1,13 @@
 # BungeeIPC
 
-BungeeIPC is an API and set of plugins meant for BungeeCord proxies and their backend Bukkit Minecraft Servers. It allows other plugins to use the API to send messages between the servers and proxy without relying on the built-in Minecraft/BungeeCord channels.
+BungeeIPC is a set of APIs and plugins meant for BungeeCord proxies and their backend Bukkit Minecraft Servers. It allows other plugins to use the API to send messages between the servers and proxy without relying on the built-in Minecraft/BungeeCord channels.
 
 ## Download
 
 You can download the latest version of the plugins from [here](https://github.com/bspfsystems/BungeeIPC/releases/latest/). Please be sure to download both the Bukkit and BungeeCord `.jar` files.
 
 The latest release is 1.0.3.<br />
-The latest snapshot is 1.0.3-SNAPSHOT.
+The latest snapshot is 2.0.0-SNAPSHOT.
 
 ## Build from Source
 
@@ -120,7 +120,7 @@ These commands only exist with the BungeeCord plugin, and do not have an equival
 
 ## API Usage / Downstream Dependencies
 
-The main purpose of BungeeIPC is to facilitate sending messages between BungeeCord and Bukkit for downstream plugins. An API has been created that can be used by any downstream plugins to access the capabilities in BungeeIPC.
+The main purpose of BungeeIPC is to facilitate sending messages between BungeeCord and Bukkit for downstream plugins. A few API modules have been created that can be used by any downstream plugins to access the capabilities in BungeeIPC.
 
 ### Adding as a Dependency
 
@@ -143,7 +143,7 @@ Include the following in your `pom.xml` file:<br />
 <dependencies>
   <dependency>
     <groupId>org.bspfsystems.bungeeipc</groupId>
-    <artifactId>bungeeipc-api</artifactId>
+    <artifactId>bungeeipc-client-api</artifactId>
     <version>1.0.3-SNAPSHOT</version>
     <scope>compile</scope>
   </dependency>
@@ -168,7 +168,7 @@ repositories {
 ...
 
 dependencies {
-    include implementation("org.bspfsystems.bungeeipc:bungee-api:${project.bungeeipc_version}")
+    include implementation("org.bspfsystems.bungeeipc:bungeeipc-client-api:${project.bungeeipc_version}")
     ...
 }
 ...
@@ -177,9 +177,11 @@ dependencies {
 Also include the following in your `gradle.properties` file:<br />
 ```
 ...
-bungeeipc_version = 1.0.3-SNAPSHOT
+bungeeipc_version = 2.0.0-SNAPSHOT
 ...
 ```
+
+_**Please Note:** The above examples show the client-side API as a dependency (commonly used with Bukkit). For the server-side API (usually BungeeCord), replace `bungeeipc-client-api` with `bungeeipc-server-api`._
 
 ### Inside the Plugin
 
@@ -215,9 +217,11 @@ For licensing questions, please see the Licensing section.
 BungeeIPC somewhat follows the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html). This is not the definitive coding style of the project. Generally, it is best to try to copy the style of coding found in the class that you are editing.
 
 BungeeIPC contains a few modules:
-- **API** - The public API used by other downstream plugins to access the functionality in the plugin. Except for a few cases, there are no implementations within the API itself, and the Bukkit and BungeeCord plugins provide the API.
-- **Bukkit** - The Bukkit implementation of the API, which can be run by the Bukkit server and provides the IPC functionality of the API.
-- **BungeeCord** - The BungeeCord implementation of the API, which can be run by the BungeeCord proxy and provides the IPC functionality of the API.
+- **Common API** - The public common API used by other downstream plugins to access the functionality in the plugin. Except for a few cases, there are no implementations within the API itself, and the Bukkit and BungeeCord plugins provide the API.
+- **Client API** - The public client-side API used by other downstream plugins to access client-specific functionality in the plugin. The client API depends on the core API.
+- **Server API** - The public server-side API used by other downstream plugins to access server-specific functionality in the plugin. The server API depends on the core API.
+- **Bukkit** - The Bukkit implementation of the API, which can be run by the Bukkit server and provides the IPC functionality of the client API.
+- **BungeeCord** - The BungeeCord implementation of the API, which can be run by the BungeeCord proxy and provides the IPC functionality of the server API.
 
 ## Support / Issues
 
@@ -266,9 +270,8 @@ This is not a help forum for server administration or non-project-related coding
 ## Licensing
 
 BungeeIPC uses the following licenses for the respective modules:
-- API - [The Apache License, Version 2.0](https://apache.org/licenses/LICENSE-2.0.html)
-- Bukkit - [The GNU General Public License, Version 3](https://www.gnu.org/licenses/gpl-3.0.en.html)
-- BungeeCord - [The GNU General Public License, Version 3](https://www.gnu.org/licenses/gpl-3.0.en.html)
+- Common / Client / Server APIs - [The Apache License, Version 2.0](https://apache.org/licenses/LICENSE-2.0.html)
+- Bukkit / BungeeCord - [The GNU General Public License, Version 3](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
 ### Contributions & Licensing
 

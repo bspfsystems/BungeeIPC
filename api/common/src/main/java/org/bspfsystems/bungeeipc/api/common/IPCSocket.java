@@ -17,16 +17,12 @@
  * limitations under the License.
  */
 
-package org.bspfsystems.bungeeipc.api.socket;
+package org.bspfsystems.bungeeipc.api.common;
 
-import org.bspfsystems.bungeeipc.api.IPCMessage;
-import org.bspfsystems.bungeeipc.api.plugin.IPCClientPlugin;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a connection for {@link IPCMessage}s. The {@link IPCSocket} by
- * itself is usually used on the {@link IPCClientPlugin} side of the connection
- * (the Minecraft server).
+ * Represents a connection for {@link IPCMessage}s.
  */
 public interface IPCSocket extends Runnable {
     
@@ -39,20 +35,18 @@ public interface IPCSocket extends Runnable {
     boolean isRunning();
     
     /**
-     * Gets whether this {@in IPCSocket} is connected to the
-     * {@link IPCServerSocket} or not.
+     * Gets whether this {@link IPCSocket} is connected or not.
      * <p>
      * This will always return <code>false</code> if
      * {@link IPCSocket#isRunning()} returns <code>false</code>.
      * 
      * @return <code>true</code> if this {@link IPCSocket} is running and is
-     * connected to the {@link IPCServerSocket}, <code>false</code> otherwise.
+     * connected, <code>false</code> otherwise.
      */
     boolean isConnected();
     
     /**
-     * Starts this {@link IPCSocket}, which will attempt to connect to the
-     * {@link IPCServerSocket}.
+     * Starts this {@link IPCSocket}, which will attempt to connect.
      */
     void start();
     
@@ -63,7 +57,7 @@ public interface IPCSocket extends Runnable {
     
     /**
      * Sends the specified {@link IPCMessage} to the connected
-     * {@link IPCServerSocket}, as long as this is running and connected.
+     * {@link IPCSocket}, as long as this is running and connected.
      * 
      * @param message The {@link IPCMessage} to send.
      */
