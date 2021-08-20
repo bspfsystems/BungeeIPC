@@ -23,7 +23,7 @@ package org.bspfsystems.bungeeipc.bungeecord.command;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Map;
+import java.util.List;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ComponentBuilder;
@@ -32,18 +32,37 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
+import org.bspfsystems.bungeeipc.api.common.IPCSocket;
+import org.bspfsystems.bungeeipc.api.server.IPCServerSocket;
 import org.bspfsystems.bungeeipc.bungeecord.BungeeIPCPlugin;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents the implementation of the {@code /server} {@link Command} and
+ * {@link TabExecutor} for tab-completion.
+ * <p>
+ * This {@link Command} replaces the default BungeeCord {@code /server}
+ * {@link Command} with a more visually-appealing one that retains the same
+ * functionality, as well as expanding on it with compatibility for
+ * {@link BungeeIPCPlugin} functions.
+ */
 public final class ServerCommand extends Command implements TabExecutor {
     
     private final BungeeIPCPlugin ipcPlugin;
     
+    /**
+     * Constructs a new {@link ServerCommand}.
+     * 
+     * @param ipcPlugin The {@link BungeeIPCPlugin}.
+     */
     public ServerCommand(@NotNull final BungeeIPCPlugin ipcPlugin) {
         super("server", "bungeeipc.command.server");
         this.ipcPlugin = ipcPlugin;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void execute(@NotNull final CommandSender sender, @NotNull final String[] args) {
         
@@ -61,6 +80,15 @@ public final class ServerCommand extends Command implements TabExecutor {
         }
     }
     
+    /**
+     * Sends the syntax for this {@link Command} to the given
+     * {@link CommandSender}. There is a difference in the syntax sent based on
+     * whether the {@link CommandSender} is a {@link ProxiedPlayer} or not.
+     * 
+     * @param sender The {@link CommandSender} executing this {@link Command}.
+     * @param isPlayer {@code true} if the {@link CommandSender} is a
+     *                 {@link ProxiedPlayer}, {@code false} otherwise.
+     */
     private void sendSyntax(@NotNull final CommandSender sender, final boolean isPlayer) {
         
         final ComponentBuilder builder = new ComponentBuilder("Syntax: /server").color(ChatColor.RED);
@@ -73,6 +101,16 @@ public final class ServerCommand extends Command implements TabExecutor {
         sender.sendMessage(builder.create());
     }
     
+    /**
+     * Lists the {@link ServerInfo} names and their connection statuses to the
+     * given {@link CommandSender}. Additionally, if the {@link CommandSender}
+     * is a {@link ProxiedPlayer}, the {@link ServerInfo Server} that they are
+     * connected to will be displayed.
+     *
+     * @param sender The {@link CommandSender} executing this {@link Command}.
+     * @param isPlayer {@code true} if the {@link CommandSender} is a
+     *                 {@link ProxiedPlayer}, {@code false} otherwise.
+     */
     private void listServers(@NotNull final CommandSender sender, final boolean isPlayer) {
         
         sender.sendMessage(new ComponentBuilder("================================================================").color(ChatColor.DARK_GRAY).create());
@@ -92,15 +130,13 @@ public final class ServerCommand extends Command implements TabExecutor {
             sender.sendMessage(new ComponentBuilder("----------------------------------------------------------------").color(ChatColor.DARK_GRAY).create());
         }
         
-        final Map<String, ServerInfo> servers = this.ipcPlugin.getProxy().getServers();
         int accessibleServers = 0;
-        
-        for (final String serverName : servers.keySet()) {
-            if (!servers.get(serverName).canAccess(sender)) {
+        for (final ServerInfo server : this.ipcPlugin.getProxy().getServers().values()) {
+            if (!server.canAccess(sender)) {
                 continue;
             }
             accessibleServers++;
-            sender.sendMessage(new ComponentBuilder(" - ").color(ChatColor.WHITE).append(serverName).color(this.getColor(serverName)).create());
+            sender.sendMessage(new ComponentBuilder(" - ").color(ChatColor.WHITE).append(server.getName()).color(this.getColor(server.getName())).create());
         }
         
         if (accessibleServers == 0) {
@@ -109,6 +145,26 @@ public final class ServerCommand extends Command implements TabExecutor {
         sender.sendMessage(new ComponentBuilder("================================================================").color(ChatColor.DARK_GRAY).create());
     }
     
+    /**
+     * Gets the {@link ChatColor} used to color the {@link ServerInfo Server}
+     * name for status information. The {@link ChatColor}s used are listed as
+     * follows:
+     * <li>{@link ChatColor#GRAY} - No information</li>
+     * <li>{@link ChatColor#RED} - Minecraft server disconnected/offline</li>
+     * <li>{@link ChatColor#BLUE} - Minecraft server online, not an
+     *     IPC-enabled server</li>
+     * <li>{@link ChatColor#GOLD} - Minecraft server online, IPC-enabled, not
+     *     yet available (the {@link IPCServerSocket} has not started.</li>
+     * <li>{@link ChatColor#YELLOW} - Minecraft server online, IPC-enabled, not
+     *     yet connected (the opposing {@link IPCSocket} has not yet
+     *     connected).</li>
+     * <li>{@link ChatColor#GREEN} - Minecraft server online, IPC-enabled, IPC
+     *     has connected.</li>
+     * 
+     * @param serverName The name of the {@link ServerInfo Server} to get the
+     *                   status color of.
+     * @return The {@link ChatColor} associated with the status of the server.
+     */
     @NotNull
     private ChatColor getColor(@NotNull final String serverName) {
     
@@ -134,6 +190,15 @@ public final class ServerCommand extends Command implements TabExecutor {
         }
     }
     
+    /**
+     * Connects the {@link ProxiedPlayer} to the {@link ServerInfo Server} with
+     * the given name, if it exists, and the {@link ProxiedPlayer} has
+     * permission to access it.
+     * 
+     * @param player The {@link ProxiedPlayer} attempting to change servers.
+     * @param serverName The name of the {@link ServerInfo Server} to switch the
+     *                   {@link ProxiedPlayer} to.
+     */
     private void changeServers(@NotNull final ProxiedPlayer player, @NotNull final String serverName) {
         
         final ServerInfo server = this.ipcPlugin.getProxy().getServerInfo(serverName);
@@ -149,18 +214,23 @@ public final class ServerCommand extends Command implements TabExecutor {
         }
     }
     
-    @NotNull
+    /**
+     * {@inheritDoc}
+     */
     @Override
+    @NotNull
     public Iterable<String> onTabComplete(@NotNull final CommandSender sender, @NotNull final String[] args) {
         
         if (!(sender instanceof ProxiedPlayer)) {
             return Collections.emptyList();
         }
         
-        final ArrayList<String> argList = new ArrayList<String>(Arrays.asList(args));
-        final ArrayList<String> completions = new ArrayList<String>();
+        final List<String> argList = new ArrayList<String>(Arrays.asList(args));
+        final List<String> completions = new ArrayList<String>();
         for (final ServerInfo server : this.ipcPlugin.getProxy().getServers().values()) {
-            completions.add(server.getName());
+            if (server.canAccess(sender)) {
+                completions.add(server.getName());
+            }
         }
         
         if (argList.isEmpty()) {

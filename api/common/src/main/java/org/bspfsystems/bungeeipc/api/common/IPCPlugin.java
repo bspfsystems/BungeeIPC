@@ -32,9 +32,9 @@ public interface IPCPlugin {
      * 
      * @param channel The channel to subscribe to.
      * @param reader The {@link IPCReader} to subscribe.
-     * @return <code>true</code> if the channel was subscribed to successfully,
-     *         <code>false</code> if it was already subscribed to or overrode
-     *         another subscription.
+     * @return {@code true} if the channel was subscribed to successfully,
+     *         {@code false} if it was already subscribed to or overrode another
+     *         subscription.
      */
     boolean addReader(@NotNull String channel, @NotNull IPCReader reader);
     
@@ -42,8 +42,8 @@ public interface IPCPlugin {
      * Unsubscribes the specific channel, returning the success.
      * 
      * @param channel The channel to unsubscribe from.
-     * @return <code>true</code> if the channel was unsubscribed from
-     *         successfully, <code>false</code> otherwise.
+     * @return {@code true} if the channel was unsubscribed from successfully,
+     *         {@code false} otherwise.
      */
     boolean removeReader(@NotNull String channel);
     

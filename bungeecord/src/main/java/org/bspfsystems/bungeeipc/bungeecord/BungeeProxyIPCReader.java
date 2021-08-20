@@ -31,16 +31,28 @@ import org.bspfsystems.bungeeipc.api.common.IPCMessage;
 import org.bspfsystems.bungeeipc.api.common.IPCReader;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents the {@link BungeeIPCPlugin}'s implementation of an
+ * {@link IPCReader}.
+ */
 final class BungeeProxyIPCReader implements IPCReader {
     
     private final BungeeIPCPlugin ipcPlugin;
     private final Logger logger;
     
+    /**
+     * Constructs a new {@link BungeeProxyIPCReader}.
+     * 
+     * @param ipcPlugin The {@link BungeeIPCPlugin}.
+     */
     BungeeProxyIPCReader(@NotNull final BungeeIPCPlugin ipcPlugin) {
         this.ipcPlugin = ipcPlugin;
         this.logger = this.ipcPlugin.getLogger();
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void readMessage(@NotNull final IPCMessage message) {
         

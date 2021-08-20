@@ -27,8 +27,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -42,6 +42,9 @@ import org.bspfsystems.bungeeipc.api.server.IPCServerSocket;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents the BungeeCord implementation of an {@link IPCServerSocket}.
+ */
 final class BungeeIPCServerSocket implements IPCServerSocket {
     
     private final BungeeIPCPlugin ipcPlugin;
@@ -52,8 +55,8 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
     private final int port;
     
     private final SSLServerSocketFactory sslServerSocketFactory;
-    private final ArrayList<String> tlsVersionWhitelist;
-    private final ArrayList<String> tlsCipherSuiteWhitelist;
+    private final List<String> tlsVersionWhitelist;
+    private final List<String> tlsCipherSuiteWhitelist;
     
     private DataOutputStream toBukkit;
     private ServerSocket serverSocket;
@@ -64,7 +67,28 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
     private final AtomicBoolean connected;
     private final AtomicInteger taskId;
     
-    BungeeIPCServerSocket(@NotNull final BungeeIPCPlugin ipcPlugin, @NotNull final String name, @NotNull final Configuration config, @NotNull final Collection<InetAddress> localAddresses, @Nullable final SSLServerSocketFactory sslServerSocketFactory, @NotNull final ArrayList<String> tlsVersionWhitelist, @NotNull final ArrayList<String> tlsCipherSuiteWhitelist) {
+    /**
+     * Constructs a new {@link BungeeIPCServerSocket}.
+     * 
+     * @param ipcPlugin The {@link BungeeIPCPlugin} controlling the
+     *                  {@link BungeeIPCServerSocket}.
+     * @param name The name to assign to the {@link BungeeIPCServerSocket}.
+     * @param config The {@link Configuration} used to configure the IP address
+     *               and port to bind the server socket to.
+     * @param localAddresses A {@link Collection} of IP addresses that are
+     *                       available on the machine.
+     * @param sslServerSocketFactory The {@link SSLServerSocketFactory} used for
+     *                               SSL/TLS encryption on the connection.
+     * @param tlsVersionWhitelist A {@link List} of SSL/TLS versions that the
+     *                            {@link BungeeIPCServerSocket} may use.
+     * @param tlsCipherSuiteWhitelist A {@link List} of SSL/TLS cipher suites
+     *                                that the {@link BungeeIPCServerSocket} may
+     *                                use.
+     * @throws IllegalArgumentException If there is a configuration error when
+     *                                  setting up the
+     *                                  {@link BungeeIPCServerSocket}.
+     */
+    BungeeIPCServerSocket(@NotNull final BungeeIPCPlugin ipcPlugin, @NotNull final String name, @NotNull final Configuration config, @NotNull final Collection<InetAddress> localAddresses, @Nullable final SSLServerSocketFactory sslServerSocketFactory, @NotNull final List<String> tlsVersionWhitelist, @NotNull final List<String> tlsCipherSuiteWhitelist) throws IllegalArgumentException {
         
         this.ipcPlugin = ipcPlugin;
         this.logger = this.ipcPlugin.getLogger();
@@ -104,16 +128,25 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         this.toBukkit = null;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isRunning() {
         return this.running.get();
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isConnected() {
         return this.running.get() && this.connected.get();
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void start() {
         this.logger.log(Level.INFO, "Starting the IPC server for " + this.name + "...");
@@ -121,6 +154,9 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         this.taskId.set(this.scheduler.runAsync(this.ipcPlugin, this).getId());
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void run() {
         
@@ -156,10 +192,12 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
             } catch (IOException e) {
                 
                 this.logger.log(Level.INFO, "IPC server " + this.name + " connection broken.");
-                this.logger.log(Level.CONFIG, "Server Name - " + this.name);
-                this.logger.log(Level.CONFIG, "IP Address  - " + this.address.getHostAddress());
-                this.logger.log(Level.CONFIG, "Port Number - " + this.port);
-                this.logger.log(Level.CONFIG, e.getClass().getSimpleName() + " thrown.", e);
+                if (this.ipcPlugin.isExtraLoggingEnabled()) {
+                    this.logger.log(Level.INFO, "Server Name - " + this.name);
+                    this.logger.log(Level.INFO, "IP Address  - " + this.address.getHostAddress());
+                    this.logger.log(Level.INFO, "Port Number - " + this.port);
+                    this.logger.log(Level.INFO, e.getClass().getSimpleName() + " thrown.", e);
+                }
                 
                 try {
                     if (this.toBukkit != null) {
@@ -187,6 +225,9 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         }
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void stop() {
         
@@ -229,11 +270,19 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         this.logger.log(Level.INFO, "IPC server closed.");
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public synchronized void sendMessage(@NotNull final IPCMessage message) {
         this.scheduler.runAsync(this.ipcPlugin, () -> this.send(message));
     }
     
+    /**
+     * Performs the sending of the given {@link IPCMessage} to the proxy.
+     *
+     * @param message The {@link IPCMessage} to send to the proxy.
+     */
     private synchronized void send(@NotNull final IPCMessage message) {
         
         if (!this.isConnected()) {
@@ -256,21 +305,46 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         }
     }
     
-    @NotNull
+    /**
+     * {@inheritDoc}
+     */
     @Override
+    @NotNull
     public String getName() {
         return this.name;
     }
     
+    /**
+     * Gets the {@link InetAddress} that this {@link BungeeIPCServerSocket} will
+     * bind to.
+     * 
+     * @return The {@link InetAddress} that this {@link BungeeIPCServerSocket}
+     *         will bind to.
+     */
     @NotNull
     InetAddress getAddress() {
         return this.address;
     }
     
+    /**
+     * Gets the port number that this {@link BungeeIPCServerSocket} will bind
+     * to.
+     * 
+     * @return The port number that this {@link BungeeIPCServerSocket} will bind
+     *         to.
+     */
     int getPort() {
         return this.port;
     }
     
+    /**
+     * Validates that the given {@link String value} is not empty (or only
+     * whitespace).
+     *
+     * @param value The {@link String value} to check for being blank.
+     * @param message The error message to display if the value is blank.
+     * @throws IllegalArgumentException If the given value is blank.
+     */
     private static void validateNotBlank(@Nullable final String value, @NotNull final String message) {
         if (value != null && value.trim().isEmpty()) {
             throw new IllegalArgumentException(message);

@@ -37,8 +37,8 @@ public interface IPCServerPlugin extends IPCPlugin {
      * configured in the BungeeCord proxy, depending on the implementation.
      * 
      * @param name The name assigned to the {@link IPCServerSocket}.
-     * @return <code>true</code> if an {@link IPCServerSocket} is registered
-     *         with the name, <code>false</code> otherwise.
+     * @return {@code true} if an {@link IPCServerSocket} is registered with the
+     *         name, {@code false} otherwise.
      */
     boolean isRegisteredServer(@NotNull String name);
     
@@ -47,8 +47,8 @@ public interface IPCServerPlugin extends IPCPlugin {
      * not.
      * 
      * @param name The name of the {@link IPCServerSocket} to check.
-     * @return <code>true</code> if the server is running,
-     *         <code>false</code> if it is stopped.
+     * @return {@code true} if the server is running, {@code false} if it is
+     *         stopped.
      */
     boolean isServerRunning(@NotNull String name);
     
@@ -56,15 +56,13 @@ public interface IPCServerPlugin extends IPCPlugin {
      * Checks to see if the client side of the {@link IPCServerSocket} has
      * connected or not.
      * <p>
-     * This will always return <code>false</code> if
-     * {@link IPCServerPlugin#isServerRunning(String)} returns
-     * <code>false</code>.
+     * This will always return {@code false} if
+     * {@link IPCServerPlugin#isServerRunning(String)} returns {@code false}.
      * 
      * @param name The name of the {@link IPCServerSocket} to check.
-     * @return <code>true</code> if the opposing {@link IPCSocket} has connected
-     *         to the {@link IPCServerSocket}, <code>false</code> if the
-     *         connection has not been completed or the {@link IPCServerSocket}
-     *         is not running.
+     * @return {@code true} if the opposing {@link IPCSocket} has connected to
+     *         the {@link IPCServerSocket}, {@code false} if the connection has
+     *         not been completed or the {@link IPCServerSocket} is not running.
      */
     boolean isServerConnected(@NotNull String name);
     

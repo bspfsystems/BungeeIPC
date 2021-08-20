@@ -30,19 +30,19 @@ public interface IPCClientPlugin extends IPCPlugin {
     /**
      * Gets whether the client-side connection is running or not.
      * 
-     * @return <code>true</code> if the client {@link IPCSocket} is running,
-     *         <code>false</code> if it is stopped.
+     * @return {@code true} if the client {@link IPCSocket} is running,
+     *         {@code false} if it is stopped.
      */
     boolean isClientRunning();
     
     /**
      * Gets whether the {@link IPCClientSocket} is connected or not.
      * <p>
-     * This will always return <code>false</code> if
-     * {@link IPCClientPlugin#isClientRunning()} returns <code>false</code>.
+     * This will always return {@code false} if
+     * {@link IPCClientPlugin#isClientRunning()} returns {@code false}.
      * 
-     * @return <code>true</code> if the client {@link IPCSocket} is connected,
-     *         <code>false</code> if the client is not connected or is not
+     * @return {@code true} if the client {@link IPCSocket} is connected,
+     *         {@code false} if the client is not connected or is not
      *         running.
      */
     boolean isClientConnected();

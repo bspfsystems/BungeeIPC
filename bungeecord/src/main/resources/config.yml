@@ -23,6 +23,21 @@
 ################################################################################
 
 ################################################################################
+#                           General Plugin Settings                            #
+################################################################################
+
+# Enables extra logging for the plugin logger.
+#
+# - This is equivalent to a logging level of "debug".
+# - Due to a limitation of BungeeCord's Logger, debug/config is not and cannot
+#   be enabled. The alternative is to enable extra logging, which will come
+#   across at the INFO level.
+# - No settings will need to be changed in BungeeCord's config.yml file.
+# - The default for this setting is false. Null or empty values will be treated
+#   as false.
+extra_logging: false
+
+################################################################################
 #                          IPC Servers Configuration                           #
 ################################################################################
 

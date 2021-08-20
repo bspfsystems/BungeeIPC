@@ -7,7 +7,7 @@ BungeeIPC is a set of APIs and plugins meant for BungeeCord proxies and their ba
 You can download the latest version of the plugins from [here](https://github.com/bspfsystems/BungeeIPC/releases/latest/). Please be sure to download both the Bukkit and BungeeCord `.jar` files.
 
 The latest release is 2.0.0.<br />
-The latest snapshot is 2.0.0-SNAPSHOT.
+The latest snapshot is 2.1.0-SNAPSHOT.
 
 ## Build from Source
 
@@ -98,6 +98,9 @@ Only the Bukkit-based commands, descriptions, and permission nodes will be shown
 **Reload Command:** Reloads the configuration file, re-creating the IPCClient and reconnecting it to its respective IPCServer. This can be used if any of the configuration information has changed, such as IP address, port, SSL/TLS settings, etc. It can also be used if there was a general configuration file update.
 - `/ipc reload` - `bungeeipc.command.ipc.reload`
 
+**Help Command:** Displays all available (sub-)commands that the CommandSender has permission to use, if any.
+- `/ipc help` - `bungeeipc.command.ipc.help`
+
 ### Bukkit-Specific Commands
 
 These commands only exist with the Bukkit plugin, and do not have an equivalent command in the BungeeCord plugin.
@@ -143,8 +146,14 @@ Include the following in your `pom.xml` file:<br />
 <dependencies>
   <dependency>
     <groupId>org.bspfsystems.bungeeipc</groupId>
+    <artifactId>bungeeipc-common-api</artifactId>
+    <version>2.1.0-SNAPSHOT</version>
+    <scope>compile</scope>
+  </dependency>
+  <dependency>
+    <groupId>org.bspfsystems.bungeeipc</groupId>
     <artifactId>bungeeipc-client-api</artifactId>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>2.1.0-SNAPSHOT</version>
     <scope>compile</scope>
   </dependency>
   ...
@@ -168,6 +177,7 @@ repositories {
 ...
 
 dependencies {
+    include implementation("org.bspfsystems.bungeeipc:bungeeipc-common-api:${project.bungeeipc_version}")
     include implementation("org.bspfsystems.bungeeipc:bungeeipc-client-api:${project.bungeeipc_version}")
     ...
 }
@@ -177,21 +187,21 @@ dependencies {
 Also include the following in your `gradle.properties` file:<br />
 ```
 ...
-bungeeipc_version = 2.0.0-SNAPSHOT
+bungeeipc_version = 2.1.0-SNAPSHOT
 ...
 ```
 
-_**Please Note:** The above examples show the client-side API as a dependency (commonly used with Bukkit). For the server-side API (usually BungeeCord), replace `bungeeipc-client-api` with `bungeeipc-server-api`._
+_**Please Note:** The above examples show the client-side API as a dependency (commonly used with Bukkit). For the server-side API (usually BungeeCord), replace `bungeeipc-client-api` with `bungeeipc-server-api`. `bungeeipc-common-api` is required for both._
 
 ### Inside the Plugin
 
 Inside your Plugin code, you can gain access to the common BungeeIPC plugin functions via the following means:
-- Bukkit: `IPCPlugin ipcPlugin = (IPCPlugin) Bukkit.getPluginManager().getPlugin("IPCPlugin");`
-- BungeeCord: `IPCPlugin ipcPlugin = (IPCPlugin) ProxyServer.getPluginManager().getPlugin("IPCPlugin");`
+- Bukkit: `IPCPlugin ipcPlugin = (IPCPlugin) Bukkit.getPluginManager().getPlugin("BungeeIPC");`
+- BungeeCord: `IPCPlugin ipcPlugin = (IPCPlugin) ProxyServer.getPluginManager().getPlugin("BungeeIPC");`
 
 For Bukkit- or BungeeCord-specific API calls, you can obtain the specific type of Plugin:
-- Bukkit: `IPCClientPlugin ipcClientPlugin = (IPCClientPlugin) Bukkit.getPluginManager().getPlugin("IPCPlugin");`
-- BungeeCord: `IPCServerPlugin ipcServerPlugin = (IPCServerPlugin) ProxyServer.getPluginManager().getPlugin("IPCPlugin");`
+- Bukkit: `IPCClientPlugin ipcClientPlugin = (IPCClientPlugin) Bukkit.getPluginManager().getPlugin("BungeeIPC");`
+- BungeeCord: `IPCServerPlugin ipcServerPlugin = (IPCServerPlugin) ProxyServer.getPluginManager().getPlugin("BungeeIPC");`
 
 ### Javadocs
 

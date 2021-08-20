@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -40,7 +40,10 @@ import org.bukkit.scheduler.BukkitScheduler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class BukkitIPCSocket implements IPCClientSocket {
+/**
+ * Represents the Bukkit implementation of an {@link IPCClientSocket}.
+ */
+final class BukkitIPCClientSocket implements IPCClientSocket {
     
     private final BukkitIPCPlugin ipcPlugin;
     private final Logger logger;
@@ -49,8 +52,8 @@ final class BukkitIPCSocket implements IPCClientSocket {
     private final int port;
     
     private final SSLSocketFactory sslSocketFactory;
-    private final ArrayList<String> tlsVersionWhitelist;
-    private final ArrayList<String> tlsCipherSuiteWhitelist;
+    private final List<String> tlsVersionWhitelist;
+    private final List<String> tlsCipherSuiteWhitelist;
     
     private DataOutputStream toBungee;
     private Socket socket;
@@ -60,7 +63,25 @@ final class BukkitIPCSocket implements IPCClientSocket {
     private final AtomicBoolean connected;
     private final AtomicInteger taskId;
     
-    BukkitIPCSocket(@NotNull final BukkitIPCPlugin ipcPlugin, @NotNull final YamlConfiguration config, @Nullable final SSLSocketFactory sslSocketFactory, @NotNull final ArrayList<String> tlsVersionWhitelist, @NotNull final ArrayList<String> tlsCipherSuiteWhitelist) {
+    /**
+     * Constructs a new {@link BukkitIPCClientSocket}.
+     * 
+     * @param ipcPlugin The {@link BukkitIPCPlugin} controlling the
+     *                  {@link BukkitIPCClientSocket}.
+     * @param config The {@link YamlConfiguration} used to configure the IP
+     *               address and port to connect to.
+     * @param sslSocketFactory The {@link SSLSocketFactory} used for SSL/TLS
+     *                         encryption on the connection.
+     * @param tlsVersionWhitelist A {@link List} of SSL/TLS versions that the
+     *                            {@link BukkitIPCClientSocket} may use.
+     * @param tlsCipherSuiteWhitelist A {@link List} of SSL/TLS cipher suites
+     *                                that the {@link BukkitIPCClientSocket} may
+     *                                use.
+     * @throws IllegalArgumentException If there is a configuration error when
+     *                                  setting up the
+     *                                  {@link BukkitIPCClientSocket}.
+     */
+    BukkitIPCClientSocket(@NotNull final BukkitIPCPlugin ipcPlugin, @NotNull final YamlConfiguration config, @Nullable final SSLSocketFactory sslSocketFactory, @NotNull final List<String> tlsVersionWhitelist, @NotNull final List<String> tlsCipherSuiteWhitelist) throws IllegalArgumentException {
         
         this.ipcPlugin = ipcPlugin;
         this.logger = this.ipcPlugin.getLogger();
@@ -68,7 +89,7 @@ final class BukkitIPCSocket implements IPCClientSocket {
         final String addressValue = config.getString("bungeecord_ip", "localhost");
         final int portValue = config.getInt("port", -1);
         
-        BukkitIPCSocket.validateNotBlank(addressValue, "IP address cannot be blank.");
+        BukkitIPCClientSocket.validateNotBlank(addressValue, "IP address cannot be blank.");
         if (portValue == -1) {
             throw new IllegalArgumentException("Port must be specified in the config.");
         }
@@ -94,16 +115,25 @@ final class BukkitIPCSocket implements IPCClientSocket {
         this.toBungee = null;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isRunning() {
         return this.running.get();
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isConnected() {
         return this.running.get() && this.connected.get();
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void start() {
         this.logger.log(Level.INFO, "Starting the IPC client socket.");
@@ -111,6 +141,9 @@ final class BukkitIPCSocket implements IPCClientSocket {
         this.taskId.set(this.scheduler.runTaskAsynchronously(this.ipcPlugin, this).getTaskId());
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void run() {
         
@@ -184,6 +217,9 @@ final class BukkitIPCSocket implements IPCClientSocket {
         }
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void stop() {
     
@@ -216,11 +252,19 @@ final class BukkitIPCSocket implements IPCClientSocket {
         this.logger.log(Level.INFO, "IPC client closed.");
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public synchronized void sendMessage(@NotNull final IPCMessage message) {
         this.scheduler.runTaskAsynchronously(this.ipcPlugin, () -> this.send(message));
     }
     
+    /**
+     * Performs the sending of the given {@link IPCMessage} to the proxy.
+     * 
+     * @param message The {@link IPCMessage} to send to the proxy.
+     */
     private synchronized void send(@NotNull final IPCMessage message) {
         
         if (!this.connected.get()) {
@@ -243,7 +287,15 @@ final class BukkitIPCSocket implements IPCClientSocket {
         }
     }
     
-    private static void validateNotBlank(@Nullable final String value, @NotNull final String message) {
+    /**
+     * Validates that the given {@link String value} is not empty (or only
+     * whitespace).
+     *
+     * @param value The {@link String value} to check for being blank.
+     * @param message The error message to display if the value is blank.
+     * @throws IllegalArgumentException If the given value is blank.
+     */
+    private static void validateNotBlank(@Nullable final String value, @NotNull final String message) throws IllegalArgumentException {
         if (value != null && value.trim().isEmpty()) {
             throw new IllegalArgumentException(message);
         }

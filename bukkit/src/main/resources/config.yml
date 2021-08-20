@@ -23,6 +23,18 @@
 ################################################################################
 
 ################################################################################
+#                           General Plugin Settings                            #
+################################################################################
+
+# The logging level for the plugin logger.
+#
+# - This will only affect the plugin logger's logging level for this plugin.
+# - NOTE: You will need to update Spigot's spigot.yml to enable debugging for
+#   the debug messages to display in the log files.
+# - The default is "INFO", but null or empty will be treated as INFO.
+logging_level: "INFO"
+
+################################################################################
 #                           IPC Client Configuration                           #
 ################################################################################
 

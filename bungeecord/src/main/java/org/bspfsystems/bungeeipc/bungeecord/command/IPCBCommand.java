@@ -22,10 +22,11 @@ package org.bspfsystems.bungeeipc.bungeecord.command;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
+import java.util.List;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
@@ -34,40 +35,48 @@ import org.bspfsystems.bungeeipc.api.common.IPCMessage;
 import org.bspfsystems.bungeeipc.bungeecord.BungeeIPCPlugin;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents the implementation of the {@code /ipcb} {@link Command} and
+ * {@link TabExecutor} for tab-completion.
+ */
 public final class IPCBCommand extends Command implements TabExecutor {
     
     private final BungeeIPCPlugin ipcPlugin;
     
     public IPCBCommand(@NotNull final BungeeIPCPlugin ipcPlugin) {
           super("ipcb", "bungeeipc.command.ipcb");
+          this.setPermissionMessage("§r§cYou do not have permission to execute this command!§r");
           this.ipcPlugin = ipcPlugin;
     }
     
     @Override
     public void execute(@NotNull final CommandSender sender, @NotNull final String[] args) {
-        
-        if (args.length == 0) {
-            this.sendSubCommands(sender);
+    
+        final List<String> argsList = new ArrayList<String>(Arrays.asList(args));
+        if (argsList.isEmpty()) {
+            if (sender.hasPermission("bungeeipc.command.ipcb.help")) {
+                sender.sendMessage(TextComponent.fromLegacyText("§r§cIncomplete BungeeIPC command. Please use§r §b/ipcb help§r §cfor help.§r"));
+            } else {
+                sender.sendMessage(TextComponent.fromLegacyText(this.getPermissionMessage()));
+            }
             return;
         }
         
-        final ArrayList<String> argList = new ArrayList<String>(Arrays.asList(args));
-        final String subCommand = argList.remove(0).toLowerCase();
-        
+        final String subCommand = argsList.remove(0);
         if (subCommand.equalsIgnoreCase("command")) {
             
             if (!sender.hasPermission("bungeeipc.command.ipcb.command")) {
-                sender.sendMessage(new ComponentBuilder("You do not have permission to execute this command.").color(ChatColor.RED).create());
+                sender.sendMessage(TextComponent.fromLegacyText(this.getPermissionMessage()));
                 return;
             }
             
-            if (argList.size() < 3) {
+            if (argsList.size() < 3) {
                 sender.sendMessage(new ComponentBuilder("Syntax: /ipcb command <server> <sender> <command> [args...]").color(ChatColor.RED).create());
                 return;
             }
             
-            final String serverName = argList.remove(0);
-            final String playerName = argList.remove(0);
+            final String serverName = argsList.remove(0);
+            final String playerName = argsList.remove(0);
             final boolean isConsole;
             
             if (playerName.equals("console")) {
@@ -124,76 +133,75 @@ public final class IPCBCommand extends Command implements TabExecutor {
             
             final IPCMessage message = new IPCMessage(serverName, "SERVER_COMMAND");
             message.add(playerName);
-            for (final String commandPart : argList) {
+            for (final String commandPart : argsList) {
                 message.add(commandPart);
             }
             
             this.ipcPlugin.sendMessage(message);
             
-        } else if (subCommand.equalsIgnoreCase("status")) {
+        } else if (subCommand.equalsIgnoreCase("help")) {
     
-            if (!sender.hasPermission("bungeeipc.command.ipcb.status")) {
-                sender.sendMessage(new ComponentBuilder("You do not have permission to execute this command.").color(ChatColor.RED).create());
+            if (!sender.hasPermission("bungeeipc.command.ipcb.help")) {
+                sender.sendMessage(TextComponent.fromLegacyText(this.getPermissionMessage()));
                 return;
             }
-            
-            final boolean isPlayer = sender instanceof ProxiedPlayer;
-            if (argList.isEmpty()) {
-    
-                this.sendStatusHeader(sender, isPlayer);
-                final Map<String, ServerInfo> servers = this.ipcPlugin.getProxy().getServers();
-                int accessibleServers = 0;
-                
-                for (final String serverName : servers.keySet()) {
-                    if (!servers.get(serverName).canAccess(sender)) {
-                        continue;
-                    }
-                    accessibleServers++;
-                    sender.sendMessage(new ComponentBuilder(" - ").color(ChatColor.WHITE).append(serverName).color(this.getColor(serverName)).create());
-                }
-    
-                if (accessibleServers == 0) {
-                    sender.sendMessage(new ComponentBuilder("No servers.").color(ChatColor.RED).create());
-                }
-                sender.sendMessage(new ComponentBuilder("================================================================").color(ChatColor.DARK_GRAY).create());
-            } else if (argList.size() == 1) {
-                
-                this.sendStatusHeader(sender, isPlayer);
-                final String serverName = argList.remove(0);
-                final ServerInfo server = this.ipcPlugin.getProxy().getServerInfo(serverName);
-                
-                if (server == null) {
-                    final ComponentBuilder builder = new ComponentBuilder("Server ").color(ChatColor.RED);
-                    builder.append(serverName).color(ChatColor.GOLD);
-                    builder.append(" not found.").color(ChatColor.RED);
-                    sender.sendMessage(builder.create());
-                } else if (!server.canAccess(sender)) {
-                    final ComponentBuilder builder = new ComponentBuilder("Server ").color(ChatColor.RED);
-                    builder.append(serverName).color(ChatColor.GOLD);
-                    builder.append(" not found.").color(ChatColor.RED);
-                    sender.sendMessage(builder.create());
-                } else {
-                    final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
-                    builder.append(serverName).color(this.getColor(serverName));
-                    sender.sendMessage(builder.create());
-                }
-                sender.sendMessage(new ComponentBuilder("================================================================").color(ChatColor.DARK_GRAY).create());
-            } else {
-                sender.sendMessage(new ComponentBuilder("Syntax: /ipcb status [server]").color(ChatColor.RED).create());
+            if (!argsList.isEmpty()) {
+                sender.sendMessage(new ComponentBuilder("Syntax: /ipcb help").color(ChatColor.RED).create());
+                return;
             }
-            
+    
+            final boolean permissionCommand = sender.hasPermission("bungeeipc.command.ipcb.command");
+            final boolean permissionHelp = sender.hasPermission("bungeeipc.command.ipcb.help");
+            final boolean permissionReconnect = sender.hasPermission("bungeeipc.command.ipcb.reconnect");
+            final boolean permissionReload = sender.hasPermission("bungeeipc.command.ipcb.reload");
+            final boolean permissionStatus = sender.hasPermission("bungeeipc.command.ipcb.status");
+    
+            if (!permissionCommand && !permissionHelp && !permissionReconnect && !permissionReload && !permissionStatus) {
+                sender.sendMessage(TextComponent.fromLegacyText(this.getPermissionMessage()));
+                return;
+            }
+    
+            sender.sendMessage(new ComponentBuilder("Available commands:").color(ChatColor.GOLD).create());
+            sender.sendMessage(new ComponentBuilder("----------------------------------------------------------------").color(ChatColor.DARK_GRAY).create());
+    
+            if (permissionCommand) {
+                final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
+                builder.append("/ipcb command <server> <sender> <command> [args...]").color(ChatColor.AQUA);
+                sender.sendMessage(builder.create());
+            }
+            if (permissionHelp) {
+                final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
+                builder.append("/ipcb help").color(ChatColor.AQUA);
+                sender.sendMessage(builder.create());
+            }
+            if (permissionReconnect) {
+                final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
+                builder.append("/ipcb reconnect <server>").color(ChatColor.AQUA);
+                sender.sendMessage(builder.create());
+            }
+            if (permissionReload) {
+                final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
+                builder.append("/ipcb reload").color(ChatColor.AQUA);
+                sender.sendMessage(builder.create());
+            }
+            if (permissionStatus) {
+                final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
+                builder.append("/ipcb status [server]").color(ChatColor.AQUA);
+                sender.sendMessage(builder.create());
+            }
+    
         } else if (subCommand.equalsIgnoreCase("reconnect")) {
     
             if (!sender.hasPermission("bungeeipc.command.ipcb.reconnect")) {
-                sender.sendMessage(new ComponentBuilder("You do not have permission to execute this command.").color(ChatColor.RED).create());
+                sender.sendMessage(TextComponent.fromLegacyText(this.getPermissionMessage()));
                 return;
             }
-            if (argList.size() != 1) {
+            if (argsList.size() != 1) {
                 sender.sendMessage(new ComponentBuilder("Syntax: /ipcb reconnect <server>").color(ChatColor.RED).create());
                 return;
             }
     
-            final String serverName = argList.remove(0);
+            final String serverName = argsList.remove(0);
             if (!this.ipcPlugin.isRegisteredServer(serverName)) {
                 final ComponentBuilder builder = new ComponentBuilder("Server ").color(ChatColor.RED);
                 builder.append(serverName).color(ChatColor.GOLD);
@@ -216,12 +224,12 @@ public final class IPCBCommand extends Command implements TabExecutor {
             sender.sendMessage(builder.create());
     
         } else if (subCommand.equalsIgnoreCase("reload")) {
-            
+    
             if (!sender.hasPermission("bungeeipc.command.ipcb.reload")) {
-                sender.sendMessage(new ComponentBuilder("You do not have permission to execute this command.").color(ChatColor.RED).create());
+                sender.sendMessage(TextComponent.fromLegacyText(this.getPermissionMessage()));
                 return;
             }
-            if (argList.size() != 0) {
+            if (!argsList.isEmpty()) {
                 sender.sendMessage(new ComponentBuilder("Syntax: /ipcb reload").color(ChatColor.RED).create());
                 return;
             }
@@ -231,48 +239,63 @@ public final class IPCBCommand extends Command implements TabExecutor {
             builder.append(" (if possible) in a few seconds to verify that the IPC Servers have reloaded and reconnected successfully.").color(ChatColor.GOLD);
             sender.sendMessage(builder.create());
             this.ipcPlugin.reloadConfig(sender);
-        } else {
-            this.sendSubCommands(sender);
-        }
-    }
+            
+        } else if (subCommand.equalsIgnoreCase("status")) {
     
-    private void sendSubCommands(@NotNull final CommandSender sender) {
+            if (!sender.hasPermission("bungeeipc.command.ipcb.status")) {
+                sender.sendMessage(TextComponent.fromLegacyText(this.getPermissionMessage()));
+                return;
+            }
+    
+            final boolean isPlayer = sender instanceof ProxiedPlayer;
+            if (argsList.isEmpty()) {
         
-        final boolean permissionCommand = sender.hasPermission("bungeeipc.command.ipcb.command");
-        final boolean permissionStatus = sender.hasPermission("bungeeipc.command.ipcb.status");
-        final boolean permissionReconnect = sender.hasPermission("bungeeipc.command.ipcb.reconnect");
-        final boolean permissionReload = sender.hasPermission("bungeeipc.command.ipcb.reload");
+                this.sendStatusHeader(sender, isPlayer);
+                int accessibleServers = 0;
+                for (final ServerInfo server : this.ipcPlugin.getProxy().getServers().values()) {
+                    if (!server.canAccess(sender)) {
+                        continue;
+                    }
+                    accessibleServers++;
+                    sender.sendMessage(new ComponentBuilder(" - ").color(ChatColor.WHITE).append(server.getName()).color(this.getColor(server.getName())).create());
+                }
         
-        if (!permissionCommand && !permissionStatus && !permissionReconnect && !permissionReload) {
-            sender.sendMessage(new ComponentBuilder("You do not have permission to execute this command.").color(ChatColor.RED).create());
-            return;
-        }
+                if (accessibleServers == 0) {
+                    sender.sendMessage(new ComponentBuilder("No servers.").color(ChatColor.RED).create());
+                }
+                sender.sendMessage(new ComponentBuilder("================================================================").color(ChatColor.DARK_GRAY).create());
+            } else if (argsList.size() == 1) {
         
-        sender.sendMessage(new ComponentBuilder("Available commands:").color(ChatColor.GOLD).create());
-        sender.sendMessage(new ComponentBuilder("----------------------------------------------------------------").color(ChatColor.DARK_GRAY).create());
+                this.sendStatusHeader(sender, isPlayer);
+                final String serverName = argsList.remove(0);
+                final ServerInfo server = this.ipcPlugin.getProxy().getServerInfo(serverName);
         
-        if (permissionCommand) {
-            final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
-            builder.append(" - ").color(ChatColor.WHITE);
-            builder.append("/ipcb command <server> <sender> <command> [args...]").color(ChatColor.AQUA);
-            sender.sendMessage(builder.create());
-        }
-        if (permissionStatus) {
-            final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
-            builder.append(" - ").color(ChatColor.WHITE);
-            builder.append("/ipcb status [server]").color(ChatColor.AQUA);
-            sender.sendMessage(builder.create());
-        }
-        if (permissionReconnect) {
-            final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
-            builder.append(" - ").color(ChatColor.WHITE);
-            builder.append("/ipcb reconnect <server>").color(ChatColor.AQUA);
-            sender.sendMessage(builder.create());
-        }
-        if (permissionReload) {
-            final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
-            builder.append("/ipcb reload").color(ChatColor.AQUA);
-            sender.sendMessage(builder.create());
+                if (server == null) {
+                    final ComponentBuilder builder = new ComponentBuilder("Server ").color(ChatColor.RED);
+                    builder.append(serverName).color(ChatColor.GOLD);
+                    builder.append(" not found.").color(ChatColor.RED);
+                    sender.sendMessage(builder.create());
+                } else if (!server.canAccess(sender)) {
+                    final ComponentBuilder builder = new ComponentBuilder("Server ").color(ChatColor.RED);
+                    builder.append(serverName).color(ChatColor.GOLD);
+                    builder.append(" not found.").color(ChatColor.RED);
+                    sender.sendMessage(builder.create());
+                } else {
+                    final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
+                    builder.append(serverName).color(this.getColor(serverName));
+                    sender.sendMessage(builder.create());
+                }
+                sender.sendMessage(new ComponentBuilder("================================================================").color(ChatColor.DARK_GRAY).create());
+            } else {
+                sender.sendMessage(new ComponentBuilder("Syntax: /ipcb status [server]").color(ChatColor.RED).create());
+            }
+    
+        } else {
+            if (sender.hasPermission("bungeeipc.command.ipcb.help")) {
+                sender.sendMessage(TextComponent.fromLegacyText("§r§cIncomplete BungeeIPC command. Please use§r §b/ipcb help§r §cfor help.§r"));
+            } else {
+                sender.sendMessage(TextComponent.fromLegacyText(this.getPermissionMessage()));
+            }
         }
     }
     
@@ -321,23 +344,24 @@ public final class IPCBCommand extends Command implements TabExecutor {
         }
     }
     
-    @NotNull
     @Override
+    @NotNull
     public Iterable<String> onTabComplete(@NotNull final CommandSender sender, @NotNull final String[] args) {
         
-        final ArrayList<String> argList = new ArrayList<String>(Arrays.asList(args));
-        final ArrayList<String> completions = new ArrayList<String>();
+        final List<String> argsList = new ArrayList<String>(Arrays.asList(args));
+        final List<String> completions = new ArrayList<String>();
         
         final boolean permissionCommand = sender.hasPermission("bungeeipc.command.ipcb.command");
-        final boolean permissionStatus = sender.hasPermission("bungeeipc.command.ipcb.status");
+        final boolean permissionHelp = sender.hasPermission("bungeeipc.command.ipcb.help");
         final boolean permissionReconnect = sender.hasPermission("bungeeipc.command.ipcb.reconnect");
         final boolean permissionReload = sender.hasPermission("bungeeipc.command.ipcb.reload");
+        final boolean permissionStatus = sender.hasPermission("bungeeipc.command.ipcb.status");
         
         if (permissionCommand) {
             completions.add("command");
         }
-        if (permissionStatus) {
-            completions.add("status");
+        if (permissionHelp) {
+            completions.add("help");
         }
         if (permissionReconnect) {
             completions.add("reconnect");
@@ -345,65 +369,112 @@ public final class IPCBCommand extends Command implements TabExecutor {
         if (permissionReload) {
             completions.add("reload");
         }
+        if (permissionStatus) {
+            completions.add("status");
+        }
         
-        if (argList.isEmpty()) {
+        if (argsList.isEmpty()) {
             return completions;
         }
         
-        final String subCommand = argList.remove(0);
-        if (argList.isEmpty()) {
+        final String subCommand = argsList.remove(0);
+        if (argsList.isEmpty()) {
             completions.removeIf(completion -> !completion.toLowerCase().startsWith(subCommand.toLowerCase()));
             return completions;
         }
         
         completions.clear();
-        if (!permissionCommand && !permissionStatus && !permissionReconnect && !permissionReload) {
-            return completions;
-        }
-        if (subCommand.equalsIgnoreCase("reload")) {
-            return completions;
-        }
-        
-        for (final ServerInfo server : this.ipcPlugin.getProxy().getServers().values()) {
-            if (server.canAccess(sender)) {
-                completions.add(server.getName());
-            }
-        }
-        
-        if (argList.isEmpty()) {
-            return completions;
-        }
-        
-        final String serverName = argList.remove(0);
-        if (argList.isEmpty()) {
-            completions.removeIf(completion -> !completion.toLowerCase().startsWith(serverName.toLowerCase()));
-            return completions;
-        }
-        
-        completions.clear();
-        
-        if (permissionCommand && subCommand.equalsIgnoreCase("command")) {
+        if (subCommand.equalsIgnoreCase("command")) {
             
-            for (final ProxiedPlayer player : this.ipcPlugin.getProxy().getPlayers()) {
-                completions.add(player.getName());
-            }
-            
-            if (argList.isEmpty()) {
+            if (!permissionCommand) {
                 return completions;
             }
             
-            final String playerName = argList.remove(0);
-            if (argList.isEmpty()) {
+            for (final ServerInfo server : this.ipcPlugin.getProxy().getServers().values()) {
+                if (server.canAccess(sender)) {
+                    completions.add(server.getName());
+                }
+            }
+    
+            final String serverName = argsList.remove(0);
+            if (argsList.isEmpty()) {
+                completions.removeIf(completion -> !completion.toLowerCase().startsWith(serverName.toLowerCase()));
+                return completions;
+            }
+    
+            completions.clear();
+            final ServerInfo server = this.ipcPlugin.getProxy().getServerInfo(serverName);
+            if (server == null || !server.canAccess(sender)) {
+                return completions;
+            }
+            
+            for (final ProxiedPlayer player : server.getPlayers()) {
+                if (player.getName().equalsIgnoreCase(sender.getName())) {
+                    completions.add(player.getName());
+                } else if (sender.hasPermission("bungeeipc.command.ipcb.command.player.other")) {
+                    completions.add(player.getName());
+                }
+            }
+            
+            if (sender.hasPermission("bungeeipc.command.ipcb.command.player.console")) {
+                completions.add("console");
+            }
+            
+            final String playerName = argsList.remove(0);
+            if (argsList.isEmpty()) {
                 completions.removeIf(completion -> !completion.toLowerCase().startsWith(playerName.toLowerCase()));
                 return completions;
             }
             
             completions.clear();
             return completions;
-        } else if (permissionStatus && subCommand.equalsIgnoreCase("status")) {
+            
+        } else if (subCommand.equalsIgnoreCase("help")) {
             return completions;
-        } else if (permissionReconnect && subCommand.equalsIgnoreCase("reconnect")) {
+        } else if (subCommand.equalsIgnoreCase("reconnect")) {
+            
+            if (!permissionReconnect) {
+                return completions;
+            }
+    
+            for (final ServerInfo server : this.ipcPlugin.getProxy().getServers().values()) {
+                if (server.canAccess(sender)) {
+                    completions.add(server.getName());
+                }
+            }
+    
+            final String serverName = argsList.remove(0);
+            if (argsList.isEmpty()) {
+                completions.removeIf(completion -> !completion.toLowerCase().startsWith(serverName.toLowerCase()));
+                return completions;
+            }
+    
+            completions.clear();
             return completions;
+            
+        } else if (subCommand.equalsIgnoreCase("reload")) {
+            return completions;
+        } else if (subCommand.equalsIgnoreCase("status")) {
+            
+            if (!permissionStatus) {
+                return completions;
+            }
+    
+            for (final ServerInfo server : this.ipcPlugin.getProxy().getServers().values()) {
+                if (server.canAccess(sender)) {
+                    completions.add(server.getName());
+                }
+            }
+    
+            final String serverName = argsList.remove(0);
+            if (argsList.isEmpty()) {
+                completions.removeIf(completion -> !completion.toLowerCase().startsWith(serverName.toLowerCase()));
+                return completions;
+            }
+    
+            completions.clear();
+            return completions;
+            
         } else {
             return completions;
         }

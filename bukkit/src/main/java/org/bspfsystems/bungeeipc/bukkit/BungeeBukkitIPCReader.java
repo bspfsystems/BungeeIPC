@@ -28,16 +28,28 @@ import org.bspfsystems.bungeeipc.api.common.IPCReader;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents the {@link BukkitIPCPlugin}'s implementation of an
+ * {@link IPCReader}.
+ */
 final class BungeeBukkitIPCReader implements IPCReader {
 
     private final BukkitIPCPlugin ipcPlugin;
     private final Logger logger;
     
+    /**
+     * Constructs a new {@link BungeeBukkitIPCReader}.
+     * 
+     * @param ipcPlugin The {@link BukkitIPCPlugin}.
+     */
     BungeeBukkitIPCReader(@NotNull final BukkitIPCPlugin ipcPlugin) {
         this.ipcPlugin = ipcPlugin;
         this.logger = this.ipcPlugin.getLogger();
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void readMessage(@NotNull final IPCMessage message) {
         

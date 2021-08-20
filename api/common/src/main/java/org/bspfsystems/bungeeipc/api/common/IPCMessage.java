@@ -20,6 +20,7 @@
 package org.bspfsystems.bungeeipc.api.common;
 
 import java.util.ArrayList;
+import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,8 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * The {@link String} data stored in an {@link IPCMessage} has order maintained
  * via an {@link ArrayList}. The order that the data was added in will be the
- * order that the data can be read in. None of the data may be
- * <code>null</code>.
+ * order that the data can be read in. None of the data may be {@code null}
  */
 public final class IPCMessage {
     
@@ -38,7 +38,7 @@ public final class IPCMessage {
     
     private final String server;
     private final String channel;
-    private final ArrayList<String> data;
+    private final List<String> data;
     
     private int lastRead;
     
@@ -49,7 +49,7 @@ public final class IPCMessage {
      *               ("proxy" if it is to go to the BungeeCord proxy
      *               {@link IPCPlugin}).
      * @param channel The channel that the message is to be read by.
-     * @see IPCMessage#IPCMessage(String, String, ArrayList)
+     * @see IPCMessage#IPCMessage(String, String, List)
      */
     public IPCMessage(@NotNull final String server, @NotNull final String channel) {
         this(server, channel, new ArrayList<String>());
@@ -64,7 +64,7 @@ public final class IPCMessage {
      * @param channel The channel that the message is to be read by.
      * @param data The data to initialize the message with.
      */
-    private IPCMessage(@NotNull final String server, @NotNull final String channel, @NotNull ArrayList<String> data) {
+    private IPCMessage(@NotNull final String server, @NotNull final String channel, @NotNull List<String> data) {
     
         IPCMessage.validateNotBlank(server, "IPCMessage IPC server cannot be blank.");
         IPCMessage.validateNotBlank(channel, "IPCMessage channel cannot be blank.");
@@ -102,8 +102,8 @@ public final class IPCMessage {
     /**
      * Checks to see if there is any remaining data to be read.
      * 
-     * @return <code>true</code> if there is more data to be read,
-     *         <code>false</code> otherwise.
+     * @return {@code true} if there is more data to be read, {@code false}
+     *         otherwise.
      */
     public boolean hasNext() {
         return this.lastRead < this.data.size() - 1;
@@ -116,6 +116,7 @@ public final class IPCMessage {
      * @throws IndexOutOfBoundsException If an attempt is made to read data
      *                                   after the end of the internal list
      *                                   has been reached.
+     * @see List#get(int)
      */
     @NotNull
     public String next() throws IndexOutOfBoundsException {
@@ -201,13 +202,31 @@ public final class IPCMessage {
         return new IPCMessage(split.remove(0), split.remove(0), split);
     }
     
-    private static void validateNotBlank(@NotNull final String value, @NotNull final String message) {
+    /**
+     * Validates that the given {@link String value} is not empty (or only
+     * whitespace).
+     * 
+     * @param value The {@link String value} to check for being blank.
+     * @param message The error message to display if the value is blank.
+     * @throws IllegalArgumentException If the given value is blank.
+     */
+    private static void validateNotBlank(@NotNull final String value, @NotNull final String message) throws IllegalArgumentException {
         if (value.trim().isEmpty()) {
             throw new IllegalArgumentException(message);
         }
     }
     
-    private static void validateNotNull(@NotNull final ArrayList<String> data, @NotNull final String message) {
+    /**
+     * Validates that the given {@link List} has no data in it that is
+     * {@code null}.
+     * 
+     * @param data The {@link List} of data to check.
+     * @param message The error message to display if the given {@link List} has
+     *                {@code null} data in it.
+     * @throws IllegalArgumentException If the given {@link List} has
+     *                                  {@code null} data in it.
+     */
+    private static void validateNotNull(@NotNull final List<String> data, @NotNull final String message) {
         for (final String item : data) {
             if (item == null) {
                 throw new IllegalArgumentException(message);

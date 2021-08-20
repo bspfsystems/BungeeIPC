@@ -29,19 +29,19 @@ public interface IPCSocket extends Runnable {
     /**
      * Gets whether this {@link IPCSocket} is running or not.
      * 
-     * @return <code>true</code> if this {@link IPCSocket} is running,
-     *         <code>false</code> if it is stopped.
+     * @return {@code true} if this {@link IPCSocket} is running, {@code false}
+     *         if it is stopped.
      */
     boolean isRunning();
     
     /**
      * Gets whether this {@link IPCSocket} is connected or not.
      * <p>
-     * This will always return <code>false</code> if
-     * {@link IPCSocket#isRunning()} returns <code>false</code>.
+     * This will always return {@code false} if {@link IPCSocket#isRunning()}
+     * returns {@code false}.
      * 
-     * @return <code>true</code> if this {@link IPCSocket} is running and is
-     * connected, <code>false</code> otherwise.
+     * @return {@code true} if this {@link IPCSocket} is running and is
+     *         connected, {@code false} otherwise.
      */
     boolean isConnected();
     
