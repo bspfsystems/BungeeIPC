@@ -2,7 +2,7 @@ name: BungeeIPC
 main: org.bspfsystems.bungeeipc.bukkit.BukkitIPCPlugin
 author: mciolkosz
 website: https://github.com/bspfsystems/BungeeIPC/
-version: 2.1.0
+version: 2.1.1
 
 commands:
   ipc:
