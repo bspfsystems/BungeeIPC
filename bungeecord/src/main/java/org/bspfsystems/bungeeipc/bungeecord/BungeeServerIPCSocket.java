@@ -101,9 +101,6 @@ final class BungeeServerIPCSocket implements ServerIPCSocket {
         this.ipcPlugin = ipcPlugin;
         this.logger = this.ipcPlugin.getLogger();
         
-        final String addressValue = config.getString("bind_address", "localhost");
-        final int portValue = config.getInt("bind_port", -1);
-    
         BungeeServerIPCSocket.validateNotBlank(name, "Server name cannot be blank.");
         if (name.equalsIgnoreCase(IPCMessage.PROXY_SERVER)) {
             throw new IllegalArgumentException("Server name cannot be the proxy name (" + IPCMessage.PROXY_SERVER + ").");
@@ -118,25 +115,28 @@ final class BungeeServerIPCSocket implements ServerIPCSocket {
         if (serverInfo == null) {
             throw new IllegalArgumentException("Server name is not a Minecraft server registered with the BungeeCord proxy.");
         }
+        this.name = name;
+    
+        final String addressValue = config.getString("bind_address", "localhost");
         BungeeServerIPCSocket.validateNotBlank(addressValue, "IP address cannot be blank.");
+        
+        try {
+            this.address = InetAddress.getByName(addressValue);
+        } catch (UnknownHostException e) {
+            throw new IllegalArgumentException("Unable to decipher IP address from config value.", e);
+        }
+        if (!localAddresses.contains(this.address)) {
+            throw new IllegalArgumentException("Cannot use network address that is not on the local system.");
+        }
+    
+        final int portValue = config.getInt("bind_port", -1);
         if (portValue == -1) {
             throw new IllegalArgumentException("Port must be specified in the config.");
         }
         if (portValue < 1024 || portValue > 65535) {
             throw new IllegalArgumentException("Port must be between 1024 and 65535 (inclusive).");
         }
-        
-        this.name = name;
-        try {
-            this.address = InetAddress.getByName(addressValue);
-        } catch (UnknownHostException e) {
-            throw new IllegalArgumentException("Unable to decipher IP address from config value.", e);
-        }
         this.port = portValue;
-        
-        if (!localAddresses.contains(this.address)) {
-            throw new IllegalArgumentException("Cannot use network address that is not on the local system.");
-        }
         
         this.serverAddress = ((InetSocketAddress) serverInfo.getSocketAddress()).getAddress();
         
