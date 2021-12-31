@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.bspfsystems.bungeeipc.api.client.ClientIPCMessage;
 import org.bspfsystems.bungeeipc.api.common.IPCMessage;
 import org.bspfsystems.bungeeipc.bukkit.BukkitIPCPlugin;
 import org.bukkit.command.Command;
@@ -103,7 +104,7 @@ public final class IPCTabExecutor implements TabExecutor {
                     }
                 }
         
-                final IPCMessage message = new IPCMessage("proxy", "PROXY_COMMAND");
+                final IPCMessage message = new ClientIPCMessage(IPCMessage.PROXY_SERVER, "PROXY_COMMAND");
                 if (sender instanceof Player) {
                     message.add(((Player) sender).getUniqueId().toString());
                 } else {

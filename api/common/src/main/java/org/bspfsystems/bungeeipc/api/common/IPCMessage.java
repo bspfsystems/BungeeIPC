@@ -19,75 +19,58 @@
 
 package org.bspfsystems.bungeeipc.api.common;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Queue;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a message that is sent between {@link IPCSocket}s.
+ * Represents a message that is sent between {@link IPCSocket IPCSockets}.
  * <p>
  * The {@link String} data stored in an {@link IPCMessage} has order maintained
- * via an {@link ArrayList}. The order that the data was added in will be the
- * order that the data can be read in. None of the data may be {@code null}
+ * via a {@link Queue}. The order that the data was added in will be the order
+ * that the data can be read in. None of the data may be {@code null}.
  */
-public final class IPCMessage {
-    
-    public static final String BROADCAST_SERVER = "BROADCAST";
-    
-    private static final String SEPARATOR = "`|`";
-    
-    private final String server;
-    private final String channel;
-    private final List<String> data;
-    
-    private int lastRead;
+public interface IPCMessage {
     
     /**
-     * Constructs a new {@link IPCMessage} with no data.
-     * 
-     * @param server The {@link IPCSocket} that the message is to be sent to
-     *               ("proxy" if it is to go to the BungeeCord proxy
-     *               {@link IPCPlugin}).
-     * @param channel The channel that the message is to be read by.
-     * @see IPCMessage#IPCMessage(String, String, List)
+     * Used to represent the BungeeCord proxy. This can be used as either an
+     * origin or a destination.
      */
-    public IPCMessage(@NotNull final String server, @NotNull final String channel) {
-        this(server, channel, new ArrayList<String>());
-    }
+    String PROXY_SERVER = "PROXY";
     
     /**
-     * Constructs a new {@link IPCMessage} with the given data (may be empty).
-     *
-     * @param server The {@link IPCSocket} that the message is to be sent to
-     *               ("proxy" if it is to go to the BungeeCord proxy
-     *               {@link IPCPlugin}).
-     * @param channel The channel that the message is to be read by.
-     * @param data The data to initialize the message with.
+     * Used to represent a message that should be broadcast to all Bukkit
+     * servers. This can only be used as a destination.
      */
-    private IPCMessage(@NotNull final String server, @NotNull final String channel, @NotNull List<String> data) {
-    
-        IPCMessage.validateNotBlank(server, "IPCMessage IPC server cannot be blank.");
-        IPCMessage.validateNotBlank(channel, "IPCMessage channel cannot be blank.");
-        IPCMessage.validateNotNull(data, "IPCMessage data cannot have null entries: " + data.toString());
-        
-        this.server = server;
-        this.channel = channel;
-        this.data = data;
-        
-        this.lastRead = -1;
-    }
+    String BROADCAST_SERVER = "BROADCAST";
     
     /**
-     * Gets the name of the {@link IPCSocket} to send this {@link IPCMessage}
-     * to.
+     * Used as a placeholder when a message is sent by a Bukkit server, and has
+     * not yet reached the BungeeCord proxy. This can only be used as an origin.
+     * It will be automatically replaced when it is read in by the BungeeCord
+     * proxy.
+     */
+    String PLACEHOLDER_SERVER = "%%SERVER%%";
+    
+    /**
+     * Gets the origin {@link IPCSocket} of this {@link IPCMessage}.
+     * <p>
+     * This may be {@link IPCMessage#PLACEHOLDER_SERVER} if this
+     * {@link IPCMessage} has been sent by a Bukkit server and has not yet
+     * reached the BungeeCord proxy.
      * 
-     * @return The name of the {@link IPCSocket} to send this {@link IPCMessage}
-     *         to.
+     * @return The origin {@link IPCSocket} of this {@link IPCMessage}.
      */
     @NotNull
-    public String getServer() {
-        return this.server;
-    }
+    String getOrigin();
+    
+    /**
+     * Gets the destination {@link IPCSocket} for this {@link IPCMessage}.
+     * 
+     * @return The destination {@link IPCSocket} for this {@link IPCMessage}.
+     */
+    @NotNull
+    String getDestination();
     
     /**
      * Gets the channel that this {@link IPCMessage} will be read by.
@@ -95,9 +78,14 @@ public final class IPCMessage {
      * @return The channel that this {@link IPCMessage} will be read by.
      */
     @NotNull
-    public String getChannel() {
-        return this.channel;
-    }
+    String getChannel();
+    
+    /**
+     * Adds the next message to this {@link IPCMessage}.
+     *
+     * @param message The next message to add to this {@link IPCMessage}.
+     */
+    void add(@NotNull final String message);
     
     /**
      * Checks to see if there is any remaining data to be read.
@@ -105,33 +93,18 @@ public final class IPCMessage {
      * @return {@code true} if there is more data to be read, {@code false}
      *         otherwise.
      */
-    public boolean hasNext() {
-        return this.lastRead < this.data.size() - 1;
-    }
+    boolean hasNext();
     
     /**
      * Reads the next piece of data in this {@link IPCMessage}.
      * 
      * @return The next piece of data in this {@link IPCMessage}.
-     * @throws IndexOutOfBoundsException If an attempt is made to read data
-     *                                   after the end of the internal list
+     * @throws NoSuchElementException If an attempt is made to read data after
+     *                                   the end of the internal {@link Queue}
      *                                   has been reached.
-     * @see List#get(int)
      */
     @NotNull
-    public String next() throws IndexOutOfBoundsException {
-        this.lastRead++;
-        return this.data.get(this.lastRead);
-    }
-    
-    /**
-     * Adds the next message to this {@link IPCMessage}.
-     * 
-     * @param message The next message to add to this {@link IPCMessage}.
-     */
-    public void add(@NotNull final String message) {
-        this.data.add(message);
-    }
+    String next();
     
     /**
      * Writes the data stored in the internal list out to a single
@@ -144,17 +117,7 @@ public final class IPCMessage {
      * @see IPCSocket#sendMessage(IPCMessage)
      */
     @NotNull
-    public String write() {
-        
-        final StringBuilder builder = new StringBuilder();
-        builder.append(this.server).append(SEPARATOR).append(this.channel);
-    
-        for (final String item : this.data) {
-            builder.append(SEPARATOR).append(item);
-        }
-        
-        return builder.toString();
-    }
+    String write();
     
     /**
      * Writes the data stored in the internal list out to a single
@@ -165,72 +128,5 @@ public final class IPCMessage {
      */
     @Override
     @NotNull
-    public String toString() {
-        return this.write();
-    }
-    
-    /**
-     * Reads in a {@link String} that has been produced via the
-     * {@link IPCMessage#write()} method, and re-creates a new
-     * {@link IPCMessage} from it.
-     * <p>
-     * This is usually used after the data has been received by an
-     * {@link IPCSocket}.
-     * 
-     * @param value The data to create an {@link IPCMessage} from.
-     * @return The reconstructed {@link IPCMessage}.
-     * @see IPCSocket#run()
-     */
-    @NotNull
-    public static IPCMessage read(@NotNull String value) {
-    
-        IPCMessage.validateNotBlank(value, "IPCMessage data cannot be blank, cannot recreate IPCMessage: " + value);
-        final ArrayList<String> split = new ArrayList<String>();
-        
-        int index = value.indexOf(SEPARATOR);
-        while (index != -1) {
-            split.add(value.substring(0, index));
-            value = value.substring(index + SEPARATOR.length());
-            index = value.indexOf(SEPARATOR);
-        }
-        split.add(value);
-        
-        if (split.size() < 3) {
-            throw new IllegalArgumentException("Cannot recreate IPCMessage, no server, channel, and data: " + value);
-        }
-        
-        return new IPCMessage(split.remove(0), split.remove(0), split);
-    }
-    
-    /**
-     * Validates that the given {@link String value} is not empty (or only
-     * whitespace).
-     * 
-     * @param value The {@link String value} to check for being blank.
-     * @param message The error message to display if the value is blank.
-     * @throws IllegalArgumentException If the given value is blank.
-     */
-    private static void validateNotBlank(@NotNull final String value, @NotNull final String message) throws IllegalArgumentException {
-        if (value.trim().isEmpty()) {
-            throw new IllegalArgumentException(message);
-        }
-    }
-    
-    /**
-     * Validates that the given {@link List} has no data in it that is
-     * {@code null}.
-     * 
-     * @param data The {@link List} of data to check.
-     * @param message The error message to display if the given {@link List} has
-     *                {@code null} data in it.
-     * @throws IllegalArgumentException If the given {@link List} has
-     *                                  {@code null} data in it.
-     */
-    private static void validateNotNull(@NotNull final List<String> data, @NotNull final String message) {
-        for (final String item : data) {
-            if (item == null) {
-                throw new IllegalArgumentException(message);
-            }
-        }
-    }
+    String toString();
 }

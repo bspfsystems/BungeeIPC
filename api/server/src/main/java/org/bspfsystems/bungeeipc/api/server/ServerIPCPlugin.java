@@ -27,47 +27,47 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents the server-side version of the {@link IPCPlugin}.
  */
-public interface IPCServerPlugin extends IPCPlugin {
+public interface ServerIPCPlugin extends IPCPlugin {
     
     /**
      * Checks whether the specified name is a registered
-     * {@link IPCServerSocket}.
+     * {@link ServerIPCSocket}.
      * <p>
      * This name may or may not align with the Minecraft server names that are
      * configured in the BungeeCord proxy, depending on the implementation.
      * 
-     * @param name The name assigned to the {@link IPCServerSocket}.
-     * @return {@code true} if an {@link IPCServerSocket} is registered with the
+     * @param name The name assigned to the {@link ServerIPCSocket}.
+     * @return {@code true} if an {@link ServerIPCSocket} is registered with the
      *         name, {@code false} otherwise.
      */
     boolean isRegisteredServer(@NotNull String name);
     
     /**
-     * Checks to see if the specified {@link IPCServerSocket} is running or
+     * Checks to see if the specified {@link ServerIPCSocket} is running or
      * not.
      * 
-     * @param name The name of the {@link IPCServerSocket} to check.
+     * @param name The name of the {@link ServerIPCSocket} to check.
      * @return {@code true} if the server is running, {@code false} if it is
      *         stopped.
      */
     boolean isServerRunning(@NotNull String name);
     
     /**
-     * Checks to see if the client side of the {@link IPCServerSocket} has
+     * Checks to see if the client side of the {@link ServerIPCSocket} has
      * connected or not.
      * <p>
      * This will always return {@code false} if
-     * {@link IPCServerPlugin#isServerRunning(String)} returns {@code false}.
+     * {@link ServerIPCPlugin#isServerRunning(String)} returns {@code false}.
      * 
-     * @param name The name of the {@link IPCServerSocket} to check.
+     * @param name The name of the {@link ServerIPCSocket} to check.
      * @return {@code true} if the opposing {@link IPCSocket} has connected to
-     *         the {@link IPCServerSocket}, {@code false} if the connection has
-     *         not been completed or the {@link IPCServerSocket} is not running.
+     *         the {@link ServerIPCSocket}, {@code false} if the connection has
+     *         not been completed or the {@link ServerIPCSocket} is not running.
      */
     boolean isServerConnected(@NotNull String name);
     
     /**
-     * Restarts the specified {@link IPCServerSocket}. This does not restart the
+     * Restarts the specified {@link ServerIPCSocket}. This does not restart the
      * actual Minecraft server.
      * 
      * @param name The server to restart.
@@ -75,7 +75,7 @@ public interface IPCServerPlugin extends IPCPlugin {
     void restartServer(@NotNull String name);
     
     /**
-     * Broadcasts the given {@link IPCMessage} to all {@link IPCServerSocket}s,
+     * Broadcasts the given {@link IPCMessage} to all {@link ServerIPCSocket}s,
      * thus reaching all of the connected Minecraft servers.
      * 
      * @param message The {@link IPCMessage} to broadcast.

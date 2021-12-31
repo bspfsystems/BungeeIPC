@@ -26,24 +26,28 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import org.bspfsystems.bungeeipc.api.common.AbstractIPCMessage;
 import org.bspfsystems.bungeeipc.api.common.IPCMessage;
-import org.bspfsystems.bungeeipc.api.client.IPCClientSocket;
+import org.bspfsystems.bungeeipc.api.client.ClientIPCSocket;
+import org.bspfsystems.bungeeipc.api.common.IPCSocket;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents the Bukkit implementation of an {@link IPCClientSocket}.
+ * Represents the Bukkit implementation of an {@link ClientIPCSocket}.
  */
-final class BukkitIPCClientSocket implements IPCClientSocket {
+final class BukkitClientIPCSocket implements ClientIPCSocket {
     
     private final BukkitIPCPlugin ipcPlugin;
     private final Logger logger;
@@ -64,24 +68,24 @@ final class BukkitIPCClientSocket implements IPCClientSocket {
     private final AtomicInteger taskId;
     
     /**
-     * Constructs a new {@link BukkitIPCClientSocket}.
+     * Constructs a new {@link BukkitClientIPCSocket}.
      * 
      * @param ipcPlugin The {@link BukkitIPCPlugin} controlling the
-     *                  {@link BukkitIPCClientSocket}.
+     *                  {@link BukkitClientIPCSocket}.
      * @param config The {@link YamlConfiguration} used to configure the IP
      *               address and port to connect to.
      * @param sslSocketFactory The {@link SSLSocketFactory} used for SSL/TLS
      *                         encryption on the connection.
      * @param tlsVersionWhitelist A {@link List} of SSL/TLS versions that the
-     *                            {@link BukkitIPCClientSocket} may use.
+     *                            {@link BukkitClientIPCSocket} may use.
      * @param tlsCipherSuiteWhitelist A {@link List} of SSL/TLS cipher suites
-     *                                that the {@link BukkitIPCClientSocket} may
+     *                                that the {@link BukkitClientIPCSocket} may
      *                                use.
      * @throws IllegalArgumentException If there is a configuration error when
      *                                  setting up the
-     *                                  {@link BukkitIPCClientSocket}.
+     *                                  {@link BukkitClientIPCSocket}.
      */
-    BukkitIPCClientSocket(@NotNull final BukkitIPCPlugin ipcPlugin, @NotNull final YamlConfiguration config, @Nullable final SSLSocketFactory sslSocketFactory, @NotNull final List<String> tlsVersionWhitelist, @NotNull final List<String> tlsCipherSuiteWhitelist) throws IllegalArgumentException {
+    BukkitClientIPCSocket(@NotNull final BukkitIPCPlugin ipcPlugin, @NotNull final YamlConfiguration config, @Nullable final SSLSocketFactory sslSocketFactory, @NotNull final List<String> tlsVersionWhitelist, @NotNull final List<String> tlsCipherSuiteWhitelist) throws IllegalArgumentException {
         
         this.ipcPlugin = ipcPlugin;
         this.logger = this.ipcPlugin.getLogger();
@@ -89,7 +93,7 @@ final class BukkitIPCClientSocket implements IPCClientSocket {
         final String addressValue = config.getString("bungeecord_ip", "localhost");
         final int portValue = config.getInt("port", -1);
         
-        BukkitIPCClientSocket.validateNotBlank(addressValue, "IP address cannot be blank.");
+        BukkitClientIPCSocket.validateNotBlank(addressValue, "IP address cannot be blank.");
         if (portValue == -1) {
             throw new IllegalArgumentException("Port must be specified in the config.");
         }
@@ -178,7 +182,7 @@ final class BukkitIPCClientSocket implements IPCClientSocket {
             final DataInputStream fromBungee = new DataInputStream(this.socket.getInputStream());
             
             while(this.connected.get()) {
-                final IPCMessage message = IPCMessage.read(fromBungee.readUTF());
+                final IPCMessage message = SimpleClientIPCMessage.read(fromBungee.readUTF());
                 this.scheduler.runTask(this.ipcPlugin, () -> ipcPlugin.receiveMessage(message));
             }
         } catch (IOException e) {
@@ -214,6 +218,76 @@ final class BukkitIPCClientSocket implements IPCClientSocket {
             if (this.running.get()) {
                 this.taskId.set(this.scheduler.runTaskLaterAsynchronously(this.ipcPlugin, this, 5).getTaskId());
             }
+        }
+    }
+    
+    /**
+     * Represents a simple extension of an {@link AbstractIPCMessage}, used when
+     * reading in a serialized {@link IPCMessage}.
+     */
+    private static class SimpleClientIPCMessage extends AbstractIPCMessage {
+    
+        /**
+         * Constructs a new {@link IPCMessage}.
+         *
+         * @param origin The origin {@link IPCSocket}.
+         * @param destination The destination {@link IPCSocket}.
+         * @param channel The channel the {@link IPCMessage} will be read by.
+         * @param data The initial data as a {@link Queue}. Order will be
+         *             maintained.
+         * @see AbstractIPCMessage#AbstractIPCMessage(String, String, String, Queue)
+         * @throws IllegalArgumentException If {@code origin},
+         *                                  {@code destination}, and/or
+         *                                  {@code channel} are blank, or if any
+         *                                  element in {@code data} is
+         *                                  {@code null}.
+         */
+        private SimpleClientIPCMessage(@NotNull final String origin, @NotNull final String destination, @NotNull final String channel, @NotNull final Queue<String> data) {
+            super(origin, destination, channel, data);
+        }
+    
+        /**
+         * Reads in the given raw {@link IPCMessage} (as a {@link String}), and
+         * deserializes it into an {@link IPCMessage}.
+         * 
+         * @param message The serialized {@link IPCMessage} as a {@link String}.
+         * @return The deserialized {@link IPCMessage}.
+         * @throws IllegalArgumentException If the given message is blank.
+         */
+        @NotNull
+        private static IPCMessage read(@NotNull String message) {
+    
+            AbstractIPCMessage.validateNotBlank(message, "IPCMessage data cannot be blank, cannot recreate IPCMessage: " + message);
+            final Queue<String> split = new LinkedList<String>();
+    
+            int index = message.indexOf(AbstractIPCMessage.SEPARATOR);
+            while (index != -1) {
+                split.add(message.substring(0, index));
+                message = message.substring(index + AbstractIPCMessage.SEPARATOR.length());
+                index = message.indexOf(AbstractIPCMessage.SEPARATOR);
+            }
+            split.add(message);
+    
+            if (split.size() < 3) {
+                throw new IllegalArgumentException("Cannot recreate IPCMessage, missing some combination of origin, destination, and/or channel (data not required): " + message);
+            }
+            
+            final String origin = split.poll();
+            if (origin == null) {
+                throw new IllegalArgumentException("Cannot recreate IPCMessage, missing origin: " + message);
+            }
+            
+            final String destination = split.poll();
+            if (destination == null) {
+                throw new IllegalArgumentException("Cannot recreate IPCMessage, missing destination: " + message);
+            }
+            
+            final String channel = split.poll();
+            if (channel == null) {
+                throw new IllegalArgumentException("Cannot recreate IPCMessage, missing channel: " + message);
+            }
+    
+            return new SimpleClientIPCMessage(origin, destination, channel, split);
         }
     }
     

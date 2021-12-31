@@ -64,19 +64,17 @@ import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 import org.bspfsystems.bungeeipc.api.common.IPCMessage;
 import org.bspfsystems.bungeeipc.api.common.IPCReader;
-import org.bspfsystems.bungeeipc.api.server.IPCServerPlugin;
-import org.bspfsystems.bungeeipc.api.server.IPCServerSocket;
+import org.bspfsystems.bungeeipc.api.server.ServerIPCPlugin;
+import org.bspfsystems.bungeeipc.api.server.ServerIPCSocket;
 import org.bspfsystems.bungeeipc.bungeecord.command.IPCBCommand;
 import org.bspfsystems.bungeeipc.bungeecord.command.ServerCommand;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents the implementation of a BungeeCord {@link Plugin} that provides
- * the {@link IPCServerPlugin} functionality.
+ * the {@link ServerIPCPlugin} functionality.
  */
-public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
-    
-    private static final String PROXY_SERVER = "proxy";
+public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
     
     private Logger logger;
     private AtomicBoolean extraLogging;
@@ -87,7 +85,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     private ConcurrentHashMap<String, AtomicBoolean> onlineStatuses;
     private ServerStatusUpdater serverStatusUpdater;
     
-    private ConcurrentHashMap<String, IPCServerSocket> serverSockets;
+    private ConcurrentHashMap<String, ServerIPCSocket> serverSockets;
     
     /**
      * Explicitly define the constructor.
@@ -154,7 +152,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
         
         // Server socket setup
         
-        this.serverSockets = new ConcurrentHashMap<String, IPCServerSocket>();
+        this.serverSockets = new ConcurrentHashMap<String, ServerIPCSocket>();
         
         // Main data directory setup
         
@@ -179,7 +177,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
         }
         
         // Configuration (re-)loading
-        //     This includes all IPCServerSocket setup, as well as other
+        //     This includes all ServerIPCSocket setup, as well as other
         //     miscellaneous configuration items.
         
         this.reloadConfig(this.getProxy().getConsole(), false);
@@ -192,7 +190,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     public void onDisable() {
         this.removeReader("PROXY_COMMAND");
         this.serverStatusUpdater.stop();
-        for (final IPCServerSocket serverSocket : this.serverSockets.values()) {
+        for (final ServerIPCSocket serverSocket : this.serverSockets.values()) {
             serverSocket.stop();
         }
     }
@@ -228,14 +226,14 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     @Override
     public void sendMessage(@NotNull final IPCMessage message) {
         
-        if (message.getChannel().equals(IPCMessage.BROADCAST_SERVER)) {
+        if (message.getDestination().equals(IPCMessage.BROADCAST_SERVER)) {
             this.broadcastMessage(message);
-        } else if (message.getServer().equals(BungeeIPCPlugin.PROXY_SERVER)) {
+        } else if (message.getDestination().equals(IPCMessage.PROXY_SERVER)) {
             this.receiveMessage(message);
-        } else if (!this.serverSockets.containsKey(message.getServer())) {
-            this.logger.log(Level.WARNING, "Server name " + message.getServer() + " is not registered to this IPC Plugin.");
+        } else if (!this.serverSockets.containsKey(message.getDestination())) {
+            this.logger.log(Level.WARNING, "Destination name " + message.getDestination() + " is not registered to this IPC Plugin.");
         } else {
-            this.serverSockets.get(message.getServer()).sendMessage(message);
+            this.serverSockets.get(message.getDestination()).sendMessage(message);
         }
     }
     
@@ -245,19 +243,19 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     @Override
     public void receiveMessage(@NotNull final IPCMessage message) {
         
-        if (message.getServer().equals(BungeeIPCPlugin.PROXY_SERVER)) {
+        if (message.getDestination().equals(IPCMessage.PROXY_SERVER)) {
             if (!this.readers.containsKey(message.getChannel())) {
                 this.logger.log(Level.WARNING, "IPC message destined for the BungeeCord proxy, but the channel is not specified.");
                 this.logger.log(Level.WARNING, "IPC message channel: " + message.getChannel());
             } else {
                 this.readers.get(message.getChannel()).readMessage(message);
             }
-        } else if (this.serverSockets.containsKey(message.getServer())) {
-            this.logger.log(Level.INFO, "Forwarding message on to server " + message.getServer());
-            this.serverSockets.get(message.getServer()).sendMessage(message);
+        } else if (this.serverSockets.containsKey(message.getDestination())) {
+            this.logger.log(Level.INFO, "Forwarding message on to destination " + message.getDestination());
+            this.serverSockets.get(message.getDestination()).sendMessage(message);
         } else {
-            this.logger.log(Level.WARNING, "IPC message with an unregistered server.");
-            this.logger.log(Level.WARNING, "IPC message server: " + message.getServer());
+            this.logger.log(Level.WARNING, "IPC message with an unregistered destination.");
+            this.logger.log(Level.WARNING, "IPC message destination: " + message.getDestination());
             this.logger.log(Level.WARNING, "IPC message data: " + message.toString());
         }
     }
@@ -277,7 +275,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     @Override
     public boolean isServerRunning(@NotNull final String name) {
         this.validateNotBlank(name, "Server name cannot be blank.");
-        this.validateServer(name, "Server is not registered to the BungeeCord proxy.");
+        this.validateServer(name);
         return this.serverSockets.get(name).isRunning();
     }
     
@@ -287,7 +285,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     @Override
     public boolean isServerConnected(@NotNull final String name) {
         this.validateNotBlank(name, "Server name cannot be blank.");
-        this.validateServer(name, "Server is not registered to the BungeeCord proxy.");
+        this.validateServer(name);
         return this.serverSockets.get(name).isConnected();
     }
     
@@ -297,7 +295,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     @Override
     public void restartServer(@NotNull final String name) {
         this.validateNotBlank(name, "Server name cannot be blank.");
-        this.validateServer(name, "Server is not registered to the BungeeCord proxy.");
+        this.validateServer(name);
         this.serverSockets.get(name).stop();
         this.scheduler.schedule(this, () -> this.serverSockets.get(name).start(), 2L, TimeUnit.SECONDS);
     }
@@ -308,13 +306,13 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     @Override
     public void broadcastMessage(@NotNull final IPCMessage message) {
         
-        if (!message.getChannel().equals(IPCMessage.BROADCAST_SERVER)) {
+        if (!message.getDestination().equals(IPCMessage.BROADCAST_SERVER)) {
             this.logger.log(Level.WARNING, "Cannot broadcast IPC message when the server is not the broadcast server.");
-            this.logger.log(Level.WARNING, "IPC message server: " + message.getServer());
+            this.logger.log(Level.WARNING, "IPC message destination: " + message.getDestination());
             return;
         }
         
-        for (final IPCServerSocket serverSocket : this.serverSockets.values()) {
+        for (final ServerIPCSocket serverSocket : this.serverSockets.values()) {
             serverSocket.sendMessage(message);
         }
     }
@@ -335,17 +333,15 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
     
     /**
      * Validates that the given server name is a registered
-     * {@link IPCServerSocket}.
+     * {@link ServerIPCSocket}.
      * 
-     * @param name The name of the {@link IPCServerSocket} to validate.
-     * @param message The error message to display if an {@link IPCServerSocket}
-     *                with the given name does not exist.
+     * @param name The name of the {@link ServerIPCSocket} to validate.
      * @throws IllegalArgumentException If the given name is not a registered
-     *                                  {@link IPCServerSocket}.
+     *                                  {@link ServerIPCSocket}.
      */
-    private void validateServer(@NotNull final String name, @NotNull final String message) throws IllegalArgumentException {
+    private void validateServer(@NotNull final String name) throws IllegalArgumentException {
         if (!this.serverSockets.containsKey(name)) {
-            throw new IllegalArgumentException(message);
+            throw new IllegalArgumentException("Server " + name + " is not registered to the BungeeCord proxy.");
         }
     }
     
@@ -424,7 +420,7 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
      */
     private void reloadConfig(@NotNull final CommandSender sender, final boolean command) {
         
-        for (final IPCServerSocket serverSocket : this.serverSockets.values()) {
+        for (final ServerIPCSocket serverSocket : this.serverSockets.values()) {
             serverSocket.stop();
         }
         this.serverSockets.clear();
@@ -677,97 +673,94 @@ public final class BungeeIPCPlugin extends Plugin implements IPCServerPlugin {
                 return;
             }
             
-            this.scheduler.runAsync(this, () -> {
+            for (final String serverName : serversConfig.getKeys()) {
                 
-                for (final String serverName : serversConfig.getKeys()) {
-        
-                    final Configuration serverConfig = serversConfig.getSection(serverName);
-                    final BungeeIPCServerSocket serverSocket;
-                    try {
-                        serverSocket = new BungeeIPCServerSocket(this, serverName, serverConfig, localAddresses, sslServerSocketFactory, tlsVersionWhitelist, tlsCipherSuiteWhitelist);
-                    } catch (IllegalArgumentException e) {
-                        this.logger.log(Level.WARNING, "Failure while attempting to create IPCServerSocket " + serverName + ".");
-                        this.logger.log(Level.WARNING, "IPC Server " + serverName + " will not be started.");
-                        this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
-                        if (command) {
-                            final ComponentBuilder builder1 = new ComponentBuilder("An error has occurred while (re)loading one of the IPC Servers. Please check the BungeeIPC configuration section for the IPC Server ").color(ChatColor.RED);
-                            builder1.append(serverName).color(ChatColor.AQUA);
-                            builder1.append(".").color(ChatColor.RED);
-                            final ComponentBuilder builder2 = new ComponentBuilder("After updating the configuration section as needed, please run ").color(ChatColor.GOLD);
-                            builder2.append("/ipcb reload").color(ChatColor.AQUA);
-                            builder2.append(" to reload the updated configuration.").color(ChatColor.GOLD);
-                            final ComponentBuilder builder3 = new ComponentBuilder("If you believe the configuration has no issues, or this error persists after updating and reloading, please report it to a server administrator.").color(ChatColor.RED);
-                            sender.sendMessage(builder1.create());
-                            sender.sendMessage(builder2.create());
-                            sender.sendMessage(builder3.create());
-                        }
-                        continue;
+                final Configuration serverConfig = serversConfig.getSection(serverName);
+                final BungeeServerIPCSocket serverSocket;
+                try {
+                    serverSocket = new BungeeServerIPCSocket(this, serverName, serverConfig, localAddresses, sslServerSocketFactory, tlsVersionWhitelist, tlsCipherSuiteWhitelist);
+                } catch (IllegalArgumentException e) {
+                    this.logger.log(Level.WARNING, "Failure while attempting to create ServerIPCSocket " + serverName + ".");
+                    this.logger.log(Level.WARNING, "IPC Server " + serverName + " will not be started.");
+                    this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
+                    if (command) {
+                        final ComponentBuilder builder1 = new ComponentBuilder("An error has occurred while (re)loading one of the IPC Servers. Please check the BungeeIPC configuration section for the IPC Server ").color(ChatColor.RED);
+                        builder1.append(serverName).color(ChatColor.AQUA);
+                        builder1.append(".").color(ChatColor.RED);
+                        final ComponentBuilder builder2 = new ComponentBuilder("After updating the configuration section as needed, please run ").color(ChatColor.GOLD);
+                        builder2.append("/ipcb reload").color(ChatColor.AQUA);
+                        builder2.append(" to reload the updated configuration.").color(ChatColor.GOLD);
+                        final ComponentBuilder builder3 = new ComponentBuilder("If you believe the configuration has no issues, or this error persists after updating and reloading, please report it to a server administrator.").color(ChatColor.RED);
+                        sender.sendMessage(builder1.create());
+                        sender.sendMessage(builder2.create());
+                        sender.sendMessage(builder3.create());
                     }
-        
-                    final String connection = serverSocket.getAddress().getHostAddress() + ":" + serverSocket.getPort();
-                    if (!connections.add(connection)) {
-                        this.logger.log(Level.WARNING, "Non-unique IPC connection.");
-                        this.logger.log(Level.WARNING, "IPCServerSocket name: " + serverName);
-                        this.logger.log(Level.WARNING, "Hostname/IP Address: " + serverSocket.getAddress().getHostAddress());
-                        this.logger.log(Level.WARNING, "Port: " + serverSocket.getPort());
-                        this.logger.log(Level.WARNING, "IPC Server " + serverName + " will not be started.");
-                        if (command) {
-                            final ComponentBuilder builder1 = new ComponentBuilder("An error has occurred while (re)loading one of the IPC Servers. Please check the BungeeIPC configuration section for the IPC Server ").color(ChatColor.RED);
-                            builder1.append(serverName).color(ChatColor.AQUA);
-                            builder1.append(".").color(ChatColor.RED);
-                            final ComponentBuilder builder2 = new ComponentBuilder("This appears to be an issue with ").color(ChatColor.RED);
-                            builder2.append("non-unique connection information (hostname/IP address and port combination are used somewhere else)").color(ChatColor.AQUA);
-                            builder2.append(". Please update the BungeeIPC configuration to remove this conflict.").color(ChatColor.RED);
-                            final ComponentBuilder builder3 = new ComponentBuilder("After updating the configuration section as needed, please run ").color(ChatColor.GOLD);
-                            builder3.append("/ipcb reload").color(ChatColor.AQUA);
-                            builder3.append(" to reload the updated configuration.").color(ChatColor.GOLD);
-                            final ComponentBuilder builder4 = new ComponentBuilder("If you believe the configuration has no issues, or this error persists after updating and reloading, please report it to a server administrator.").color(ChatColor.RED);
-                            sender.sendMessage(builder1.create());
-                            sender.sendMessage(builder2.create());
-                            sender.sendMessage(builder3.create());
-                            sender.sendMessage(builder4.create());
-                        }
-                        continue;
-                    }
-        
-                    if (this.serverSockets.containsKey(serverName)) {
-                        this.logger.log(Level.WARNING, "IPCServerSocket previously defined and added.");
-                        this.logger.log(Level.WARNING, "Please check all configurations for duplicates.");
-                        this.logger.log(Level.WARNING, "Duplicate IPCServerSocket name: " + serverName);
-                        this.logger.log(Level.WARNING, "IPC Server " + serverName + " will not be started.");
-                        if (command) {
-                            final ComponentBuilder builder1 = new ComponentBuilder("An error has occurred while (re)loading one of the IPC Servers. Please check the BungeeIPC configuration section for the IPC Server ").color(ChatColor.RED);
-                            builder1.append(serverName).color(ChatColor.AQUA);
-                            builder1.append(".").color(ChatColor.RED);
-                            final ComponentBuilder builder2 = new ComponentBuilder("This appears to be an issue with ").color(ChatColor.RED);
-                            builder2.append("non-unique IPC Server names").color(ChatColor.AQUA);
-                            builder2.append(". Please update the BungeeIPC configuration to remove this conflict.").color(ChatColor.RED);
-                            final ComponentBuilder builder3 = new ComponentBuilder("After updating the configuration section as needed, please run ").color(ChatColor.GOLD);
-                            builder3.append("/ipcb reload").color(ChatColor.AQUA);
-                            builder3.append(" to reload the updated configuration.").color(ChatColor.GOLD);
-                            final ComponentBuilder builder4 = new ComponentBuilder("If you believe the configuration has no issues, or this error persists after updating and reloading, please report it to a server administrator.").color(ChatColor.RED);
-                            sender.sendMessage(builder1.create());
-                            sender.sendMessage(builder2.create());
-                            sender.sendMessage(builder3.create());
-                            sender.sendMessage(builder4.create());
-                        }
-                        continue;
-                    }
-        
-                    this.serverSockets.put(serverName, serverSocket);
+                    continue;
                 }
     
-                for (final IPCServerSocket serverSocket : this.serverSockets.values()) {
-                    serverSocket.start();
+                final String connection = serverSocket.getAddress().getHostAddress() + ":" + serverSocket.getPort();
+                if (!connections.add(connection)) {
+                    this.logger.log(Level.WARNING, "Non-unique IPC connection.");
+                    this.logger.log(Level.WARNING, "ServerIPCSocket name: " + serverName);
+                    this.logger.log(Level.WARNING, "Hostname/IP Address: " + serverSocket.getAddress().getHostAddress());
+                    this.logger.log(Level.WARNING, "Port: " + serverSocket.getPort());
+                    this.logger.log(Level.WARNING, "IPC Server " + serverName + " will not be started.");
+                    if (command) {
+                        final ComponentBuilder builder1 = new ComponentBuilder("An error has occurred while (re)loading one of the IPC Servers. Please check the BungeeIPC configuration section for the IPC Server ").color(ChatColor.RED);
+                        builder1.append(serverName).color(ChatColor.AQUA);
+                        builder1.append(".").color(ChatColor.RED);
+                        final ComponentBuilder builder2 = new ComponentBuilder("This appears to be an issue with ").color(ChatColor.RED);
+                        builder2.append("non-unique connection information (hostname/IP address and port combination are used somewhere else)").color(ChatColor.AQUA);
+                        builder2.append(". Please update the BungeeIPC configuration to remove this conflict.").color(ChatColor.RED);
+                        final ComponentBuilder builder3 = new ComponentBuilder("After updating the configuration section as needed, please run ").color(ChatColor.GOLD);
+                        builder3.append("/ipcb reload").color(ChatColor.AQUA);
+                        builder3.append(" to reload the updated configuration.").color(ChatColor.GOLD);
+                        final ComponentBuilder builder4 = new ComponentBuilder("If you believe the configuration has no issues, or this error persists after updating and reloading, please report it to a server administrator.").color(ChatColor.RED);
+                        sender.sendMessage(builder1.create());
+                        sender.sendMessage(builder2.create());
+                        sender.sendMessage(builder3.create());
+                        sender.sendMessage(builder4.create());
+                    }
+                    continue;
                 }
-                
-                if (command) {
-                    final ComponentBuilder builder = new ComponentBuilder("The BungeeIPC configuration has been reloaded. Please run ").color(ChatColor.GREEN);
-                    builder.append("/ipcb status").color(ChatColor.AQUA);
-                    builder.append(" in a few seconds to verify that the IPC Servers have reloaded and reconnected successfully.").color(ChatColor.GREEN);
-                    sender.sendMessage(builder.create());
+    
+                if (this.serverSockets.containsKey(serverName)) {
+                    this.logger.log(Level.WARNING, "ServerIPCSocket previously defined and added.");
+                    this.logger.log(Level.WARNING, "Please check all configurations for duplicates.");
+                    this.logger.log(Level.WARNING, "Duplicate ServerIPCSocket name: " + serverName);
+                    this.logger.log(Level.WARNING, "IPC Server " + serverName + " will not be started.");
+                    if (command) {
+                        final ComponentBuilder builder1 = new ComponentBuilder("An error has occurred while (re)loading one of the IPC Servers. Please check the BungeeIPC configuration section for the IPC Server ").color(ChatColor.RED);
+                        builder1.append(serverName).color(ChatColor.AQUA);
+                        builder1.append(".").color(ChatColor.RED);
+                        final ComponentBuilder builder2 = new ComponentBuilder("This appears to be an issue with ").color(ChatColor.RED);
+                        builder2.append("non-unique IPC Server names").color(ChatColor.AQUA);
+                        builder2.append(". Please update the BungeeIPC configuration to remove this conflict.").color(ChatColor.RED);
+                        final ComponentBuilder builder3 = new ComponentBuilder("After updating the configuration section as needed, please run ").color(ChatColor.GOLD);
+                        builder3.append("/ipcb reload").color(ChatColor.AQUA);
+                        builder3.append(" to reload the updated configuration.").color(ChatColor.GOLD);
+                        final ComponentBuilder builder4 = new ComponentBuilder("If you believe the configuration has no issues, or this error persists after updating and reloading, please report it to a server administrator.").color(ChatColor.RED);
+                        sender.sendMessage(builder1.create());
+                        sender.sendMessage(builder2.create());
+                        sender.sendMessage(builder3.create());
+                        sender.sendMessage(builder4.create());
+                    }
+                    continue;
                 }
-            });
+    
+                this.serverSockets.put(serverName, serverSocket);
+            }
+
+            for (final ServerIPCSocket serverSocket : this.serverSockets.values()) {
+                serverSocket.start();
+            }
+            
+            if (command) {
+                final ComponentBuilder builder = new ComponentBuilder("The BungeeIPC configuration has been reloaded. Please run ").color(ChatColor.GREEN);
+                builder.append("/ipcb status").color(ChatColor.AQUA);
+                builder.append(" in a few seconds to verify that the IPC Servers have reloaded and reconnected successfully.").color(ChatColor.GREEN);
+                sender.sendMessage(builder.create());
+            }
         });
     }
 }

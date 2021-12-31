@@ -32,6 +32,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 import org.bspfsystems.bungeeipc.api.common.IPCMessage;
+import org.bspfsystems.bungeeipc.api.server.ServerIPCMessage;
 import org.bspfsystems.bungeeipc.bungeecord.BungeeIPCPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -131,7 +132,7 @@ public final class IPCBCommand extends Command implements TabExecutor {
                 }
             }
             
-            final IPCMessage message = new IPCMessage(serverName, "SERVER_COMMAND");
+            final IPCMessage message = new ServerIPCMessage(serverName, "SERVER_COMMAND");
             message.add(playerName);
             for (final String commandPart : argsList) {
                 message.add(commandPart);
@@ -323,16 +324,13 @@ public final class IPCBCommand extends Command implements TabExecutor {
     private ChatColor getColor(@NotNull final String serverName) {
         
         final int onlineStatus = this.ipcPlugin.getOnlineStatus(serverName);
-        final boolean registered = this.ipcPlugin.isRegisteredServer(serverName);
-        final boolean available = this.ipcPlugin.isServerRunning(serverName);
-        final boolean connected = this.ipcPlugin.isServerConnected(serverName);
         
         if (onlineStatus == 1) {
-            if (!registered) {
+            if (!this.ipcPlugin.isRegisteredServer(serverName)) {
                 return ChatColor.BLUE;
-            } else if (connected) {
+            } else if (this.ipcPlugin.isServerConnected(serverName)) {
                 return ChatColor.GREEN;
-            } else if (available) {
+            } else if (this.ipcPlugin.isServerRunning(serverName)) {
                 return ChatColor.YELLOW;
             } else {
                 return ChatColor.GOLD;

@@ -33,10 +33,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import org.bspfsystems.bungeeipc.api.client.IPCClientSocket;
+import org.bspfsystems.bungeeipc.api.client.ClientIPCSocket;
 import org.bspfsystems.bungeeipc.api.common.IPCMessage;
 import org.bspfsystems.bungeeipc.api.common.IPCReader;
-import org.bspfsystems.bungeeipc.api.client.IPCClientPlugin;
+import org.bspfsystems.bungeeipc.api.client.ClientIPCPlugin;
 import org.bspfsystems.bungeeipc.bukkit.command.IPCTabExecutor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -50,15 +50,15 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents the implementation of a Bukkit {@link JavaPlugin} that provides
- * the {@link IPCClientPlugin} functionality.
+ * the {@link ClientIPCPlugin} functionality.
  */
-public final class BukkitIPCPlugin extends JavaPlugin implements IPCClientPlugin {
+public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin {
     
     private Logger logger;
     
     private BukkitScheduler scheduler;
     
-    private IPCClientSocket socket;
+    private ClientIPCSocket socket;
     private ConcurrentHashMap<String, IPCReader> readers;
     
     /**
@@ -262,7 +262,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements IPCClientPlugin
     }
     
     /**
-     * Performs the starting of the {@link IPCClientSocket}.
+     * Performs the starting of the {@link ClientIPCSocket}.
      */
     private void startClient() {
         if (this.socket == null) {
@@ -471,7 +471,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements IPCClientPlugin
             this.scheduler.runTask(this, () -> {
     
                 try {
-                    this.socket = new BukkitIPCClientSocket(this, config, sslSocketFactory, tlsVersionWhitelist, tlsCipherSuiteWhitelist);
+                    this.socket = new BukkitClientIPCSocket(this, config, sslSocketFactory, tlsVersionWhitelist, tlsCipherSuiteWhitelist);
                 } catch (IllegalArgumentException e) {
                     this.logger.log(Level.WARNING, "Unable to create IPC Client.");
                     this.logger.log(Level.WARNING, "IPC Client will not be started.");

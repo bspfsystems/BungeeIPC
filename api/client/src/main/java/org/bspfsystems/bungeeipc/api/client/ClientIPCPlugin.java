@@ -25,7 +25,7 @@ import org.bspfsystems.bungeeipc.api.common.IPCSocket;
 /**
  * Represents the client-side version of the {@link IPCPlugin}.
  */
-public interface IPCClientPlugin extends IPCPlugin {
+public interface ClientIPCPlugin extends IPCPlugin {
     
     /**
      * Gets whether the client-side connection is running or not.
@@ -36,10 +36,10 @@ public interface IPCClientPlugin extends IPCPlugin {
     boolean isClientRunning();
     
     /**
-     * Gets whether the {@link IPCClientSocket} is connected or not.
+     * Gets whether the {@link ClientIPCSocket} is connected or not.
      * <p>
      * This will always return {@code false} if
-     * {@link IPCClientPlugin#isClientRunning()} returns {@code false}.
+     * {@link ClientIPCPlugin#isClientRunning()} returns {@code false}.
      * 
      * @return {@code true} if the client {@link IPCSocket} is connected,
      *         {@code false} if the client is not connected or is not

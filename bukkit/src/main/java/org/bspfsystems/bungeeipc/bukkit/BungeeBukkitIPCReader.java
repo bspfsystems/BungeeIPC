@@ -103,7 +103,7 @@ final class BungeeBukkitIPCReader implements IPCReader {
             
             this.ipcPlugin.getServer().dispatchCommand(sender, builder.toString());
         } else {
-            this.logger.log(Level.WARNING, "IPCMessage sent to this Minecraft server (name: " + message.getServer() + ").");
+            this.logger.log(Level.WARNING, "IPCMessage sent to this Minecraft server (name: " + message.getDestination() + ").");
             this.logger.log(Level.WARNING, "The channel " + channel + " is not registered to this server.");
             this.logger.log(Level.WARNING, "IPC message data: " + message.toString());
         }

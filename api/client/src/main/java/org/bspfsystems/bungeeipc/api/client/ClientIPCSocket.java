@@ -17,27 +17,15 @@
  * limitations under the License.
  */
 
-package org.bspfsystems.bungeeipc.api.server;
+package org.bspfsystems.bungeeipc.api.client;
 
 import org.bspfsystems.bungeeipc.api.common.IPCMessage;
 import org.bspfsystems.bungeeipc.api.common.IPCSocket;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a client connection for {@link IPCMessage}s. The
- * {@link IPCServerSocket} is usually used on the {@link IPCServerPlugin} side
- * of the connection (the BungeeCord proxy).
+ * {@link ClientIPCSocket} is usually used on the {@link ClientIPCPlugin} side
+ * of the connection (the Minecraft server).
  */
-public interface IPCServerSocket extends IPCSocket {
-    
-    /**
-     * Gets the name of this {@link IPCServerSocket}.
-     * <p>
-     * This may or may not be the same name as the Minecraft server that is
-     * configured in BungeeCord, depending on the implementation.
-     * 
-     * @return The name of this {@link IPCServerSocket}.
-     */
-    @NotNull
-    String getName();
+public interface ClientIPCSocket extends IPCSocket {
 }

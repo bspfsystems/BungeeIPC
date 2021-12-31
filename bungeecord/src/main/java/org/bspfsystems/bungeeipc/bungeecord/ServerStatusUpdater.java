@@ -92,7 +92,7 @@ final class ServerStatusUpdater implements Runnable {
         final Socket socket = new Socket();
         try {
             if (ipcPlugin.isExtraLoggingEnabled()) {
-                this.logger.log(Level.CONFIG, "Updating server status for " + server.getSocketAddress().toString());
+                this.logger.log(Level.INFO, "Updating server status for " + server.getSocketAddress().toString());
             }
             socket.connect(server.getSocketAddress(), 500);
             socket.close();
@@ -101,7 +101,7 @@ final class ServerStatusUpdater implements Runnable {
             return;
         } catch (IOException e) {
             if (this.ipcPlugin.isExtraLoggingEnabled()) {
-                this.logger.log(Level.CONFIG, e.getClass().getSimpleName() + " thrown while updating status.", e);
+                this.logger.log(Level.INFO, e.getClass().getSimpleName() + " thrown while updating status.", e);
             }
         }
         this.scheduler.runAsync(this.ipcPlugin, () -> this.ipcPlugin.setOnlineStatus(server.getName(), false));

@@ -49,7 +49,7 @@ public interface IPCPlugin {
     
     /**
      * Sends the {@link IPCMessage} over the network connection to its
-     * destination ({@link IPCMessage#getServer()}).
+     * destination ({@link IPCMessage#getDestination()}).
      * 
      * @param message The {@link IPCMessage} to send.
      */

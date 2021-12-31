@@ -24,28 +24,34 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
+import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.scheduler.TaskScheduler;
 import net.md_5.bungee.config.Configuration;
+import org.bspfsystems.bungeeipc.api.common.AbstractIPCMessage;
 import org.bspfsystems.bungeeipc.api.common.IPCMessage;
-import org.bspfsystems.bungeeipc.api.server.IPCServerSocket;
+import org.bspfsystems.bungeeipc.api.common.IPCSocket;
+import org.bspfsystems.bungeeipc.api.server.ServerIPCSocket;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents the BungeeCord implementation of an {@link IPCServerSocket}.
+ * Represents the BungeeCord implementation of an {@link ServerIPCSocket}.
  */
-final class BungeeIPCServerSocket implements IPCServerSocket {
+final class BungeeServerIPCSocket implements ServerIPCSocket {
     
     private final BungeeIPCPlugin ipcPlugin;
     private final Logger logger;
@@ -53,6 +59,8 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
     private final String name;
     private final InetAddress address;
     private final int port;
+    
+    private final InetAddress serverAddress;
     
     private final SSLServerSocketFactory sslServerSocketFactory;
     private final List<String> tlsVersionWhitelist;
@@ -68,11 +76,11 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
     private final AtomicInteger taskId;
     
     /**
-     * Constructs a new {@link BungeeIPCServerSocket}.
+     * Constructs a new {@link BungeeServerIPCSocket}.
      * 
      * @param ipcPlugin The {@link BungeeIPCPlugin} controlling the
-     *                  {@link BungeeIPCServerSocket}.
-     * @param name The name to assign to the {@link BungeeIPCServerSocket}.
+     *                  {@link BungeeServerIPCSocket}.
+     * @param name The name to assign to the {@link BungeeServerIPCSocket}.
      * @param config The {@link Configuration} used to configure the IP address
      *               and port to bind the server socket to.
      * @param localAddresses A {@link Collection} of IP addresses that are
@@ -80,15 +88,15 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
      * @param sslServerSocketFactory The {@link SSLServerSocketFactory} used for
      *                               SSL/TLS encryption on the connection.
      * @param tlsVersionWhitelist A {@link List} of SSL/TLS versions that the
-     *                            {@link BungeeIPCServerSocket} may use.
+     *                            {@link BungeeServerIPCSocket} may use.
      * @param tlsCipherSuiteWhitelist A {@link List} of SSL/TLS cipher suites
-     *                                that the {@link BungeeIPCServerSocket} may
+     *                                that the {@link BungeeServerIPCSocket} may
      *                                use.
      * @throws IllegalArgumentException If there is a configuration error when
      *                                  setting up the
-     *                                  {@link BungeeIPCServerSocket}.
+     *                                  {@link BungeeServerIPCSocket}.
      */
-    BungeeIPCServerSocket(@NotNull final BungeeIPCPlugin ipcPlugin, @NotNull final String name, @NotNull final Configuration config, @NotNull final Collection<InetAddress> localAddresses, @Nullable final SSLServerSocketFactory sslServerSocketFactory, @NotNull final List<String> tlsVersionWhitelist, @NotNull final List<String> tlsCipherSuiteWhitelist) throws IllegalArgumentException {
+    BungeeServerIPCSocket(@NotNull final BungeeIPCPlugin ipcPlugin, @NotNull final String name, @NotNull final Configuration config, @NotNull final Collection<InetAddress> localAddresses, @Nullable final SSLServerSocketFactory sslServerSocketFactory, @NotNull final List<String> tlsVersionWhitelist, @NotNull final List<String> tlsCipherSuiteWhitelist) throws IllegalArgumentException {
         
         this.ipcPlugin = ipcPlugin;
         this.logger = this.ipcPlugin.getLogger();
@@ -96,8 +104,21 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         final String addressValue = config.getString("bind_address", "localhost");
         final int portValue = config.getInt("bind_port", -1);
     
-        BungeeIPCServerSocket.validateNotBlank(name, "Server name cannot be blank.");
-        BungeeIPCServerSocket.validateNotBlank(addressValue, "IP address cannot be blank.");
+        BungeeServerIPCSocket.validateNotBlank(name, "Server name cannot be blank.");
+        if (name.equalsIgnoreCase(IPCMessage.PROXY_SERVER)) {
+            throw new IllegalArgumentException("Server name cannot be the proxy name (" + IPCMessage.PROXY_SERVER + ").");
+        }
+        if (name.equalsIgnoreCase(IPCMessage.BROADCAST_SERVER)) {
+            throw new IllegalArgumentException("Server name cannot be the broadcast name (" + IPCMessage.BROADCAST_SERVER + ").");
+        }
+        if (name.equalsIgnoreCase(IPCMessage.PLACEHOLDER_SERVER)) {
+            throw new IllegalArgumentException("Server name cannot be the placeholder server name (" + IPCMessage.PLACEHOLDER_SERVER + ").");
+        }
+        final ServerInfo serverInfo = this.ipcPlugin.getProxy().getServerInfo(name);
+        if (serverInfo == null) {
+            throw new IllegalArgumentException("Server name is not a Minecraft server registered with the BungeeCord proxy.");
+        }
+        BungeeServerIPCSocket.validateNotBlank(addressValue, "IP address cannot be blank.");
         if (portValue == -1) {
             throw new IllegalArgumentException("Port must be specified in the config.");
         }
@@ -116,6 +137,8 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
         if (!localAddresses.contains(this.address)) {
             throw new IllegalArgumentException("Cannot use network address that is not on the local system.");
         }
+        
+        this.serverAddress = ((InetSocketAddress) serverInfo.getSocketAddress()).getAddress();
         
         this.sslServerSocketFactory = sslServerSocketFactory;
         this.tlsVersionWhitelist = tlsVersionWhitelist;
@@ -178,6 +201,14 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
                 
                 this.logger.log(Level.INFO, "IPC server " + this.name + " waiting for client connection...");
                 this.socket = this.serverSocket.accept();
+                final InetAddress remoteAddress = ((InetSocketAddress) this.socket.getRemoteSocketAddress()).getAddress();
+                if (!remoteAddress.equals(this.serverAddress)) {
+                    this.logger.log(Level.WARNING, "IPC server " + this.name + " unable to connect: configured address mismatch.");
+                    this.logger.log(Level.WARNING, "Registered Minecraft server address: " + this.serverAddress.getHostAddress());
+                    this.logger.log(Level.WARNING, "IPC server connected address: " + remoteAddress.getHostAddress());
+                    this.stop();
+                    return;
+                }
                 this.connected.set(true);
                 this.logger.log(Level.INFO, "IPC server " + this.name + " connected to client.");
                 
@@ -186,7 +217,7 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
                 
                 while (this.connected.get()) {
                     
-                    final IPCMessage message = IPCMessage.read(fromBukkit.readUTF());
+                    final IPCMessage message = SimpleServerIPCMessage.read(fromBukkit.readUTF(), this.name);
                     this.scheduler.runAsync(this.ipcPlugin, () -> ipcPlugin.receiveMessage(message));
                 }
             } catch (IOException e) {
@@ -222,6 +253,81 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
                 this.connected.set(false);
                 this.toBukkit = null;
             }
+        }
+    }
+    
+    /**
+     * Represents a simple extension of an {@link AbstractIPCMessage}, used when
+     * reading in a serialized {@link IPCMessage}.
+     */
+    private static class SimpleServerIPCMessage extends AbstractIPCMessage {
+        
+        /**
+         * Constructs a new {@link IPCMessage}.
+         *
+         * @param origin The origin {@link IPCSocket}.
+         * @param destination The destination {@link IPCSocket}.
+         * @param channel The channel the {@link IPCMessage} will be read by.
+         * @param data The initial data as a {@link Queue}. Order will be
+         *             maintained.
+         * @see AbstractIPCMessage#AbstractIPCMessage(String, String, String, Queue)
+         * @throws IllegalArgumentException If {@code origin},
+         *                                  {@code destination}, and/or
+         *                                  {@code channel} are blank, or if any
+         *                                  element in {@code data} is
+         *                                  {@code null}.
+         */
+        private SimpleServerIPCMessage(@NotNull final String origin, @NotNull final String destination, @NotNull final String channel, @NotNull final Queue<String> data) {
+            super(origin, destination, channel, data);
+        }
+        
+        /**
+         * Reads in the given raw {@link IPCMessage} (as a {@link String}), and
+         * deserializes it into an {@link IPCMessage}.
+         *
+         * @param message The serialized {@link IPCMessage} as a {@link String}.
+         * @param serverName The name of the {@link IPCSocket} the message was
+         *                   read in by.
+         * @return The deserialized {@link IPCMessage}.
+         * @throws IllegalArgumentException If the given message is blank.
+         */
+        @NotNull
+        private static IPCMessage read(@NotNull String message, @NotNull final String serverName) {
+            
+            AbstractIPCMessage.validateNotBlank(message, "IPCMessage data cannot be blank, cannot recreate IPCMessage: " + message);
+            final Queue<String> split = new LinkedList<String>();
+            
+            int index = message.indexOf(AbstractIPCMessage.SEPARATOR);
+            while (index != -1) {
+                split.add(message.substring(0, index));
+                message = message.substring(index + AbstractIPCMessage.SEPARATOR.length());
+                index = message.indexOf(AbstractIPCMessage.SEPARATOR);
+            }
+            split.add(message);
+            
+            if (split.size() < 3) {
+                throw new IllegalArgumentException("Cannot recreate IPCMessage, missing some combination of origin, destination, and/or channel (data not required): " + message);
+            }
+            
+            final String origin = split.poll();
+            if (origin == null) {
+                throw new IllegalArgumentException("Cannot recreate IPCMessage, missing origin: " + message);
+            }
+            if (!origin.equals(IPCMessage.PLACEHOLDER_SERVER)) {
+                throw new IllegalArgumentException("Cannot recreate IPCMessage, invalid origin: " + message);
+            }
+            
+            final String destination = split.poll();
+            if (destination == null) {
+                throw new IllegalArgumentException("Cannot recreate IPCMessage, missing destination: " + message);
+            }
+            
+            final String channel = split.poll();
+            if (channel == null) {
+                throw new IllegalArgumentException("Cannot recreate IPCMessage, missing channel: " + message);
+            }
+            
+            return new SimpleServerIPCMessage(serverName, destination, channel, split);
         }
     }
     
@@ -315,10 +421,10 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
     }
     
     /**
-     * Gets the {@link InetAddress} that this {@link BungeeIPCServerSocket} will
+     * Gets the {@link InetAddress} that this {@link BungeeServerIPCSocket} will
      * bind to.
      * 
-     * @return The {@link InetAddress} that this {@link BungeeIPCServerSocket}
+     * @return The {@link InetAddress} that this {@link BungeeServerIPCSocket}
      *         will bind to.
      */
     @NotNull
@@ -327,10 +433,10 @@ final class BungeeIPCServerSocket implements IPCServerSocket {
     }
     
     /**
-     * Gets the port number that this {@link BungeeIPCServerSocket} will bind
+     * Gets the port number that this {@link BungeeServerIPCSocket} will bind
      * to.
      * 
-     * @return The port number that this {@link BungeeIPCServerSocket} will bind
+     * @return The port number that this {@link BungeeServerIPCSocket} will bind
      *         to.
      */
     int getPort() {

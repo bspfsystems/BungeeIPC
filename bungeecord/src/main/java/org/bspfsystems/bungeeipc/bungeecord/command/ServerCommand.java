@@ -33,7 +33,7 @@ import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 import org.bspfsystems.bungeeipc.api.common.IPCSocket;
-import org.bspfsystems.bungeeipc.api.server.IPCServerSocket;
+import org.bspfsystems.bungeeipc.api.server.ServerIPCSocket;
 import org.bspfsystems.bungeeipc.bungeecord.BungeeIPCPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -154,7 +154,7 @@ public final class ServerCommand extends Command implements TabExecutor {
      * <li>{@link ChatColor#BLUE} - Minecraft server online, not an
      *     IPC-enabled server</li>
      * <li>{@link ChatColor#GOLD} - Minecraft server online, IPC-enabled, not
-     *     yet available (the {@link IPCServerSocket} has not started.</li>
+     *     yet available (the {@link ServerIPCSocket} has not started.</li>
      * <li>{@link ChatColor#YELLOW} - Minecraft server online, IPC-enabled, not
      *     yet connected (the opposing {@link IPCSocket} has not yet
      *     connected).</li>
