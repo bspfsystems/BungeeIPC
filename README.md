@@ -6,8 +6,8 @@ BungeeIPC is a set of APIs and plugins meant for BungeeCord proxies and their ba
 
 You can download the latest version of the plugins from [here](https://github.com/bspfsystems/BungeeIPC/releases/latest/). Please be sure to download both the Bukkit and BungeeCord `.jar` files.
 
-The latest release is 2.1.1.<br />
-The latest snapshot is 2.1.1-SNAPSHOT.
+The latest release is 3.0.0.<br />
+The latest snapshot is 3.0.0-SNAPSHOT.
 
 ## Build from Source
 
@@ -147,13 +147,13 @@ Include the following in your `pom.xml` file:<br />
   <dependency>
     <groupId>org.bspfsystems.bungeeipc</groupId>
     <artifactId>bungeeipc-common-api</artifactId>
-    <version>2.1.1-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
     <scope>compile</scope>
   </dependency>
   <dependency>
     <groupId>org.bspfsystems.bungeeipc</groupId>
     <artifactId>bungeeipc-client-api</artifactId>
-    <version>2.1.1-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
     <scope>compile</scope>
   </dependency>
   ...
@@ -187,7 +187,7 @@ dependencies {
 Also include the following in your `gradle.properties` file:<br />
 ```
 ...
-bungeeipc_version = 2.1.1-SNAPSHOT
+bungeeipc_version = 3.0.0-SNAPSHOT
 ...
 ```
 
