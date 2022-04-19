@@ -2,7 +2,7 @@
  * This file is part of the BungeeIPC plugins for
  * BungeeCord and Bukkit servers for Minecraft.
  *
- * Copyright 2020-2021 BSPF Systems, LLC
+ * Copyright 2020-2022 BSPF Systems, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public interface IPCPlugin {
      *         {@code false} if it was already subscribed to or overrode another
      *         subscription.
      */
-    boolean addReader(@NotNull String channel, @NotNull IPCReader reader);
+    boolean addReader(@NotNull final String channel, @NotNull final IPCReader reader);
     
     /**
      * Unsubscribes the specific channel, returning the success.
@@ -45,7 +45,7 @@ public interface IPCPlugin {
      * @return {@code true} if the channel was unsubscribed from successfully,
      *         {@code false} otherwise.
      */
-    boolean removeReader(@NotNull String channel);
+    boolean removeReader(@NotNull final String channel);
     
     /**
      * Sends the {@link IPCMessage} over the network connection to its
@@ -53,12 +53,12 @@ public interface IPCPlugin {
      * 
      * @param message The {@link IPCMessage} to send.
      */
-    void sendMessage(@NotNull IPCMessage message);
+    void sendMessage(@NotNull final IPCMessage message);
     
     /**
      * Receives the {@link IPCMessage} and begins the processing of it.
      * 
      * @param message The {@link IPCMessage} to be processed.
      */
-    void receiveMessage(@NotNull IPCMessage message);
+    void receiveMessage(@NotNull final IPCMessage message);
 }

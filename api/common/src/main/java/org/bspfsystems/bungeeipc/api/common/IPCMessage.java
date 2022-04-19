@@ -2,7 +2,7 @@
  * This file is part of the BungeeIPC plugins for
  * BungeeCord and Bukkit servers for Minecraft.
  * 
- * Copyright 2020-2021 BSPF Systems, LLC
+ * Copyright 2020-2022 BSPF Systems, LLC
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,8 +84,11 @@ public interface IPCMessage {
      * Adds the next message to this {@link IPCMessage}.
      *
      * @param message The next message to add to this {@link IPCMessage}.
+     * @throws IllegalArgumentException If adding the message to this
+     *                                  {@link IPCMessage} would make it too
+     *                                  long to be sent.
      */
-    void add(@NotNull final String message);
+    void add(@NotNull final String message) throws IllegalArgumentException;
     
     /**
      * Checks to see if there is any remaining data to be read.

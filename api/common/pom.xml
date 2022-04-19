@@ -2,7 +2,7 @@
   ~ This file is part of the BungeeIPC plugins for Bukkit servers and
   ~ BungeeCord proxies for Minecraft.
   ~
-  ~ Copyright 2020-2021 BSPF Systems, LLC
+  ~ Copyright 2020-2022 BSPF Systems, LLC
   ~ 
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.bspfsystems.bungeeipc</groupId>
         <artifactId>bungeeipc-api</artifactId>
-        <version>3.0.0</version>
+        <version>3.0.1-SNAPSHOT</version>
     </parent>
     
     <artifactId>bungeeipc-common-api</artifactId>
@@ -36,7 +36,7 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>22.0.0</version>
+            <version>23.0.0</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
@@ -49,6 +49,14 @@
                 <version>3.2.4</version>
                 <configuration>
                     <minimizeJar>true</minimizeJar>
+                    <filters>
+                        <filter>
+                            <artifact>org.bspfsystems.bungeeipc:bungeeipc-common-api</artifact>
+                            <excludes>
+                                <exclude>META-INF/*.MF</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
                 </configuration>
                 <executions>
                     <execution>

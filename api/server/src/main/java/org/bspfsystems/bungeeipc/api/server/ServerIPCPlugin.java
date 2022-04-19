@@ -2,7 +2,7 @@
  * This file is part of the BungeeIPC plugins for
  * BungeeCord and Bukkit servers for Minecraft.
  *
- * Copyright 2020-2021 BSPF Systems, LLC
+ * Copyright 2020-2022 BSPF Systems, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public interface ServerIPCPlugin extends IPCPlugin {
      * @return {@code true} if an {@link ServerIPCSocket} is registered with the
      *         name, {@code false} otherwise.
      */
-    boolean isRegisteredServer(@NotNull String name);
+    boolean isRegisteredServer(@NotNull final String name);
     
     /**
      * Checks to see if the specified {@link ServerIPCSocket} is running or
@@ -50,7 +50,7 @@ public interface ServerIPCPlugin extends IPCPlugin {
      * @return {@code true} if the server is running, {@code false} if it is
      *         stopped.
      */
-    boolean isServerRunning(@NotNull String name);
+    boolean isServerRunning(@NotNull final String name);
     
     /**
      * Checks to see if the client side of the {@link ServerIPCSocket} has
@@ -64,7 +64,7 @@ public interface ServerIPCPlugin extends IPCPlugin {
      *         the {@link ServerIPCSocket}, {@code false} if the connection has
      *         not been completed or the {@link ServerIPCSocket} is not running.
      */
-    boolean isServerConnected(@NotNull String name);
+    boolean isServerConnected(@NotNull final String name);
     
     /**
      * Restarts the specified {@link ServerIPCSocket}. This does not restart the
@@ -72,7 +72,7 @@ public interface ServerIPCPlugin extends IPCPlugin {
      * 
      * @param name The server to restart.
      */
-    void restartServer(@NotNull String name);
+    void restartServer(@NotNull final String name);
     
     /**
      * Broadcasts the given {@link IPCMessage} to all {@link ServerIPCSocket}s,
@@ -80,5 +80,5 @@ public interface ServerIPCPlugin extends IPCPlugin {
      * 
      * @param message The {@link IPCMessage} to broadcast.
      */
-    void broadcastMessage(@NotNull IPCMessage message);
+    void broadcastMessage(@NotNull final IPCMessage message);
 }

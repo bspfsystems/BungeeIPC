@@ -26,16 +26,21 @@
 #                           General Plugin Settings                            #
 ################################################################################
 
-# Enables extra logging for the plugin logger.
+# The logging level for the plugin logger.
 #
-# - This is equivalent to a logging level of "debug".
-# - Due to a limitation of BungeeCord's Logger, debug/config is not and cannot
-#   be enabled. The alternative is to enable extra logging, which will come
-#   across at the INFO level.
-# - No settings will need to be changed in BungeeCord's config.yml file.
-# - The default for this setting is false. Null or empty values will be treated
-#   as false.
-extra_logging: false
+# - This will only affect the plugin logger's logging level for this plugin.
+# - NOTE: This replaces the old setting "extra_logging", as a Log4j adapter has
+#   been created within BungeeCord.
+# - The default is "INFO", but null or empty will be treated as INFO.
+# - The available levels and their respective Log4j levels are:
+#      - SEVERE  - Error
+#      - WARNING - Warn
+#      - INFO    - Info
+#      - CONFIG  - Info
+#      - FINE    - Debug
+#      - FINER   - Debug
+#      - FINEST  - Trace
+logging_level: "INFO"
 
 ################################################################################
 #                          IPC Servers Configuration                           #
@@ -101,7 +106,11 @@ use_ssl: false
 
 # The KeyStore file location
 #
-# - It is highly recommended to use the fully-qualified path to the KeyStore file.
+# - It is highly recommended to use the fully-qualified path to the KeyStore
+#   file.
+# - When creating the keystore, depending on the CA that generated your
+#   certificate, you may need to have a full-chain certificate, as Java's
+#   default trusted CAs may not include yours.
 # - If no file path is specified, an exception will be thrown.
 key_store_file: ""
 
@@ -161,8 +170,8 @@ tls_cipher_suite_whitelist:
 # The KeyStore instance
 #
 # - Which instance of the KeyStore you want to use.
-# - If no instance is specified, "JKS" will be used.
-key_store_instance: "JKS"
+# - If no instance is specified, "PKCS12" will be used.
+key_store_instance: "PKCS12"
 
 # The KeyManagerFactory algorithm
 #

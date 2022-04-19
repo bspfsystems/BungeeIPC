@@ -2,7 +2,7 @@
  * This file is part of the BungeeIPC plugins for Bukkit servers and
  * BungeeCord proxies for Minecraft.
  *
- * Copyright (C) 2020-2021 BSPF Systems, LLC (https://bspfsystems.org/)
+ * Copyright (C) 2020-2022 BSPF Systems, LLC (https://bspfsystems.org/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -77,7 +77,6 @@ import org.jetbrains.annotations.NotNull;
 public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
     
     private Logger logger;
-    private AtomicBoolean extraLogging;
     private TaskScheduler scheduler;
     
     private ConcurrentHashMap<String, IPCReader> readers;
@@ -105,7 +104,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
         this.logger.log(Level.INFO, "///////////////////////////////////////////////////////////////////////////");
         this.logger.log(Level.INFO, "//                                                                       //");
         this.logger.log(Level.INFO, "// BungeeIPC Bukkit/BungeeCord plugin for Minecraft                      //");
-        this.logger.log(Level.INFO, "// Copyright (C) 2020-2021 BSPF Systems, LLC (https://bspfsystems.org/)  //");
+        this.logger.log(Level.INFO, "// Copyright (C) 2020-2022 BSPF Systems, LLC (https://bspfsystems.org/)  //");
         this.logger.log(Level.INFO, "//                                                                       //");
         this.logger.log(Level.INFO, "// This program is free software: you can redistribute it and/or modify  //");
         this.logger.log(Level.INFO, "// it under the terms of the GNU General Public License as published by  //");
@@ -122,7 +121,6 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
         this.logger.log(Level.INFO, "//                                                                       //");
         this.logger.log(Level.INFO, "///////////////////////////////////////////////////////////////////////////");
         
-        this.extraLogging = new AtomicBoolean(false);
         this.scheduler = this.getProxy().getScheduler();
         
         // Command setup
@@ -345,20 +343,6 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
         }
     }
     
-    //////////////////////////////
-    // GENERAL ATTRIBUTE ACCESS //
-    //////////////////////////////
-    
-    /**
-     * Gets if extra logging (debug logging) is enabled or not.
-     * 
-     * @return {@code true} if extra logging (debug logging) is enabled,
-     *         {@code false} otherwise.
-     */
-    public boolean isExtraLoggingEnabled() {
-        return this.extraLogging.get();
-    }
-    
     ////////////////////////////
     // COMMAND PUBLIC METHODS //
     ////////////////////////////
@@ -372,7 +356,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
      * @param online {@code true} if the {@link ServerInfo Server} is online,
      *               {@code false} otherwise.
      */
-    synchronized void setOnlineStatus(@NotNull final String name, final boolean online) {
+    void setOnlineStatus(@NotNull final String name, final boolean online) {
         this.onlineStatuses.get(name).set(online);
     }
     
@@ -509,8 +493,19 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                 }
                 return;
             }
-            
-            this.extraLogging.set(config.getBoolean("extra_logging", false));
+    
+            Level loggingLevel;
+            try {
+                loggingLevel = Level.parse(config.getString("logging_level", "INFO"));
+            } catch (NullPointerException | IllegalArgumentException e) {
+                this.logger.log(Level.WARNING, "Unable to load the BungeeIPC logging level.");
+                this.logger.log(Level.WARNING, "Will use the default level (INFO).");
+                this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
+                if (command) {
+                    sender.sendMessage(new ComponentBuilder("An error has occurred while (re)loading the BungeeIPC configuration. Please try again. If this error persists, please report it to a server administrator.").color(ChatColor.RED).create());
+                }
+                loggingLevel = Level.INFO;
+            }
             
             final SSLServerSocketFactory sslServerSocketFactory;
             final List<String> tlsVersionWhitelist = new ArrayList<String>();
@@ -551,9 +546,9 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                     return;
                 }
         
-                String keyStoreInstance = config.getString("key_store_instance", "JKS");
+                String keyStoreInstance = config.getString("key_store_instance", "PKCS12");
                 if (keyStoreInstance == null || keyStoreInstance.trim().isEmpty()) {
-                    keyStoreInstance = "JKS";
+                    keyStoreInstance = "PKCS12";
                 }
                 String keyManagerFactoryAlgorithm = config.getString("key_manager_factory_algorithm", "NewSunX509");
                 if (keyManagerFactoryAlgorithm == null || keyManagerFactoryAlgorithm.trim().isEmpty()) {
@@ -750,6 +745,8 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
     
                 this.serverSockets.put(serverName, serverSocket);
             }
+            
+            this.logger.setLevel(loggingLevel);
 
             for (final ServerIPCSocket serverSocket : this.serverSockets.values()) {
                 serverSocket.start();

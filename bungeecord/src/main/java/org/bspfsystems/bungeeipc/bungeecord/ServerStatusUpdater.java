@@ -2,7 +2,7 @@
  * This file is part of the BungeeIPC plugins for Bukkit servers and
  * BungeeCord proxies for Minecraft.
  *
- * Copyright (C) 2020-2021 BSPF Systems, LLC (https://bspfsystems.org/)
+ * Copyright (C) 2020-2022 BSPF Systems, LLC (https://bspfsystems.org/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,11 +59,31 @@ final class ServerStatusUpdater implements Runnable {
     /**
      * Runs through the {@link Collection} of {@link ServerInfo Server}s,
      * performing updates on their online statuses.
+     * <p>
+     * This works by attempting to open a connection (via the configured
+     * information in BungeeCord's "config.yml" file), with a timeout of 500
+     * milliseconds. If that connection opens, then the
+     * {@link ServerInfo Server} is considered online. If an {@link IOException}
+     * is thrown (due to reaching the timeout, unable to connect, etc), then the
+     * {@link ServerInfo Server} will be considered offline.
      */
     @Override
     public void run() {
+        
         for (final ServerInfo server : this.servers) {
-            this.scheduler.runAsync(this.ipcPlugin, () -> this.updateStatus(server));
+            try {
+                this.logger.log(Level.FINE, "Updating server status for " + server.getSocketAddress().toString());
+    
+                final Socket socket = new Socket();
+                socket.connect(server.getSocketAddress(), 500);
+                socket.close();
+        
+                this.ipcPlugin.setOnlineStatus(server.getName(), true);
+                continue;
+            } catch (IOException e) {
+                this.logger.log(Level.FINE, e.getClass().getSimpleName() + " thrown while updating status.", e);
+            }
+            this.ipcPlugin.setOnlineStatus(server.getName(), false);
         }
     }
     
@@ -72,38 +92,5 @@ final class ServerStatusUpdater implements Runnable {
      */
     void stop() {
         this.scheduler.cancel(this.taskId);
-    }
-    
-    /**
-     * Updates the online status for the given {@link ServerInfo Server}.
-     * <p>
-     * This works by attempting to open a connection (via the configured
-     * information in BungeeCord's "config.yml" file), with a timeout of 500
-     * milliseconds. If that connection opens, then the
-     * {@link ServerInfo Server} is considered online. If an {@link IOException}
-     * is thrown (due to reaching the timeout, unable to connect, etc), then the
-     * {@link ServerInfo Server} will be considered offline.
-     * 
-     * @param server The {@link ServerInfo Server} to get the updated online
-     *               status on.
-     */
-    private synchronized void updateStatus(@NotNull final ServerInfo server) {
-        
-        final Socket socket = new Socket();
-        try {
-            if (ipcPlugin.isExtraLoggingEnabled()) {
-                this.logger.log(Level.INFO, "Updating server status for " + server.getSocketAddress().toString());
-            }
-            socket.connect(server.getSocketAddress(), 500);
-            socket.close();
-            
-            this.scheduler.runAsync(this.ipcPlugin, () -> this.ipcPlugin.setOnlineStatus(server.getName(), true));
-            return;
-        } catch (IOException e) {
-            if (this.ipcPlugin.isExtraLoggingEnabled()) {
-                this.logger.log(Level.INFO, e.getClass().getSimpleName() + " thrown while updating status.", e);
-            }
-        }
-        this.scheduler.runAsync(this.ipcPlugin, () -> this.ipcPlugin.setOnlineStatus(server.getName(), false));
     }
 }

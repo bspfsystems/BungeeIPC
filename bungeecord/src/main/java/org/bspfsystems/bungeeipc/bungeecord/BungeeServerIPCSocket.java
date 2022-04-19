@@ -2,7 +2,7 @@
  * This file is part of the BungeeIPC plugins for Bukkit servers and
  * BungeeCord proxies for Minecraft.
  *
- * Copyright (C) 2020-2021 BSPF Systems, LLC (https://bspfsystems.org/)
+ * Copyright (C) 2020-2022 BSPF Systems, LLC (https://bspfsystems.org/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -223,12 +223,10 @@ final class BungeeServerIPCSocket implements ServerIPCSocket {
             } catch (IOException e) {
                 
                 this.logger.log(Level.INFO, "IPC server " + this.name + " connection broken.");
-                if (this.ipcPlugin.isExtraLoggingEnabled()) {
-                    this.logger.log(Level.INFO, "Server Name - " + this.name);
-                    this.logger.log(Level.INFO, "IP Address  - " + this.address.getHostAddress());
-                    this.logger.log(Level.INFO, "Port Number - " + this.port);
-                    this.logger.log(Level.INFO, e.getClass().getSimpleName() + " thrown.", e);
-                }
+                this.logger.log(Level.FINE, "Server Name - " + this.name);
+                this.logger.log(Level.FINE, "IP Address  - " + this.address.getHostAddress());
+                this.logger.log(Level.FINE, "Port Number - " + this.port);
+                this.logger.log(Level.FINE, e.getClass().getSimpleName() + " thrown.", e);
                 
                 try {
                     if (this.toBukkit != null) {
