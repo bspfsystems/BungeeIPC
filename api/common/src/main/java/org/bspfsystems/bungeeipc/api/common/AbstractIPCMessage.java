@@ -1,9 +1,9 @@
-/*
+/* 
  * This file is part of the BungeeIPC plugins for
  * BungeeCord and Bukkit servers for Minecraft.
- *
+ * 
  * Copyright 2020-2022 BSPF Systems, LLC
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -57,7 +57,7 @@ public abstract class AbstractIPCMessage implements IPCMessage {
      * Constructs a new {@link IPCMessage} containing the initial data in the
      * given {@link List}. Order of the items in the {@link List} will be
      * maintained.
-     *
+     * 
      * @param origin The origin {@link IPCSocket}.
      * @param destination The destination {@link IPCSocket}.
      * @param channel The channel the {@link IPCMessage} will be read by.
@@ -76,7 +76,7 @@ public abstract class AbstractIPCMessage implements IPCMessage {
      * Constructs a new {@link IPCMessage} containing the initial data in the
      * given {@link Queue}. Order of the items in the {@link Queue} will be
      * maintained.
-     *
+     * 
      * @param origin The origin {@link IPCSocket}.
      * @param destination The destination {@link IPCSocket}.
      * @param channel The channel the {@link IPCMessage} will be read by.
@@ -172,16 +172,16 @@ public abstract class AbstractIPCMessage implements IPCMessage {
     @Override
     @NotNull
     public final String write() {
-    
+        
         final StringBuilder builder = new StringBuilder();
         builder.append(this.origin);
         builder.append(AbstractIPCMessage.SEPARATOR).append(this.destination);
         builder.append(AbstractIPCMessage.SEPARATOR).append(this.channel);
-    
+        
         for (final String item : this.data) {
             builder.append(AbstractIPCMessage.SEPARATOR).append(item);
         }
-    
+        
         return builder.toString();
     }
     
@@ -241,7 +241,7 @@ public abstract class AbstractIPCMessage implements IPCMessage {
     /**
      * Validates that the given {@link String value} is not empty (or only
      * whitespace).
-     *
+     * 
      * @param value The {@link String value} to check for being blank.
      * @param message The error message to display if the value is blank.
      * @throws IllegalArgumentException If the given value is blank.
@@ -255,7 +255,7 @@ public abstract class AbstractIPCMessage implements IPCMessage {
     /**
      * Validates that the given {@link Queue} has no data in it that is
      * {@code null}.
-     *
+     * 
      * @param data The {@link Queue} of data to check.
      * @param message The error message to display if the given {@link Queue}
      *                has {@code null} data in it.

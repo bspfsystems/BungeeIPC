@@ -1,19 +1,19 @@
-/*
+/* 
  * This file is part of the BungeeIPC plugins for Bukkit servers and
  * BungeeCord proxies for Minecraft.
- *
+ * 
  * Copyright (C) 2020-2022 BSPF Systems, LLC (https://bspfsystems.org/)
- *
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -100,7 +100,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
     public void onEnable() {
         
         this.logger = this.getLogger();
-    
+        
         this.logger.log(Level.INFO, "///////////////////////////////////////////////////////////////////////////");
         this.logger.log(Level.INFO, "//                                                                       //");
         this.logger.log(Level.INFO, "// BungeeIPC Bukkit/BungeeCord plugin for Minecraft                      //");
@@ -130,7 +130,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
         if (bungeeServerPlugin != null) {
             pluginManager.unregisterCommands(bungeeServerPlugin);
         }
-    
+        
         pluginManager.registerCommand(this, new IPCBCommand(this));
         pluginManager.registerCommand(this, new ServerCommand(this));
         
@@ -318,7 +318,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
     /**
      * Validates that the given {@link String value} is not empty (or only
      * whitespace).
-     *
+     * 
      * @param value The {@link String value} to check for being blank.
      * @param message The error message to display if the value is blank.
      * @throws IllegalArgumentException If the given value is blank.
@@ -383,7 +383,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
     /**
      * Reloads the configuration file, displaying any error messages to the
      * given {@link CommandSender}.
-     *
+     * 
      * @param sender The {@link CommandSender} that triggered the configuration
      *               reload.
      */
@@ -394,7 +394,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
     /**
      * Reloads the configuration file, displaying any error messages to the
      * given {@link CommandSender} if this was triggered via {@link Command}.
-     *
+     * 
      * @param sender The {@link CommandSender} that triggered the configuration
      *               reload.
      * @param command If {@code true}, error messages will be displayed to the
@@ -437,16 +437,16 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                         }
                         return;
                     }
-                
+                    
                     final InputStream defaultConfig = this.getResourceAsStream(configFile.getName());
                     final FileOutputStream outputStream = new FileOutputStream(configFile);
                     final byte[] buffer = new byte[4096];
                     int bytesRead;
-                
+                    
                     while ((bytesRead = defaultConfig.read(buffer)) != -1) {
                         outputStream.write(buffer, 0, bytesRead);
                     }
-                
+                    
                     outputStream.flush();
                     outputStream.close();
                     
@@ -472,7 +472,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                 }
                 return;
             }
-        
+            
             final Configuration config;
             try {
                 config = provider.load(configFile);
@@ -493,7 +493,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                 }
                 return;
             }
-    
+            
             Level loggingLevel;
             try {
                 loggingLevel = Level.parse(config.getString("logging_level", "INFO"));
@@ -514,10 +514,10 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
             if (!config.getBoolean("use_ssl", false)) {
                 sslServerSocketFactory = null;
             } else {
-        
+                
                 final String keyStoreFile = config.getString("key_store_file", null);
                 final String keyStorePassword = config.getString("key_store_password", null);
-        
+                
                 if (keyStoreFile == null || keyStoreFile.trim().isEmpty()) {
                     this.logger.log(Level.WARNING, "KeyStore file is null or empty: " + (keyStoreFile == null ? "null" : keyStoreFile));
                     this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
@@ -531,7 +531,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                     }
                     return;
                 }
-        
+                
                 if (keyStorePassword == null || keyStorePassword.trim().isEmpty()) {
                     this.logger.log(Level.WARNING, "KeyStore password is null or empty: " + (keyStorePassword == null ? "null" : keyStorePassword));
                     this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
@@ -545,7 +545,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                     }
                     return;
                 }
-        
+                
                 String keyStoreInstance = config.getString("key_store_instance", "PKCS12");
                 if (keyStoreInstance == null || keyStoreInstance.trim().isEmpty()) {
                     keyStoreInstance = "PKCS12";
@@ -562,7 +562,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                 if (sslContextProtocol == null || sslContextProtocol.trim().isEmpty()) {
                     sslContextProtocol = "TLS";
                 }
-        
+                
                 final List<String> tlsVersionWhitelistRaw = config.getStringList("tls_version_whitelist");
                 if (tlsVersionWhitelistRaw.isEmpty()) {
                     tlsVersionWhitelist.add("TLSv1.2");
@@ -574,11 +574,11 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                         tlsVersionWhitelist.add(version);
                     }
                 }
-        
+                
                 if (tlsVersionWhitelist.isEmpty()) {
                     tlsVersionWhitelist.add("TLSv1.2");
                 }
-        
+                
                 final List<String> tlsCipherSuiteWhitelistRaw = config.getStringList("tls_cipher_suite_whitelist");
                 if (tlsCipherSuiteWhitelistRaw.isEmpty()) {
                     tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
@@ -590,24 +590,24 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                         tlsCipherSuiteWhitelist.add(cipherSuite);
                     }
                 }
-        
+                
                 if (tlsCipherSuiteWhitelist.isEmpty()) {
                     tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
                 }
-        
+                
                 try {
                     final KeyStore keyStore = KeyStore.getInstance(keyStoreInstance);
                     keyStore.load(new FileInputStream(keyStoreFile), keyStorePassword.toCharArray());
-            
+                    
                     final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(keyManagerFactoryAlgorithm);
                     keyManagerFactory.init(keyStore, keyStorePassword.toCharArray());
-            
+                    
                     final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(trustManagerFactoryAlgorithm);
                     trustManagerFactory.init(keyStore);
-            
+                    
                     final SSLContext sslContext = SSLContext.getInstance(sslContextProtocol);
                     sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
-            
+                    
                     sslServerSocketFactory = sslContext.getServerSocketFactory();
                 } catch (KeyStoreException | SecurityException | IOException | NoSuchAlgorithmException | CertificateException | UnrecoverableKeyException | KeyManagementException e) {
                     this.logger.log(Level.WARNING, "Unable to create SSLServerSocketFactory.");
@@ -653,7 +653,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                 connections.add(hostAddress.getAddress().getHostAddress() + ":" + hostAddress.getPort());
             }
             
-        
+            
             try {
                 for (final NetworkInterface iface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
                     localAddresses.addAll(Collections.list(iface.getInetAddresses()));
@@ -692,7 +692,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                     }
                     continue;
                 }
-    
+                
                 final String connection = serverSocket.getAddress().getHostAddress() + ":" + serverSocket.getPort();
                 if (!connections.add(connection)) {
                     this.logger.log(Level.WARNING, "Non-unique IPC connection.");
@@ -718,7 +718,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                     }
                     continue;
                 }
-    
+                
                 if (this.serverSockets.containsKey(serverName)) {
                     this.logger.log(Level.WARNING, "ServerIPCSocket previously defined and added.");
                     this.logger.log(Level.WARNING, "Please check all configurations for duplicates.");
@@ -742,12 +742,12 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                     }
                     continue;
                 }
-    
+                
                 this.serverSockets.put(serverName, serverSocket);
             }
             
             this.logger.setLevel(loggingLevel);
-
+            
             for (final ServerIPCSocket serverSocket : this.serverSockets.values()) {
                 serverSocket.start();
             }

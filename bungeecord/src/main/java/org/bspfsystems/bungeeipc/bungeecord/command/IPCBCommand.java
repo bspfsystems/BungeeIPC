@@ -1,19 +1,19 @@
-/*
+/* 
  * This file is part of the BungeeIPC plugins for Bukkit servers and
  * BungeeCord proxies for Minecraft.
- *
+ * 
  * Copyright (C) 2020-2022 BSPF Systems, LLC (https://bspfsystems.org/)
- *
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -29,6 +29,7 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 import org.bspfsystems.bungeeipc.api.common.IPCMessage;
@@ -44,15 +45,24 @@ public final class IPCBCommand extends Command implements TabExecutor {
     
     private final BungeeIPCPlugin ipcPlugin;
     
+    /**
+     * Constructs a new {@link IPCBCommand}.
+     * 
+     * @param ipcPlugin The {@link BungeeIPCPlugin}.
+     * @see Command#Command(String, String, String...)
+     */
     public IPCBCommand(@NotNull final BungeeIPCPlugin ipcPlugin) {
           super("ipcb", "bungeeipc.command.ipcb");
           this.setPermissionMessage("§r§cYou do not have permission to execute this command!§r");
           this.ipcPlugin = ipcPlugin;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void execute(@NotNull final CommandSender sender, @NotNull final String[] args) {
-    
+        
         final List<String> argsList = new ArrayList<String>(Arrays.asList(args));
         if (argsList.isEmpty()) {
             if (sender.hasPermission("bungeeipc.command.ipcb.help")) {
@@ -120,11 +130,11 @@ public final class IPCBCommand extends Command implements TabExecutor {
                     builder.append(player.getName()).color(ChatColor.GOLD);
                     builder.append(" is not on that server.").color(ChatColor.RED);
                     sender.sendMessage(builder.create());
-            
+                    
                     builder = new ComponentBuilder("Current server: ").color(ChatColor.AQUA);
                     builder.append(player.getServer().getInfo().getName()).color(ChatColor.GOLD);
                     sender.sendMessage(builder.create());
-            
+                    
                     builder = new ComponentBuilder("Requested server: ").color(ChatColor.GREEN);
                     builder.append(serverName).color(ChatColor.GOLD);
                     sender.sendMessage(builder.create());
@@ -141,7 +151,7 @@ public final class IPCBCommand extends Command implements TabExecutor {
             this.ipcPlugin.sendMessage(message);
             
         } else if (subCommand.equalsIgnoreCase("help")) {
-    
+            
             if (!sender.hasPermission("bungeeipc.command.ipcb.help")) {
                 sender.sendMessage(TextComponent.fromLegacyText(this.getPermissionMessage()));
                 return;
@@ -150,21 +160,21 @@ public final class IPCBCommand extends Command implements TabExecutor {
                 sender.sendMessage(new ComponentBuilder("Syntax: /ipcb help").color(ChatColor.RED).create());
                 return;
             }
-    
+            
             final boolean permissionCommand = sender.hasPermission("bungeeipc.command.ipcb.command");
             final boolean permissionHelp = sender.hasPermission("bungeeipc.command.ipcb.help");
             final boolean permissionReconnect = sender.hasPermission("bungeeipc.command.ipcb.reconnect");
             final boolean permissionReload = sender.hasPermission("bungeeipc.command.ipcb.reload");
             final boolean permissionStatus = sender.hasPermission("bungeeipc.command.ipcb.status");
-    
+            
             if (!permissionCommand && !permissionHelp && !permissionReconnect && !permissionReload && !permissionStatus) {
                 sender.sendMessage(TextComponent.fromLegacyText(this.getPermissionMessage()));
                 return;
             }
-    
+            
             sender.sendMessage(new ComponentBuilder("Available commands:").color(ChatColor.GOLD).create());
             sender.sendMessage(new ComponentBuilder("----------------------------------------------------------------").color(ChatColor.DARK_GRAY).create());
-    
+            
             if (permissionCommand) {
                 final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
                 builder.append("/ipcb command <server> <sender> <command> [args...]").color(ChatColor.AQUA);
@@ -190,9 +200,9 @@ public final class IPCBCommand extends Command implements TabExecutor {
                 builder.append("/ipcb status [server]").color(ChatColor.AQUA);
                 sender.sendMessage(builder.create());
             }
-    
+            
         } else if (subCommand.equalsIgnoreCase("reconnect")) {
-    
+            
             if (!sender.hasPermission("bungeeipc.command.ipcb.reconnect")) {
                 sender.sendMessage(TextComponent.fromLegacyText(this.getPermissionMessage()));
                 return;
@@ -201,7 +211,7 @@ public final class IPCBCommand extends Command implements TabExecutor {
                 sender.sendMessage(new ComponentBuilder("Syntax: /ipcb reconnect <server>").color(ChatColor.RED).create());
                 return;
             }
-    
+            
             final String serverName = argsList.remove(0);
             if (!this.ipcPlugin.isRegisteredServer(serverName)) {
                 final ComponentBuilder builder = new ComponentBuilder("Server ").color(ChatColor.RED);
@@ -217,15 +227,15 @@ public final class IPCBCommand extends Command implements TabExecutor {
                 sender.sendMessage(builder.create());
                 return;
             }
-    
+            
             this.ipcPlugin.restartServer(serverName);
             final ComponentBuilder builder = new ComponentBuilder("IPC server ").color(ChatColor.GREEN);
             builder.append(serverName).color(ChatColor.GOLD);
             builder.append(" has been reconnected.").color(ChatColor.GREEN);
             sender.sendMessage(builder.create());
-    
+            
         } else if (subCommand.equalsIgnoreCase("reload")) {
-    
+            
             if (!sender.hasPermission("bungeeipc.command.ipcb.reload")) {
                 sender.sendMessage(TextComponent.fromLegacyText(this.getPermissionMessage()));
                 return;
@@ -234,7 +244,7 @@ public final class IPCBCommand extends Command implements TabExecutor {
                 sender.sendMessage(new ComponentBuilder("Syntax: /ipcb reload").color(ChatColor.RED).create());
                 return;
             }
-    
+            
             final ComponentBuilder builder = new ComponentBuilder("Reloading the BungeeIPC configuration. Please run ").color(ChatColor.GOLD);
             builder.append("/ipcb reload").color(ChatColor.AQUA);
             builder.append(" (if possible) in a few seconds to verify that the IPC Servers have reloaded and reconnected successfully.").color(ChatColor.GOLD);
@@ -242,15 +252,15 @@ public final class IPCBCommand extends Command implements TabExecutor {
             this.ipcPlugin.reloadConfig(sender);
             
         } else if (subCommand.equalsIgnoreCase("status")) {
-    
+            
             if (!sender.hasPermission("bungeeipc.command.ipcb.status")) {
                 sender.sendMessage(TextComponent.fromLegacyText(this.getPermissionMessage()));
                 return;
             }
-    
+            
             final boolean isPlayer = sender instanceof ProxiedPlayer;
             if (argsList.isEmpty()) {
-        
+                
                 this.sendStatusHeader(sender, isPlayer);
                 int accessibleServers = 0;
                 for (final ServerInfo server : this.ipcPlugin.getProxy().getServers().values()) {
@@ -260,17 +270,17 @@ public final class IPCBCommand extends Command implements TabExecutor {
                     accessibleServers++;
                     sender.sendMessage(new ComponentBuilder(" - ").color(ChatColor.WHITE).append(server.getName()).color(this.getColor(server.getName())).create());
                 }
-        
+                
                 if (accessibleServers == 0) {
                     sender.sendMessage(new ComponentBuilder("No servers.").color(ChatColor.RED).create());
                 }
                 sender.sendMessage(new ComponentBuilder("================================================================").color(ChatColor.DARK_GRAY).create());
             } else if (argsList.size() == 1) {
-        
+                
                 this.sendStatusHeader(sender, isPlayer);
                 final String serverName = argsList.remove(0);
                 final ServerInfo server = this.ipcPlugin.getProxy().getServerInfo(serverName);
-        
+                
                 if (server == null) {
                     final ComponentBuilder builder = new ComponentBuilder("Server ").color(ChatColor.RED);
                     builder.append(serverName).color(ChatColor.GOLD);
@@ -290,7 +300,7 @@ public final class IPCBCommand extends Command implements TabExecutor {
             } else {
                 sender.sendMessage(new ComponentBuilder("Syntax: /ipcb status [server]").color(ChatColor.RED).create());
             }
-    
+            
         } else {
             if (sender.hasPermission("bungeeipc.command.ipcb.help")) {
                 sender.sendMessage(TextComponent.fromLegacyText("§r§cIncomplete BungeeIPC command. Please use§r §b/ipcb help§r §cfor help.§r"));
@@ -300,8 +310,16 @@ public final class IPCBCommand extends Command implements TabExecutor {
         }
     }
     
+    /**
+     * Sends a set of header messages to the given {@link CommandSender},
+     * specifying the various colors of servers and their meanings.
+     * 
+     * @param sender The {@link CommandSender} asking for the header.
+     * @param isPlayer {@code true} if the given {@link CommandSender} is a
+     *                 {@link ProxiedPlayer}, {@code false} otherwise.
+     */
     private void sendStatusHeader(@NotNull final CommandSender sender, final boolean isPlayer) {
-    
+        
         sender.sendMessage(new ComponentBuilder("================================================================").color(ChatColor.DARK_GRAY).create());
         sender.sendMessage(new ComponentBuilder("Minecraft servers attached to the BungeeCord proxy:").color(ChatColor.WHITE).create());
         sender.sendMessage(new ComponentBuilder("----------------------------------------------------------------").color(ChatColor.DARK_GRAY).create());
@@ -312,7 +330,7 @@ public final class IPCBCommand extends Command implements TabExecutor {
         sender.sendMessage(new ComponentBuilder("YELLOW").color(ChatColor.YELLOW).append(" : Online, IPC Not Connected").color(ChatColor.WHITE).create());
         sender.sendMessage(new ComponentBuilder("GREEN").color(ChatColor.GREEN).append("  : Online, IPC Connected").color(ChatColor.WHITE).create());
         sender.sendMessage(new ComponentBuilder("----------------------------------------------------------------").color(ChatColor.DARK_GRAY).create());
-    
+        
         if (isPlayer) {
             final String serverName = ((ProxiedPlayer) sender).getServer().getInfo().getName();
             sender.sendMessage(new ComponentBuilder("Current Server: ").color(ChatColor.WHITE).append(serverName).color(this.getColor(serverName)).create());
@@ -320,6 +338,14 @@ public final class IPCBCommand extends Command implements TabExecutor {
         }
     }
     
+    /**
+     * Gets the {@link ChatColor} that corresponds to the status of the
+     * {@link Server} with the given name.
+     * 
+     * @param serverName The name of the {@link Server} for which to retrieve
+     *                   the status {@link ChatColor}.
+     * @return The corresponding status {@link ChatColor}.
+     */
     @NotNull
     private ChatColor getColor(@NotNull final String serverName) {
         
@@ -342,6 +368,9 @@ public final class IPCBCommand extends Command implements TabExecutor {
         }
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @NotNull
     public Iterable<String> onTabComplete(@NotNull final CommandSender sender, @NotNull final String[] args) {
@@ -393,13 +422,13 @@ public final class IPCBCommand extends Command implements TabExecutor {
                     completions.add(server.getName());
                 }
             }
-    
+            
             final String serverName = argsList.remove(0);
             if (argsList.isEmpty()) {
                 completions.removeIf(completion -> !completion.toLowerCase().startsWith(serverName.toLowerCase()));
                 return completions;
             }
-    
+            
             completions.clear();
             final ServerInfo server = this.ipcPlugin.getProxy().getServerInfo(serverName);
             if (server == null || !server.canAccess(sender)) {
@@ -434,19 +463,19 @@ public final class IPCBCommand extends Command implements TabExecutor {
             if (!permissionReconnect) {
                 return completions;
             }
-    
+            
             for (final ServerInfo server : this.ipcPlugin.getProxy().getServers().values()) {
                 if (server.canAccess(sender)) {
                     completions.add(server.getName());
                 }
             }
-    
+            
             final String serverName = argsList.remove(0);
             if (argsList.isEmpty()) {
                 completions.removeIf(completion -> !completion.toLowerCase().startsWith(serverName.toLowerCase()));
                 return completions;
             }
-    
+            
             completions.clear();
             return completions;
             
@@ -457,19 +486,19 @@ public final class IPCBCommand extends Command implements TabExecutor {
             if (!permissionStatus) {
                 return completions;
             }
-    
+            
             for (final ServerInfo server : this.ipcPlugin.getProxy().getServers().values()) {
                 if (server.canAccess(sender)) {
                     completions.add(server.getName());
                 }
             }
-    
+            
             final String serverName = argsList.remove(0);
             if (argsList.isEmpty()) {
                 completions.removeIf(completion -> !completion.toLowerCase().startsWith(serverName.toLowerCase()));
                 return completions;
             }
-    
+            
             completions.clear();
             return completions;
             

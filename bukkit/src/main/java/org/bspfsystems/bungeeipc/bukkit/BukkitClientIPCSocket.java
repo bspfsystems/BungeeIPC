@@ -1,19 +1,19 @@
-/*
+/* 
  * This file is part of the BungeeIPC plugins for Bukkit servers and
  * BungeeCord proxies for Minecraft.
- *
+ * 
  * Copyright (C) 2020-2022 BSPF Systems, LLC (https://bspfsystems.org/)
- *
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -111,7 +111,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
         this.sslSocketFactory = sslSocketFactory;
         this.tlsVersionWhitelist = tlsVersionWhitelist;
         this.tlsCipherSuiteWhitelist = tlsCipherSuiteWhitelist;
-    
+        
         this.scheduler = this.ipcPlugin.getServer().getScheduler();
         this.running = new AtomicBoolean(false);
         this.connected = new AtomicBoolean(false);
@@ -191,7 +191,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
             this.logger.log(Level.CONFIG, "IP Address  - " + this.address.getHostAddress());
             this.logger.log(Level.CONFIG, "Port Number - " + this.port);
             this.logger.log(Level.CONFIG, e.getClass().getSimpleName() + " thrown.", e);
-    
+            
             try {
                 if (this.toBungee != null) {
                     this.toBungee.close();
@@ -201,7 +201,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
                 this.logger.log(Level.WARNING, "Unable to close the DataOutputStream after the IPC connection was broken.");
                 this.logger.log(Level.WARNING, e1.getClass().getSimpleName() + " thrown.", e1);
             }
-    
+            
             try {
                 if (this.socket != null) {
                     this.socket.close();
@@ -211,7 +211,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
                 this.logger.log(Level.WARNING, "Unable to close the Socket after the IPC connection was broken.");
                 this.logger.log(Level.WARNING, e1.getClass().getSimpleName() + " thrown.", e1);
             }
-    
+            
             this.connected.set(false);
             this.toBungee = null;
             
@@ -226,7 +226,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
      * reading in a serialized {@link IPCMessage}.
      */
     private static class SimpleClientIPCMessage extends AbstractIPCMessage {
-    
+        
         /**
          * Constructs a new {@link IPCMessage}.
          *
@@ -245,7 +245,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
         private SimpleClientIPCMessage(@NotNull final String origin, @NotNull final String destination, @NotNull final String channel, @NotNull final Queue<String> data) {
             super(origin, destination, channel, data);
         }
-    
+        
         /**
          * Reads in the given raw {@link IPCMessage} (as a {@link String}), and
          * deserializes it into an {@link IPCMessage}.
@@ -256,10 +256,10 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
          */
         @NotNull
         private static IPCMessage read(@NotNull String message) {
-    
+            
             AbstractIPCMessage.validateNotBlank(message, "IPCMessage data cannot be blank, cannot recreate IPCMessage: " + message);
             final Queue<String> split = new LinkedList<String>();
-    
+            
             int index = message.indexOf(AbstractIPCMessage.SEPARATOR);
             while (index != -1) {
                 split.add(message.substring(0, index));
@@ -267,7 +267,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
                 index = message.indexOf(AbstractIPCMessage.SEPARATOR);
             }
             split.add(message);
-    
+            
             if (split.size() < 3) {
                 throw new IllegalArgumentException("Cannot recreate IPCMessage, missing some combination of origin, destination, and/or channel (data not required): " + message);
             }
@@ -286,7 +286,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
             if (channel == null) {
                 throw new IllegalArgumentException("Cannot recreate IPCMessage, missing channel: " + message);
             }
-    
+            
             return new SimpleClientIPCMessage(origin, destination, channel, split);
         }
     }
@@ -296,10 +296,10 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
      */
     @Override
     public void stop() {
-    
+        
         this.logger.log(Level.INFO, "Closing IPC client connection...");
         this.scheduler.cancelTask(this.taskId.get());
-    
+        
         try {
             if (this.toBungee != null) {
                 this.toBungee.close();
@@ -309,7 +309,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
             this.logger.log(Level.WARNING, "Unable to close the DataOutputStream during shutdown.");
             this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
         }
-    
+        
         try {
             if (this.socket != null) {
                 this.socket.close();
@@ -319,7 +319,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
             this.logger.log(Level.WARNING, "Unable to close the Socket during shutdown.");
             this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
         }
-    
+        
         this.running.set(false);
         this.connected.set(false);
         this.toBungee = null;
@@ -364,7 +364,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
     /**
      * Validates that the given {@link String value} is not empty (or only
      * whitespace).
-     *
+     * 
      * @param value The {@link String value} to check for being blank.
      * @param message The error message to display if the value is blank.
      * @throws IllegalArgumentException If the given value is blank.

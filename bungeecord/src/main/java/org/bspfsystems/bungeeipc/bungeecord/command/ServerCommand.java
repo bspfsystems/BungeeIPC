@@ -1,19 +1,19 @@
-/*
+/* 
  * This file is part of the BungeeIPC plugins for Bukkit servers and
  * BungeeCord proxies for Minecraft.
- *
+ * 
  * Copyright (C) 2020-2022 BSPF Systems, LLC (https://bspfsystems.org/)
- *
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -54,6 +54,7 @@ public final class ServerCommand extends Command implements TabExecutor {
      * Constructs a new {@link ServerCommand}.
      * 
      * @param ipcPlugin The {@link BungeeIPCPlugin}.
+     * @see Command#Command(String, String, String...)
      */
     public ServerCommand(@NotNull final BungeeIPCPlugin ipcPlugin) {
         super("server", "bungeeipc.command.server");
@@ -106,7 +107,7 @@ public final class ServerCommand extends Command implements TabExecutor {
      * given {@link CommandSender}. Additionally, if the {@link CommandSender}
      * is a {@link ProxiedPlayer}, the {@link ServerInfo Server} that they are
      * connected to will be displayed.
-     *
+     * 
      * @param sender The {@link CommandSender} executing this {@link Command}.
      * @param isPlayer {@code true} if the {@link CommandSender} is a
      *                 {@link ProxiedPlayer}, {@code false} otherwise.
@@ -167,12 +168,12 @@ public final class ServerCommand extends Command implements TabExecutor {
      */
     @NotNull
     private ChatColor getColor(@NotNull final String serverName) {
-    
+        
         final int onlineStatus = this.ipcPlugin.getOnlineStatus(serverName);
         final boolean registered = this.ipcPlugin.isRegisteredServer(serverName);
         final boolean available = this.ipcPlugin.isServerRunning(serverName);
         final boolean connected = this.ipcPlugin.isServerConnected(serverName);
-    
+        
         if (onlineStatus == 1) {
             if (!registered) {
                 return ChatColor.BLUE;

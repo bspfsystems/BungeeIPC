@@ -1,19 +1,19 @@
-/*
+/* 
  * This file is part of the BungeeIPC plugins for Bukkit servers and
  * BungeeCord proxies for Minecraft.
- *
+ * 
  * Copyright (C) 2020-2022 BSPF Systems, LLC (https://bspfsystems.org/)
- *
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -73,11 +73,11 @@ final class ServerStatusUpdater implements Runnable {
         for (final ServerInfo server : this.servers) {
             try {
                 this.logger.log(Level.FINE, "Updating server status for " + server.getSocketAddress().toString());
-    
+                
                 final Socket socket = new Socket();
                 socket.connect(server.getSocketAddress(), 500);
                 socket.close();
-        
+                
                 this.ipcPlugin.setOnlineStatus(server.getName(), true);
                 continue;
             } catch (IOException e) {

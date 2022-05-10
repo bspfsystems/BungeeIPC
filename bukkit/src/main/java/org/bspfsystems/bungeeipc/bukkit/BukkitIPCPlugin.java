@@ -1,19 +1,19 @@
-/*
+/* 
  * This file is part of the BungeeIPC plugins for Bukkit servers and
  * BungeeCord proxies for Minecraft.
- *
+ * 
  * Copyright (C) 2020-2022 BSPF Systems, LLC (https://bspfsystems.org/)
- *
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -75,7 +75,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
     public void onEnable() {
         
         this.logger = this.getLogger();
-    
+        
         this.logger.log(Level.INFO, "///////////////////////////////////////////////////////////////////////////");
         this.logger.log(Level.INFO, "//                                                                       //");
         this.logger.log(Level.INFO, "// BungeeIPC Bukkit/BungeeCord plugin for Minecraft                      //");
@@ -143,7 +143,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
      * <p>
      * If no {@link PluginCommand} is found, an error will be logged an a
      * {@link RuntimeException} will be thrown.
-     *
+     * 
      * @param commandName The name of the {@link PluginCommand} to retrieve.
      * @param tabExecutor The {@link TabExecutor} to register to the
      *                    {@link PluginCommand}.
@@ -293,7 +293,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
     /**
      * Reloads the configuration file, displaying any error messages to the
      * given {@link CommandSender}.
-     *
+     * 
      * @param sender The {@link CommandSender} that triggered the configuration
      *               reload.
      */
@@ -304,7 +304,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
     /**
      * Reloads the configuration file, displaying any error messages to the
      * given {@link CommandSender} if this was triggered via {@link Command}.
-     *
+     * 
      * @param sender The {@link CommandSender} that triggered the configuration
      *               reload.
      * @param command If {@code true}, error messages will be displayed to the
@@ -321,7 +321,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
         
         this.scheduler.runTaskAsynchronously(this, () -> {
             
-    
+            
             File configFile = new File(this.getDataFolder(), "bukkitipc.yml");
             try {
                 
@@ -347,16 +347,16 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
                         }
                         return;
                     }
-            
+                    
                     final InputStream defaultConfig = this.getResource(configFile.getName());
                     final FileOutputStream outputStream = new FileOutputStream(configFile);
                     final byte[] buffer = new byte[4096];
                     int bytesRead;
-            
+                    
                     while ((bytesRead = defaultConfig.read(buffer)) != -1) {
                         outputStream.write(buffer, 0, bytesRead);
                     }
-            
+                    
                     outputStream.flush();
                     outputStream.close();
                     
@@ -378,7 +378,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
                 }
                 return;
             }
-    
+            
             final YamlConfiguration config = new YamlConfiguration();
             try {
                 config.load(configFile);
@@ -406,20 +406,20 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
                 rawLoggingLevel = Level.INFO;
             }
             loggingLevel = rawLoggingLevel;
-    
+            
             final SSLSocketFactory sslSocketFactory;
             final ArrayList<String> tlsVersionWhitelist = new ArrayList<String>();
             final ArrayList<String> tlsCipherSuiteWhitelist = new ArrayList<String>();
-    
+            
             if (!config.getBoolean("use_ssl", false)) {
                 sslSocketFactory = null;
             } else {
-        
+                
                 String sslContextProtocol = config.getString("ssl_context_protocol", "TLS");
                 if (sslContextProtocol == null || sslContextProtocol.trim().isEmpty()) {
                     sslContextProtocol = "TLS";
                 }
-        
+                
                 final List<String> tlsVersionWhitelistRaw = config.getStringList("tls_version_whitelist");
                 if (tlsVersionWhitelistRaw.isEmpty()) {
                     tlsVersionWhitelist.add("TLSv1.2");
@@ -431,11 +431,11 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
                         tlsVersionWhitelist.add(version);
                     }
                 }
-        
+                
                 if (tlsVersionWhitelist.isEmpty()) {
                     tlsVersionWhitelist.add("TLSv1.2");
                 }
-        
+                
                 final List<String> tlsCipherSuiteWhitelistRaw = config.getStringList("tls_cipher_suite_whitelist");
                 if (tlsCipherSuiteWhitelistRaw.isEmpty()) {
                     tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
@@ -447,15 +447,15 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
                         tlsCipherSuiteWhitelist.add(cipherSuite);
                     }
                 }
-        
+                
                 if (tlsCipherSuiteWhitelist.isEmpty()) {
                     tlsCipherSuiteWhitelist.add("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384");
                 }
-        
+                
                 try {
                     final SSLContext sslContext = SSLContext.getInstance(sslContextProtocol);
                     sslContext.init(null, null, null);
-            
+                    
                     sslSocketFactory = sslContext.getSocketFactory();
                 } catch (NoSuchAlgorithmException | KeyManagementException e) {
                     this.logger.log(Level.WARNING, "Unable to create SSLSocketFactory.");
@@ -469,7 +469,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
             }
             
             this.scheduler.runTask(this, () -> {
-    
+                
                 try {
                     this.socket = new BukkitClientIPCSocket(this, config, sslSocketFactory, tlsVersionWhitelist, tlsCipherSuiteWhitelist);
                 } catch (IllegalArgumentException e) {

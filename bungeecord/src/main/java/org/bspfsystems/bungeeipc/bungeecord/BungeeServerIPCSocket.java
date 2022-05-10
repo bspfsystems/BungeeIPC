@@ -1,19 +1,19 @@
-/*
+/* 
  * This file is part of the BungeeIPC plugins for Bukkit servers and
  * BungeeCord proxies for Minecraft.
- *
+ * 
  * Copyright (C) 2020-2022 BSPF Systems, LLC (https://bspfsystems.org/)
- *
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -116,7 +116,7 @@ final class BungeeServerIPCSocket implements ServerIPCSocket {
             throw new IllegalArgumentException("Server name is not a Minecraft server registered with the BungeeCord proxy.");
         }
         this.name = name;
-    
+        
         final String addressValue = config.getString("bind_address", "localhost");
         BungeeServerIPCSocket.validateNotBlank(addressValue, "IP address cannot be blank.");
         
@@ -128,7 +128,7 @@ final class BungeeServerIPCSocket implements ServerIPCSocket {
         if (!localAddresses.contains(this.address)) {
             throw new IllegalArgumentException("Cannot use network address that is not on the local system.");
         }
-    
+        
         final int portValue = config.getInt("bind_port", -1);
         if (portValue == -1) {
             throw new IllegalArgumentException("Port must be specified in the config.");
@@ -282,7 +282,7 @@ final class BungeeServerIPCSocket implements ServerIPCSocket {
         /**
          * Reads in the given raw {@link IPCMessage} (as a {@link String}), and
          * deserializes it into an {@link IPCMessage}.
-         *
+         * 
          * @param message The serialized {@link IPCMessage} as a {@link String}.
          * @param serverName The name of the {@link IPCSocket} the message was
          *                   read in by.
@@ -367,7 +367,7 @@ final class BungeeServerIPCSocket implements ServerIPCSocket {
             this.logger.log(Level.WARNING, "Unable to close the ServerSocket during shutdown.");
             this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
         }
-    
+        
         this.running.set(false);
         this.connected.set(false);
         this.toBukkit = null;
@@ -384,7 +384,7 @@ final class BungeeServerIPCSocket implements ServerIPCSocket {
     
     /**
      * Performs the sending of the given {@link IPCMessage} to the proxy.
-     *
+     * 
      * @param message The {@link IPCMessage} to send to the proxy.
      */
     private synchronized void send(@NotNull final IPCMessage message) {
@@ -444,7 +444,7 @@ final class BungeeServerIPCSocket implements ServerIPCSocket {
     /**
      * Validates that the given {@link String value} is not empty (or only
      * whitespace).
-     *
+     * 
      * @param value The {@link String value} to check for being blank.
      * @param message The error message to display if the value is blank.
      * @throws IllegalArgumentException If the given value is blank.

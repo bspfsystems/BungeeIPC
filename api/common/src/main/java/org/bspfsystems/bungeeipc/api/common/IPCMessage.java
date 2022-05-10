@@ -1,4 +1,4 @@
-/*
+/* 
  * This file is part of the BungeeIPC plugins for
  * BungeeCord and Bukkit servers for Minecraft.
  * 
@@ -82,7 +82,7 @@ public interface IPCMessage {
     
     /**
      * Adds the next message to this {@link IPCMessage}.
-     *
+     * 
      * @param message The next message to add to this {@link IPCMessage}.
      * @throws IllegalArgumentException If adding the message to this
      *                                  {@link IPCMessage} would make it too
