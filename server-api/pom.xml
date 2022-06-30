@@ -1,7 +1,7 @@
 <!--
   ~ This file is part of the BungeeIPC plugins for Bukkit servers and
   ~ BungeeCord proxies for Minecraft.
-  ~
+  ~ 
   ~ Copyright 2020-2022 BSPF Systems, LLC
   ~ 
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,25 +22,31 @@
     
     <parent>
         <groupId>org.bspfsystems.bungeeipc</groupId>
-        <artifactId>bungeeipc-api</artifactId>
+        <artifactId>bungeeipc-parent</artifactId>
         <version>3.0.2</version>
     </parent>
     
-    <artifactId>bungeeipc-common-api</artifactId>
+    <artifactId>bungeeipc-server-api</artifactId>
     <packaging>jar</packaging>
     
-    <name>BungeeIPC-Common-API</name>
-    <description>The common API for the BungeeIPC plugin for Minecraft BungeeCord and Bukkit servers.</description>
+    <name>BungeeIPC-Server-API</name>
+    <description>The server API for the BungeeIPC plugin for Minecraft BungeeCord and Bukkit servers.</description>
     
     <dependencies>
+        <dependency>
+            <groupId>org.bspfsystems.bungeeipc</groupId>
+            <artifactId>bungeeipc-common-api</artifactId>
+            <version>3.0.2</version>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
             <version>23.0.0</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
-
+    
     <build>
         <plugins>
             <plugin>
@@ -51,7 +57,7 @@
                     <minimizeJar>true</minimizeJar>
                     <filters>
                         <filter>
-                            <artifact>org.bspfsystems.bungeeipc:bungeeipc-common-api</artifact>
+                            <artifact>org.bspfsystems.bungeeipc:bungeeipc-server-api</artifact>
                             <excludes>
                                 <exclude>META-INF/*.MF</exclude>
                             </excludes>

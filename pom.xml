@@ -1,7 +1,7 @@
 <!--
   ~ This file is part of the BungeeIPC plugins for Bukkit servers and
   ~ BungeeCord proxies for Minecraft.
-  ~
+  ~ 
   ~ Copyright 2020-2022 BSPF Systems, LLC
   ~ 
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,12 +19,12 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
+    
     <groupId>org.bspfsystems.bungeeipc</groupId>
     <artifactId>bungeeipc-parent</artifactId>
     <version>3.0.2</version>
     <packaging>pom</packaging>
-
+    
     <name>BungeeIPC</name>
     <description>IPC plugin for Minecraft BungeeCord and Bukkit servers.</description>
     <url>https://github.com/bspfsystems/BungeeIPC/</url>
@@ -32,7 +32,7 @@
         <name>BSPF Systems, LLC</name>
         <url>https://bspfsystems.org/</url>
     </organization>
-
+    
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
@@ -43,7 +43,7 @@
             <url>https://www.gnu.org/licenses/gpl-3.0.en.html</url>
         </license>
     </licenses>
-
+    
     <developers>
         <developer>
             <name>Matt Ciolkosz</name>
@@ -52,24 +52,26 @@
             <organizationUrl>https://bspfsystems.org/</organizationUrl>
         </developer>
     </developers>
-
+    
     <scm>
         <connection>scm:git:git@github.com:bspfsystems/BungeeIPC.git</connection>
         <developerConnection>scm:git:git@github.com:bspfsystems/BungeeIPC.git</developerConnection>
         <url>git@github.com:bspfsystems/BungeeIPC.git</url>
     </scm>
-
+    
     <issueManagement>
         <system>GitHub</system>
         <url>https://github.com/bpsfsystems/BungeeIPC/issues/</url>
     </issueManagement>
-
+    
     <modules>
-        <module>api</module>
+        <module>common-api</module>
+        <module>client-api</module>
+        <module>server-api</module>
         <module>bukkit</module>
         <module>bungeecord</module>
     </modules>
-
+    
     <distributionManagement>
         <snapshotRepository>
             <id>sonatype-nexus</id>
@@ -80,7 +82,7 @@
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
-
+    
     <repositories>
         <repository>
             <id>oss-sonatype-releases</id>
@@ -95,12 +97,12 @@
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
     </repositories>
-
+    
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
-
+    
     <build>
         <plugins>
             <plugin>
@@ -175,5 +177,5 @@
             </plugin>
         </plugins>
     </build>
-
+    
 </project>
