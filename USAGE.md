@@ -24,7 +24,7 @@ There are some standalone features that can be used in-game, in the form of comm
 ### Bukkit vs. BungeeCord
 
 Some commands have identical or nearly-identical functionality between the Bukkit and BungeeCord plugins. While running the commands from a console session will not require differentiation, an in-game player will require that:
-- `/ipc <command>` will run the command on the Bukkit server that the player is currently playing on.
+- `/ipc <command>` will run the command on the Bukkit server that the player is currently connected to.
 - `/ipcb <command>` will run the command on the BungeeCord proxy.
 
 Additionally, the permissions for the commands differ in the same way. Bukkit's permission nodes will be `bungeeipc.command.ipc[.<node>]`, whereas BungeeCord will use `bungeeipc.command.ipcb[.<node>]`.
