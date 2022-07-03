@@ -30,7 +30,7 @@ Additionally, if running the Bukkit command, the player may need to verify that 
 
 The permissions for the commands differ in the same way. Bukkit's permission nodes will be `bungeeipc.command.ipc[.<node>]`, whereas BungeeCord will use `bungeeipc.command.ipcb[.<node>]`. If required by the permission management system, the Bukkit permissions may need to be duplicated to each server.
 
-Only the Bukkit-based commands, descriptions, and permission nodes will be shown in the following section. If any command differs between Bukkit and BungeeCord, the BungeeCord information will be appended in _italics_. Wherever you see a command or permission node below in the below section, you can replace `/ipc` and `.ipc.` with `/ipcb` and `.ipcb.`, respectively.
+Only the Bukkit-based commands, descriptions, and permission nodes will be shown in the following section. If any command differs between Bukkit and BungeeCord, the BungeeCord information will be appended in _italics_. Wherever you see a command or permission node in the following section, you can replace `/ipc` and `.ipc.` with `/ipcb` and `.ipcb.`, respectively.
 
 ### Common Commands
 
