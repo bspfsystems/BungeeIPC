@@ -94,6 +94,11 @@ repositories {
     }
 }
 
+// For both Bukkit and BungeeCord
+dependencies {
+    compileOnly "org.bspfsystems.bungeeipc:bungeeipc-common-api:3.0.2"
+}
+
 // For Bukkit
 dependencies {
      compileOnly "org.bspfsystems.bungeeipc:bungeeipc-client-api:3.0.2"
@@ -109,7 +114,7 @@ _**Please Note:** The above examples show both the client-side and server-side A
 
 ### API Examples
 
-These are some basic usages of BungeeIPC; for a full scope of what the plugin offers, please see the Javadocs section below.
+These are some basic usages of BungeeIPC; for a full scope of what the plugins offer, please see the Javadocs section below.
 ```
 // Obtain the common instance of BungeeIPC
 IPCPlugin ipcPlugin = (IPCPlugin) Bukkit.getPluginManager().getPlugin("BungeeIPC");      // For Bukkit

@@ -23,13 +23,14 @@ There are some standalone features that can be used in-game, in the form of comm
 
 ### Bukkit vs. BungeeCord
 
-Some commands have (nearly-)identical functionality between the Bukkit and BungeeCord plugins. While running the commands from a console session will not require differentiation, an in-game player will require that:
-- `/ipc <command>` will run the command on the Bukkit server that the player is currently playing on.
+Some commands have identical or nearly-identical functionality between the Bukkit and BungeeCord plugins. While a console session will only run the appropriate command for the specific server/proxy, a player in-game will need to verify that they run the appropriate command:
+- `/ipc <command>` will run the command on the Bukkit server that the player is currently connected to.
 - `/ipcb <command>` will run the command on the BungeeCord proxy.
+Additionally, if running the Bukkit command, the player may need to verify that they are connected to the appropriate server to receive their desired result.
 
-Additionally, the permissions for the commands differ in the same way. Bukkit's permission nodes will be `bungeeipc.command.ipc[.<node>]`, whereas BungeeCord will use `bungeeipc.command.ipcb[.<node>]`.
+The permissions for the commands differ in the same way. Bukkit's permission nodes will be `bungeeipc.command.ipc[.<node>]`, whereas BungeeCord will use `bungeeipc.command.ipcb[.<node>]`. If required by the permission management system, the Bukkit permissions may need to be duplicated to each server.
 
-Only the Bukkit-based commands, descriptions, and permission nodes will be shown in the following section. If any command differs between Bukkit and BungeeCord, the BungeeCord information will be appended in _italics_. Wherever you see a command or permission node below in the below section, you can replace `/ipc` and `.ipc.` with `/ipcb` and `.ipcb.`, respectively.
+Only the Bukkit-based commands, descriptions, and permission nodes will be shown in the following section. If any command differs between Bukkit and BungeeCord, the BungeeCord information will be appended in _italics_. Wherever you see a command or permission node in the following section, you can replace `/ipc` and `.ipc.` with `/ipcb` and `.ipcb.`, respectively.
 
 ### Common Commands
 
