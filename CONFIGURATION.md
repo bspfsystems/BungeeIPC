@@ -1,6 +1,6 @@
 # Configuring BungeeIPC for Bukkit and BungeeCord
 
-A default configuration file (`config.yml`) will be created in each of the respective plugin's data folder when you start the Bukkit server/BungeeCord proxy for the first time after installing BungeeIPC. You can then edit the configuration files as needed, and then run the reload command to reload the files:
+A default configuration file (`config.yml`) will be created in each of the respective plugin's data folders when you start the Bukkit server/BungeeCord proxy for the first time after installing BungeeIPC. You can then edit the configuration files as needed, and then run the reload command to reload the files:
 - `/ipc reload` for Bukkit
 - `/ipcb reload` for BungeeCord
 
