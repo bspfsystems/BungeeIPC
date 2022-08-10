@@ -183,7 +183,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
             
             while(this.connected.get()) {
                 final IPCMessage message = SimpleClientIPCMessage.read(fromBungee.readUTF());
-                this.scheduler.runTask(this.ipcPlugin, () -> ipcPlugin.receiveMessage(message));
+                this.scheduler.runTask(this.ipcPlugin, () -> this.ipcPlugin.receiveMessage(message));
             }
         } catch (IOException e) {
             

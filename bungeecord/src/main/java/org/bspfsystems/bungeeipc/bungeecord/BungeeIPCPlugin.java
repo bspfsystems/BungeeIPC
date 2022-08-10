@@ -21,7 +21,6 @@
 package org.bspfsystems.bungeeipc.bungeecord;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,6 +29,8 @@ import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -41,6 +42,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -597,7 +599,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                 
                 try {
                     final KeyStore keyStore = KeyStore.getInstance(keyStoreInstance);
-                    keyStore.load(new FileInputStream(keyStoreFile), keyStorePassword.toCharArray());
+                    keyStore.load(Files.newInputStream(Paths.get(keyStoreFile)), keyStorePassword.toCharArray());
                     
                     final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(keyManagerFactoryAlgorithm);
                     keyManagerFactory.init(keyStore, keyStorePassword.toCharArray());
@@ -637,7 +639,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                 return;
             }
             
-            final HashSet<String> connections = new HashSet<String>();
+            final Set<String> connections = new HashSet<String>();
             final Collection<InetAddress> localAddresses = new ArrayList<InetAddress>();
             
             for (final ListenerInfo listenerInfo : this.getProxy().getConfig().getListeners()) {

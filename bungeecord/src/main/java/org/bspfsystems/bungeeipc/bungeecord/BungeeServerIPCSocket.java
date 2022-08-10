@@ -218,7 +218,7 @@ final class BungeeServerIPCSocket implements ServerIPCSocket {
                 while (this.connected.get()) {
                     
                     final IPCMessage message = SimpleServerIPCMessage.read(fromBukkit.readUTF(), this.name);
-                    this.scheduler.runAsync(this.ipcPlugin, () -> ipcPlugin.receiveMessage(message));
+                    this.scheduler.runAsync(this.ipcPlugin, () -> this.ipcPlugin.receiveMessage(message));
                 }
             } catch (IOException e) {
                 

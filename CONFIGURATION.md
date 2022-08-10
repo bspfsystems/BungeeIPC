@@ -1,4 +1,4 @@
-# Configuring BungeeIPC for Bukkit and BungeeCord
+# Configuring the BungeeIPC Bukkit & BungeeCord Plugins
 
 A default configuration file (`config.yml`) will be created in each of the respective plugin's data folders when you start the Bukkit server/BungeeCord proxy for the first time after installing BungeeIPC. You can then edit the configuration files as needed, and then run the reload command to reload the files:
 - `/ipc reload` for Bukkit
@@ -18,7 +18,7 @@ The default encryption protocols, ciphers, and other settings should be sufficie
 
 **DISCLAIMER:** WHILE WE OFFER SOLUTIONS TO ENCRYPT THE IPC TRAFFIC BETWEEN THE BungeeCord PROXY AND THE Bukkit SERVERS, WE CAN NOT GUARANTEE THAT THE METHODS ARE FOOLPROOF. RESEARCHERS, HACKERS, AND OTHERS FIND NEW SECURITY VULNERABILITIES QUITE OFTEN, AND PROTOCOLS AND CIPHERS THAT WERE PREVIOUSLY DEEMED SECURE MAY BECOME DEPRECATED. IT IS UP TO THE PERSON(S) INSTALLING AND CONFIGURING THE BungeeIPC PLUGINS TO ENSURE THE SECURITY OF THEIR DATA IF IT IS SENSITIVE IN NATURE. ADDITIONALLY, ANY PLUGIN DEVELOPERS THAT USE BungeeIPC AS A DEPENDENCY SHOULD BE AWARE OF WHAT DATA THEY MAY SEND OVER THE IPC CONNECTION(S), AND BE AWARE THAT SOME DATA THAT IS SENSITIVE IN NATURE MAY REQUIRE EXTRA CARE OR ALTERNATIVE METHODS BEFORE SENDING.
 
-The value in fee and open source software is that it can be audited by the community, and they can offer solutions to improve it. This includes updating the security aspects of the software, which further benefits the community that uses it. We ask that any improvements that strengthen the security of the plugins are made available via Pull Requests so that all may benefit from it.
+The value in free and open source software is that it can be audited by the community, and they can offer solutions to improve it. This includes updating the security aspects of the software, which further benefits the community that uses it. We ask that any improvements that strengthen the security of the plugins are made available via Pull Requests so that all may benefit from it.
 
 ## Bukkit Configuration Options
 
@@ -34,15 +34,23 @@ logging_level: "INFO"
   - This is the logging level for the BungeeIPC plugin logger. It will *only* change the logging level for the plugin's logger.
   - NOTE: You may need to update `spigot.yml` to enable debugging for the trace and debug levels to display in the log files.
   - The available levels and their respective Log4j levels are:
-    - Java Logger | Log4J
-    - SEVERE      | ERROR
-    - WARNING     | WARN
-    - INFO        | INFO
-    - CONFIG      | DEBUG
-    - FINE        | TRACE
-    - FINER       | TRACE
-    - FINEST      | TRACE
-  - The default value is "INFO", but a null or empty value will use the default value.
+  ```
+    |============================|
+    | Java Logger | Bukkit Log4j |
+    | ------------|--------------|
+    | SEVERE      | ERROR        |
+    | WARNING     | WARN         |
+    | INFO        | INFO         |
+    | CONFIG      | DEBUG        |
+    | FINE        | TRACE        |
+    | FINER       | TRACE        |
+    | FINEST      | TRACE        |
+    |============================|
+  ```
+  - The default value is `"INFO"`.
+    - A null value will use the default.
+    - An empty value will use the default.
+    - An invalid value will use the default.
 
 ### IPC Client Configuration
 
@@ -57,15 +65,19 @@ port: -1
     - Ex: BungeeCord and Bukkit on the same physical server - The IP address will most likely be a local IP, whereas the IP that players connect to will be the public IP
     - Ex: BungeeCord and Bukkit on different servers - The IP address may be different, depending on the backend networking setup (public vs. private networks for the servers).
   - If you are using SSL/TLS, it is highly recommended to use the same hostname as the server certificate, as hostname validation may occur during the SSL handshake.
-  - If no hostname or IP address is specified, "localhost" will be used (127.0.0.1).
-  - An invalid hostname or IP address will throw an Exception.
-  - The default is blank, which translates to "localhost".
+  - The default value is blank, which translates to `"localhost"` (`"127.0.0.1"`).
+    - A null value will use the default.
+    - An empty value will use the default (empty is the default).
+    - An invalid value will throw an Exception.
 - **port:**
   - This is the port number used to connect to the BungeeCord server.
   - This should be the port number that the BungeeIPC plugins is configured for on the BungeeCord proxy. The combination of the above hostname/IP address and this port number should be unique relative to any other configured BungeeIPC instances. It also should not match any combination configured for the operation of BungeeCord and its backend Minecraft server(s) itself.
-  - The port number must be between 1024 and 65535 (inclusive).
-  - If no port number is specified, or a value outside the specified range is specified, an Exception will be thrown. Please note that if you leave the default port number (-1) in place, this will cause an Exception to be thrown.
-  - The default is -1, which will throw an Exception if left unchanged.
+  - The port number must be between `1024` and `65535` (inclusive).
+  - If no port number is specified, or a value outside the specified range is specified, an Exception will be thrown. Please note that if you leave the default port number (`-1`) in place, this will cause an Exception to be thrown.
+  - The default value is `-1`, which will throw an Exception if left unchanged.
+    - A null value will throw an Exception.
+    - An empty value will throw an Exception.
+    - An invalid value will throw an Exception.
 
 ### Global SSL/TLS Settings
 
@@ -80,8 +92,10 @@ use_ssl: false
   - This determines whether SSL/TLS will be used to protect the connection between the Bukkit server and the BungeeCord proxy.
   - NOTE: While this setting's label would indicate the ability to use SSL, which has been superseded by TLS, this setting is simply to enable the SSL/TLS features below.
   - DISCLAIMER: While it is much easier to not use SSL/TLS, having SSL/TLS disabled should only be used in a testing environment. It is _highly_ recommended to use encryption between the BungeeIPC plugins on the Bukkit server and BungeeCord proxy, even if they are running on the same physical machine, no matter how "unimportant" the data is that traverses the IPC connection.
-  - If no value is specified, the default value ("false") will be used.
-  - The default value is "false", but a null, empty, or otherwise invalid value will be treated as "false".
+  - The default value is `false`.
+    - A null value will use the default.
+    - An empty value will use the default.
+    - An invalid value will use the default.
 
 ### Basic SSL/TLS Settings
 
@@ -98,17 +112,32 @@ tls_cipher_suite_whitelist:
 - **ssl_context_protocol:**
   - It is HIGHLY RECOMMENDED to mirror this setting with the BungeeIPC configuration on the BungeeCord proxy. If not mirrored, the side with the weaker context protocol will be used, which may be an older or otherwise-out-of-spec protocol ("as strong as the weakest link in the chain" analogy).
   - It is recommended to use the latest version of SSL/TLS that your system(s) support.
-  - The default value is "TLS", but a null or empty value will use the default value.
+  - The default value is `"TLS"`.
+    - A null value will use the default.
+    - An empty value will use the default.
+    - An invalid value will throw an Exception.
 - **tls_version_whitelist:**
   - It is HIGHLY RECOMMENDED to mirror this setting with the BungeeIPC configuration on the BungeeCord proxy. If not mirrored, the side with the weakest "best" TLS version will be used, which may be an older or otherwise-out-of-spec TLS version ("as strong as the weakest link in the chain" analogy).
   - This is the list of TLS versions that you wish to be able to use for your IPC connection.
   - This is separate from the above setting in that the above will allow _all_ TLS versions, but this setting will restrict that to only the ones listed.
-  - The default list only contains "TLSv1.2" (only TLSv1.2 will be able to be used), but a null or empty list will use the default list.
+  - The default list only contains `"TLSv1.2"`.
+    - A null list will use the default.
+    - An empty list will use the default.
+    - An invalid list may use the default or only the valid entries within the list.
+    - A null entry will be ignored.
+    - An empty entry will be ignored.
+    - An invalid entry may throw an Exception.
 - **tls_cipher_suite_whitelist:**
   - It is HIGHLY RECOMMENDED to mirror this setting with the BungeeIPC configuration on the BungeeCord proxy. If not mirrored, the side with the weakest "best" TLS Cipher Suite will be used, which may be an older or otherwise-out-of-spec TLS Cipher Suite ("as strong as the weakest link in the chain" analogy).
   - This is the list of TLS Cipher Suites that you wish to be able to use for your IPC connection.
   - There are over 40 Cipher Suites that the SSLSocket(s) will use by default, some of which are less-than-ideal to use. The following list allows only the specified Cipher Suite(s) to be used for BungeeIPC.
-  - The default list only contains "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384", but a null or empty list will use the default list.
+  - The default list only contains "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384".
+    - A null list will use the default.
+    - An empty list will use the default.
+    - An invalid list may use the default or only the valid entries within the list.
+    - A null entry will be ignored.
+    - An empty entry will be ignored.
+    - An invalid entry may throw an Exception.
 
 ## BungeeCord Configuration Options
 
@@ -124,15 +153,23 @@ logging_level: "INFO"
   - This is the logging level for the BungeeIPC plugin logger. It will *only* change the logging level for the plugin's logger.
   - NOTE: This replaces the old setting "extra_logging", as a Log4j adapter has been created within BungeeCord.
   - The available levels and their respective Log4j levels are:
-    - Java Logger | Log4J
-    - SEVERE      | ERROR
-    - WARNING     | WARN
-    - INFO        | INFO
-    - CONFIG      | INFO
-    - FINE        | DEBUG
-    - FINER       | DEBUG
-    - FINEST      | TRACE
-  - The default value is "INFO", but a null or empty value will use the default value.
+  ```
+    |================================|
+    | Java Logger | BungeeCord Log4j |
+    | ------------|------------------|
+    | SEVERE      | ERROR            |
+    | WARNING     | WARN             |
+    | INFO        | INFO             |
+    | CONFIG      | INFO             |
+    | FINE        | DEBUG            |
+    | FINER       | DEBUG            |
+    | FINEST      | TRACE            |
+    |================================|
+  ```
+  - The default value is `"INFO"`.
+    - A null value will use the default.
+    - An empty value will use the default.
+    - An invalid value will use the default.
 
 ### IPC Servers Configuration
 
@@ -156,6 +193,19 @@ servers:
   - The hostname/IP address and port combination for each server must be unique to any other defined IPC Server(s), as well as any listeners (including the player connection address and port) defined in the BungeeCord proxy's config.yml file.
     - The address may be the same for all connections (listener(s) and IPC Server(s)), but then the port numbers must all be unique.
   - There are no default IPC Servers defined. You must define at least 1 IPC Server with a port number and reload the configuration to be able to use BungeeIPC.
+  - The default value is empty (no IPC Servers defined). The default `bind_address` is `"localhost"` (`"127.0.0.1"`). The default `bind_port` number is `-1`.
+    - A null server configuration set will use the default.
+    - An empty server configuration set will use the default.
+    - An invalid server configuration set may use the default or only the valid entries within the set.
+    - A null entry will throw an Exception.
+    - An empty entry will throw an Exception.
+    - An invalid entry will throw an Exception.
+    - An entry with a null `bind_address` will use the default.
+    - An entry with an empty `bind_address` will use the default.
+    - An entry with an invalid `bind_address` will throw an Exception.
+    - An entry with a null `port` will throw an Exception.
+    - An entry with an empty `port` will throw an Exception.
+    - An entry with an invalid `port` will throw an Exception.
   - An example of a configuration can be seen below:
 
 ```
@@ -180,8 +230,10 @@ use_ssl: false
   - This determines whether SSL/TLS will be used to protect the connection between the BungeeCord proxy and the Bukkit server(s).
   - NOTE: While this setting's label would indicate the ability to use SSL, which has been superseded by TLS, this setting is simply to enable the SSL/TLS features below.
   - DISCLAIMER: While it is much easier to not use SSL/TLS, having SSL/TLS disabled should only be used in a testing environment. It is _highly_ recommended to use encryption between the BungeeIPC plugins on the Bukkit server and BungeeCord proxy, even if they are running on the same physical machine, no matter how "unimportant" the data is that traverses the IPC connection.
-  - If no value is specified, the default value ("false") will be used.
-  - The default value is "false", but a null, empty, or otherwise invalid value will be treated as "false".
+  - The default value is `false`.
+    - A null value will use the default.
+    - An empty value will use the default.
+    - An invalid value will use the default.
 
 ### Basic SSL/TLS Settings
 
@@ -200,24 +252,45 @@ tls_cipher_suite_whitelist:
 - **key_store_file:**
   - It is HIGHLY RECOMMENDED to use the absolute path to the KeyStore file (as opposed to a relative path from the BungeeIPC data directory).
   - WHen creating the KeyStore, depending on what CA you used to generate your certificate, you may need to edit your certificate to be a full-chain certificate, as Java's trusted CAs may not include yours by default.
-  - The default value is an empty String. If a null value, the default value, or an invalid path is specified, an Exception will be thrown.
+  - The default value is an empty String, which will throw an Exception if left unchanged.
+    - A null value will use the default.
+    - An empty value is the default.
+    - An invalid value may use the default or may throw an Exception independently.
 - **key_store_password:**
   - It is HIGHLY RECOMMENDED to use a complex, securely-generated password. Using a simple password, or the Java KeyStore's default password falls under the umbrella of "bad security practices".
-  - The default value is an empty String. If a null value or the default value is specified, an Exception will be thrown.
+  - The default value is an empty String, which will throw an Exception if left unchanged.
+    - A null value will use the default.
+    - An empty value is the default.
+    - An invalid value may use the default or may throw an Exception independently.
 - **ssl_context_protocol:**
   - It is HIGHLY RECOMMENDED to mirror this setting with the BungeeIPC configuration on the Bukkit server(s). If not mirrored, the side with the weaker context protocol will be used, which may be an older or otherwise-out-of-spec protocol ("as strong as the weakest link in the chain" analogy).
   - It is recommended to use the latest version of SSL/TLS that your system(s) support.
-  - The default value is "TLS", but a null or empty value will use the default value.
+  - The default value is `"TLS"`.
+    - A null value will use the default.
+    - An empty value will use the default.
+    - An invalid value will throw an Exception.
 - **tls_version_whitelist:**
   - It is HIGHLY RECOMMENDED to mirror this setting with the BungeeIPC configuration on the Bukkit server(s). If not mirrored, the side with the weakest "best" TLS version will be used, which may be an older or otherwise-out-of-spec TLS version ("as strong as the weakest link in the chain" analogy).
   - This is the list of TLS versions that you wish to be able to use for your IPC connection.
   - This is separate from the above setting in that the above will allow _all_ TLS versions, but this setting will restrict that to only the ones listed.
-  - The default list only contains "TLSv1.2" (only TLSv1.2 will be able to be used), but a null or empty list will use the default list.
+  - The default list only contains `"TLSv1.2"`.
+    - A null list will use the default.
+    - An empty list will use the default.
+    - An invalid list may use the default or only the valid entries within the list.
+    - A null entry will be ignored.
+    - An empty entry will be ignored.
+    - An invalid entry may throw an Exception.
 - **tls_cipher_suite_whitelist:**
   - It is HIGHLY RECOMMENDED to mirror this setting with the BungeeIPC configuration on the Bukkit server(s). If not mirrored, the side with the weakest "best" TLS Cipher Suite will be used, which may be an older or otherwise-out-of-spec TLS Cipher Suite ("as strong as the weakest link in the chain" analogy).
   - This is the list of TLS Cipher Suites that you wish to be able to use for your IPC connection.
   - There are over 40 Cipher Suites that the SSLSocket(s) will use by default, some of which are less-than-ideal to use. The following list allows only the specified Cipher Suite(s) to be used for BungeeIPC.
-  - The default list only contains "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384", but a null or empty list will use the default list.
+  - The default list only contains "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384".
+    - A null list will use the default.
+    - An empty list will use the default.
+    - An invalid list may use the default or only the valid entries within the list.
+    - A null entry will be ignored.
+    - An empty entry will be ignored.
+    - An invalid entry may throw an Exception.
 
 ### Advanced SSL/TLS Settings
 
@@ -232,10 +305,19 @@ trust_manager_factory_algorithm: "SunX509"
 
 - **key_store_instance:**
   - This determines which instance of the KeyStore will be used.
-  - The default value is "PKCS12", but a null or empty value will use the default value.
+  - The default value is "PKCS12".
+    - A null value will use the default.
+    - An empty value will use the default.
+    - An invalid value will throw an Exception.
 - **key_manager_factory_algorithm:**
   - This determines which instance of the KeyManagerFactory will be used.
-  - The default value is "NewSunX509", but a null or empty value will use the default value.
+  - The default value is "NewSunX509".
+    - A null value will use the default.
+    - An empty value will use the default.
+    - An invalid value will throw an Exception.
 - **trust_manager_factory_algorithm:**
   - This determines which instance of the TrustManagerFactory will be used.
-  - The default value is "SunX509", but a null or empty value will use the default value.
+  - The default value is "SunX509".
+    - A null value will use the default.
+    - An empty value will use the default.
+    - An invalid value will throw an Exception.

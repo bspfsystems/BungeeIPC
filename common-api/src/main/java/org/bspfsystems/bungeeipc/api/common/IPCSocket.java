@@ -22,7 +22,7 @@ package org.bspfsystems.bungeeipc.api.common;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a connection for {@link IPCMessage}s.
+ * Represents a connection for {@link IPCMessage IPCMessages}.
  */
 public interface IPCSocket extends Runnable {
     

@@ -2,7 +2,7 @@
 
 ## Installation
 
-To obtain the copies of BungeeIPC, please see the related section in [README.md](README.md). Simply drop the appropriate file into the `plugins/` folder for your Bukkit/BungeeCord installation, and then (re-)start the server/proxy.
+To obtain the copies of BungeeIPC, please see the related section in [README.md](README.md). Simply drop the appropriate file into the `plugins/` folder for your Bukkit/BungeeCord installation, and then (re-)start the server(s) and proxy.
 
 The currently-supported versions of Bukkit are:
 - 1.8.x thru 1.18.x
@@ -26,7 +26,7 @@ There are some standalone features that can be used in-game, in the form of comm
 Some commands have identical or nearly-identical functionality between the Bukkit and BungeeCord plugins. While a console session will only run the appropriate command for the specific server/proxy, a player in-game will need to verify that they run the appropriate command:
 - `/ipc <command>` will run the command on the Bukkit server that the player is currently connected to.
 - `/ipcb <command>` will run the command on the BungeeCord proxy.
-Additionally, if running the Bukkit command, the player may need to verify that they are connected to the appropriate server to receive their desired result.
+Additionally, if running the Bukkit command, the player will need to verify that they are connected to the appropriate server to receive their desired result.
 
 The permissions for the commands differ in the same way. Bukkit's permission nodes will be `bungeeipc.command.ipc[.<node>]`, whereas BungeeCord will use `bungeeipc.command.ipcb[.<node>]`. If required by the permission management system, the Bukkit permissions may need to be duplicated to each server.
 

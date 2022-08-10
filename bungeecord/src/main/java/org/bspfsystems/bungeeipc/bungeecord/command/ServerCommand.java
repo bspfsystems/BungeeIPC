@@ -26,7 +26,10 @@ import java.util.Collections;
 import java.util.List;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ServerConnectEvent;
@@ -94,11 +97,8 @@ public final class ServerCommand extends Command implements TabExecutor {
         
         final ComponentBuilder builder = new ComponentBuilder("Syntax: /server").color(ChatColor.RED);
         if (isPlayer) {
-            builder.append(" [server name]");
-        } else {
-            builder.append("");
+            builder.append(" [server name]").color(ChatColor.RED);
         }
-        builder.color(ChatColor.RED);
         sender.sendMessage(builder.create());
     }
     
@@ -114,21 +114,21 @@ public final class ServerCommand extends Command implements TabExecutor {
      */
     private void listServers(@NotNull final CommandSender sender, final boolean isPlayer) {
         
-        sender.sendMessage(new ComponentBuilder("================================================================").color(ChatColor.DARK_GRAY).create());
+        sender.sendMessage(new ComponentBuilder("================================").color(ChatColor.DARK_GRAY).create());
         sender.sendMessage(new ComponentBuilder("Minecraft servers attached to the BungeeCord proxy:").color(ChatColor.WHITE).create());
-        sender.sendMessage(new ComponentBuilder("----------------------------------------------------------------").color(ChatColor.DARK_GRAY).create());
+        sender.sendMessage(new ComponentBuilder("--------------------------------").color(ChatColor.DARK_GRAY).create());
         sender.sendMessage(new ComponentBuilder("GRAY").color(ChatColor.GRAY).append("   : No Information").color(ChatColor.WHITE).create());
         sender.sendMessage(new ComponentBuilder("RED").color(ChatColor.RED).append("    : Offline").color(ChatColor.WHITE).create());
         sender.sendMessage(new ComponentBuilder("BLUE").color(ChatColor.BLUE).append("   : Online, Non-IPC").color(ChatColor.WHITE).create());
         sender.sendMessage(new ComponentBuilder("GOLD").color(ChatColor.GOLD).append("   : Online, IPC Not Available").color(ChatColor.WHITE).create());
         sender.sendMessage(new ComponentBuilder("YELLOW").color(ChatColor.YELLOW).append(" : Online, IPC Not Connected").color(ChatColor.WHITE).create());
         sender.sendMessage(new ComponentBuilder("GREEN").color(ChatColor.GREEN).append("  : Online, IPC Connected").color(ChatColor.WHITE).create());
-        sender.sendMessage(new ComponentBuilder("----------------------------------------------------------------").color(ChatColor.DARK_GRAY).create());
+        sender.sendMessage(new ComponentBuilder("--------------------------------").color(ChatColor.DARK_GRAY).create());
         
         if (isPlayer) {
             final String serverName = ((ProxiedPlayer) sender).getServer().getInfo().getName();
             sender.sendMessage(new ComponentBuilder("Current Server: ").color(ChatColor.WHITE).append(serverName).color(this.getColor(serverName)).create());
-            sender.sendMessage(new ComponentBuilder("----------------------------------------------------------------").color(ChatColor.DARK_GRAY).create());
+            sender.sendMessage(new ComponentBuilder("--------------------------------").color(ChatColor.DARK_GRAY).create());
         }
         
         int accessibleServers = 0;
@@ -137,13 +137,15 @@ public final class ServerCommand extends Command implements TabExecutor {
                 continue;
             }
             accessibleServers++;
-            sender.sendMessage(new ComponentBuilder(" - ").color(ChatColor.WHITE).append(server.getName()).color(this.getColor(server.getName())).create());
+            final ClickEvent clickEvent = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/server " + server.getName());
+            final HoverEvent hoverEvent = new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(new ComponentBuilder(server.getPlayers().size() + " online").color(ChatColor.AQUA).create()));
+            sender.sendMessage(new ComponentBuilder(" - ").color(ChatColor.WHITE).append(server.getName()).color(this.getColor(server.getName())).event(clickEvent).event(hoverEvent).create());
         }
         
         if (accessibleServers == 0) {
             sender.sendMessage(new ComponentBuilder("No servers.").color(ChatColor.RED).create());
         }
-        sender.sendMessage(new ComponentBuilder("================================================================").color(ChatColor.DARK_GRAY).create());
+        sender.sendMessage(new ComponentBuilder("================================").color(ChatColor.DARK_GRAY).create());
     }
     
     /**

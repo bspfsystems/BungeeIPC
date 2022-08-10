@@ -19,6 +19,12 @@
 ##            mirrored in the Bukkit plugin's configuration file, as the      ##
 ##            connection is likely to fail if they are not mirrored.          ##
 ##                                                                            ##
+## For more information on configuring the BungeeCord plugin for BungeeIPC,   ##
+## including each individual configuration option in this file, please see    ##
+## the configuration documentation at                                         ##
+## https://bspfsystems.org/config-docs/bungeeipc/, under the section named    ##
+## "BungeeCord Configuration Options".                                        ##
+##                                                                            ##
 ################################################################################
 ################################################################################
 
@@ -27,19 +33,7 @@
 ################################################################################
 
 # The logging level for the plugin logger.
-#
-# - This will only affect the plugin logger's logging level for this plugin.
-# - NOTE: This replaces the old setting "extra_logging", as a Log4j adapter has
-#   been created within BungeeCord.
-# - The default is "INFO", but null or empty will be treated as INFO.
-# - The available levels and their respective Log4j levels are:
-#      - SEVERE  - Error
-#      - WARNING - Warn
-#      - INFO    - Info
-#      - CONFIG  - Info
-#      - FINE    - Debug
-#      - FINER   - Debug
-#      - FINEST  - Trace
+# - The default value is "INFO".
 logging_level: "INFO"
 
 ################################################################################
@@ -47,32 +41,6 @@ logging_level: "INFO"
 ################################################################################
 
 # Section to define the IPC Servers
-#
-# - This section is where the IPCServers are configured, including server names,
-#   hostnames/IP addresses, and ports.
-# - The minimum information required for a server is the name of the server and
-#   the port that it will bind to. Optionally, you may also include the hostname
-#   or IP address that the specific server is to bind to (IP address is
-#   preferred for binding).
-# - The server names MUST match one of the server names configured in
-#   BungeeCord's config.yml (or bungee.yml) configuration file.
-# - If no hostname or IP address is supplied, "localhost" (or 127.0.0.1) will be
-#   used.
-# - If a hostname/IP address is specified, it does not have to be the same one
-#   that players use to connect to BungeeCord. Depending on how you implement
-#   your BungeeCord network, you may have a public IP that is used for players
-#   to connect to, and then private IP address(es) and networking for the
-#   connections from BungeeCord to the backend Minecraft servers.
-# - If no port is specified, an error will be presented when this configuration
-#   file is loaded, and the respective IPC Server will not start.
-# - Port numbers must be between 1024 and 65535 (inclusive). Failure to abide by
-#   this will result in an error and the respective IPC Server will not start.
-# - The IP address and port combination that is specified for a server must not
-#   match the connection information that players use to connect to BungeeCord,
-#   nor can it match any other combination of other IPC Servers. The IP address
-#   may be the same for all, but the ports must all be different for any cases
-#   where the IP address is the same.
-#
 # - Example server configuration:
 #
 #   servers:
@@ -88,7 +56,6 @@ servers:
 ################################################################################
 
 # Whether to use SSL/TLS or not
-#
 # - MUST BE MIRRORED.
 # - DISCLAIMER: While it is much easier to not use SSL/TLS, this should be
 #               restricted to a testing environment. Even if the BungeeCord
@@ -105,53 +72,26 @@ use_ssl: false
 ################################################################################
 
 # The KeyStore file location
-#
-# - It is highly recommended to use the fully-qualified path to the KeyStore
-#   file.
-# - When creating the keystore, depending on the CA that generated your
-#   certificate, you may need to have a full-chain certificate, as Java's
-#   default trusted CAs may not include yours.
 # - If no file path is specified, an exception will be thrown.
 key_store_file: ""
 
 # The KeyStore password
-#
-# - It is highly recommended not to use a blank password.
 # - If no password is specified, an exception will be thrown.
 key_store_password: ""
 
 # The SSLContext protocol
-#
-# - Highly recommended to be mirrored. If not, the side that has the lower
-#   protocol version as its "best" will determine the protocol version that will
-#   be used ("as strong as the weakest link in the chain" analogy).
-# - It is recommended to use the latest version of SSL/TLS that your system
-#   supports.
+# - Highly recommended to be mirrored.
 # - If no protocol is specified, "TLS" will be used.
 ssl_context_protocol: "TLS"
 
 # The TLS versions
-#
-# - Highly recommended to be mirrored. If not, the side that has the lower
-#   protocol version as its "best" will determine the protocol version that will
-#   be used ("as strong as the weakest link in the chain" analogy).
-# - The list of TLS versions that you wish to be able to use.
-# - This is separate from the item above in that the above will allow all TLS
-#   versions, but this is a whitelist of which versions are actually able to be
-#   used.
+# - Highly recommended to be mirrored.
 # - If this list is null or empty, only TLSv1.2 will be whitelisted.
 tls_version_whitelist:
   - "TLSv1.2"
 
 # The Cipher Suites
-#
-# - Highly recommended to be mirrored. If not, the side that has the weaker
-#   cipher suite as its "best" will determine the cipher suite that will be used
-#   ("as strong as the weakest link in the chain" analogy).
-# - The list of Cipher Suites that are whitelisted for use with the SSLSockets.
-# - There are over 40 that the SSLSocket(s) will use by default, some of which
-#   are less-than-ideal to use. The following list whitelists the ones that
-#   should be used for BungeeIPC.
+# - Highly recommended to be mirrored.
 # - If this list is null or empty, the following cipher suites will be used by
 #   default:
 #   - "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
@@ -168,19 +108,13 @@ tls_cipher_suite_whitelist:
 ################################################################################
 
 # The KeyStore instance
-#
-# - Which instance of the KeyStore you want to use.
 # - If no instance is specified, "PKCS12" will be used.
 key_store_instance: "PKCS12"
 
 # The KeyManagerFactory algorithm
-#
-# - The algorithm of the KeyManagerFactory you wish to use.
 # - If no algorithm is specified, "NewSunX509" will be used.
 key_manager_factory_algorithm: "NewSunX509"
 
 # The TrustManagerFactory algorithm
-#
-# - The algorithm of the TrustManagerFactory you wish to use.
 # - If no algorithm is specified, "SunX509" will be used.
 trust_manager_factory_algorithm: "SunX509"

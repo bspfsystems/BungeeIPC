@@ -19,6 +19,12 @@
 ##            mirrored in the Bungee plugin's configuration file, as the      ##
 ##            connection is likely to fail if they are not mirrored.          ##
 ##                                                                            ##
+## For more information on configuring the Bukkit plugin for BungeeIPC,       ##
+## including each individual configuration option in this file, please see    ##
+## the configuration documentation at                                         ##
+## https://bspfsystems.org/config-docs/bungeeipc/, under the section named    ##
+## "Bukkit Configuration Options".                                            ##
+##                                                                            ##
 ################################################################################
 ################################################################################
 
@@ -27,19 +33,7 @@
 ################################################################################
 
 # The logging level for the plugin logger.
-#
-# - This will only affect the plugin logger's logging level for this plugin.
-# - NOTE: You will need to update Spigot's spigot.yml to enable debugging for
-#   the debug messages to display in the log files.
-# - The default is "INFO", but null or empty will be treated as INFO.
-# - The available levels and their respective Log4j levels are:
-#      - SEVERE  - Error
-#      - WARNING - Warn
-#      - INFO    - Info
-#      - CONFIG  - Debug
-#      - FINE    - Trace
-#      - FINER   - Trace
-#      - FINEST  - Trace
+# - The default value is "INFO".
 logging_level: "INFO"
 
 ################################################################################
@@ -47,27 +41,11 @@ logging_level: "INFO"
 ################################################################################
 
 # The hostname or IP address of the BungeeCord server
-#
-# - This should be the hostname or IP address that the BungeeIPC plugin is
-#   configured for on the BungeeCord proxy. This may or may not be the same as
-#   the address that players use to connect to BungeeCord (public vs. private
-#   networking for the backend Minecraft servers).
-# - If you are using SSL/TLS, it is highly recommended to use the same hostname
-#   as the server certificate, as there may be hostname validation when the SSL
-#   handshake occurs.
 # - If no hostname or IP address is specified, "localhost" will be used
 #   (127.0.0.1).
 bungeecord_ip: ""
 
 # The port to connect to on the BungeeCord server
-#
-# - This should be the port number that the BungeeIPC plugins is configured for
-#   on the BungeeCord proxy. The combination of the above hostname/IP address
-#   and this port number should not match the address that players use to
-#   connect to BungeeCord, nor should it match any other IPC Client
-#   configuration that you have on any other Minecraft servers that are
-#   connected to the same BungeeCord proxy and running BungeeIPC.
-# - The port number must be between 1024 and 65536 (inclusive).
 # - If no port number is specified, or -1 is specified (the default), then an
 #   exception will be thrown.
 port: -1
@@ -81,7 +59,6 @@ port: -1
 ################################################################################
 
 # Whether to use SSL/TLS or not
-#
 # - MUST BE MIRRORED.
 # - DISCLAIMER: While it is much easier to not use SSL/TLS, this should be
 #               restricted to a testing environment. Even if the BungeeCord
@@ -98,37 +75,18 @@ use_ssl: false
 ################################################################################
 
 # The SSLContext protocol
-#
-# - Highly recommended to be mirrored. If not, the side that has the lower
-#   protocol version as its "best" will determine the protocol version that will
-#   be used ("as strong as the weakest link in the chain" analogy).
-# - It is recommended to use the latest version of SSL/TLS that your system
-#   supports.
+# - Highly recommended to be mirrored.
 # - If no protocol is specified, "TLS" will be used.
 ssl_context_protocol: "TLS"
 
 # The TLS versions
-#
-# - Highly recommended to be mirrored. If not, the side that has the lower
-#   protocol version as its "best" will determine the protocol version that will
-#   be used ("as strong as the weakest link in the chain" analogy).
-# - The list of TLS versions that you wish to be able to use.
-# - This is separate from the item above in that the above will allow all TLS
-#   versions, but this is a whitelist of which versions are actually able to be
-#   used.
+# - Highly recommended to be mirrored.
 # - If this list is null or empty, only TLSv1.2 will be whitelisted.
 tls_version_whitelist:
   - "TLSv1.2"
 
 # The Cipher Suites
-#
-# - Highly recommended to be mirrored. If not, the side that has the weaker
-#   cipher suite as its "best" will determine the cipher suite that will be used
-#   ("as strong as the weakest link in the chain" analogy).
-# - The list of Cipher Suites that are whitelisted for use with the SSLSockets.
-# - There are over 40 that the SSLSocket(s) will use by default, some of which
-#   are less-than-ideal to use. The following list whitelists the ones that
-#   should be used for BungeeIPC.
+# - Highly recommended to be mirrored.
 # - If this list is null or empty, the following cipher suites will be used by
 #   default:
 #   - "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"

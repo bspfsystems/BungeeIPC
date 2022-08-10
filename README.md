@@ -37,7 +37,7 @@ Please see [USAGE.md](USAGE.md) for more information on installation and in-game
 
 ## Developer API
 
-The main purpose of BungeeIPC is to facilitate sending messages between BungeeCord and Bukkit for downstream plugins. A few API modules have been created that can be used by any downstream plugins to access the capabilities in BungeeIPC.
+The main purpose of BungeeIPC is to facilitate sending messages between BungeeCord and Bukkit for downstream plugins. Several API modules have been created that can be used by any downstream plugins to access the capabilities in BungeeIPC.
 
 ### Add BungeeIPC as a Dependency
 

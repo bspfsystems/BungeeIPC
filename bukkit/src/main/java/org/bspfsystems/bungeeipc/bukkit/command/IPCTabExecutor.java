@@ -81,7 +81,7 @@ public final class IPCTabExecutor implements TabExecutor {
             
             final String subCommand = argsList.remove(0);
             if (subCommand.equalsIgnoreCase("command")) {
-        
+                
                 if (!sender.hasPermission("bungeeipc.command.ipc.command")) {
                     sender.sendMessage(this.getPermissionMessage(command));
                     return true;
@@ -142,7 +142,7 @@ public final class IPCTabExecutor implements TabExecutor {
                 }
                 
                 sender.sendMessage("§r§6Available commands:§r");
-                sender.sendMessage("§r§8----------------------------------------------------------------§8");
+                sender.sendMessage("§r§8--------------------------------§8");
                 
                 if (permissionCommand) {
                     sender.sendMessage("§r §f-§r §b/ipc command <sender> <command> [args...]§r");
@@ -203,9 +203,9 @@ public final class IPCTabExecutor implements TabExecutor {
                     return true;
                 }
                 
-                sender.sendMessage("§r§8================================================================§r");
+                sender.sendMessage("§r§8================================§r");
                 sender.sendMessage("§r§fIPC Client Status§r");
-                sender.sendMessage("§r§8----------------------------------------------------------------§r");
+                sender.sendMessage("§r§8--------------------------------§r");
                 
                 if (this.ipcPlugin.isClientConnected()) {
                     sender.sendMessage("§r§aConnection Completed§r");
@@ -215,7 +215,7 @@ public final class IPCTabExecutor implements TabExecutor {
                     sender.sendMessage("§r§cNot Connected§r");
                 }
                 
-                sender.sendMessage("§r§8================================================================§r");
+                sender.sendMessage("§r§8================================§r");
                 return true;
                 
             } else {

@@ -25,8 +25,11 @@ import java.util.Arrays;
 import java.util.List;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
@@ -88,26 +91,21 @@ public final class IPCBCommand extends Command implements TabExecutor {
             
             final String serverName = argsList.remove(0);
             final String playerName = argsList.remove(0);
-            final boolean isConsole;
+            final String playerId;
             
-            if (playerName.equals("console")) {
-                isConsole = true;
+            if (playerName.equalsIgnoreCase("console")) {
                 if (!sender.hasPermission("bungeeipc.command.ipcb.command.player.console")) {
                     sender.sendMessage(new ComponentBuilder("You do not have permission to execute commands as the server console.").color(ChatColor.RED).create());
                     return;
                 }
+                playerId = playerName;
                 
-            } else if (!playerName.equalsIgnoreCase(sender.getName())) {
-                isConsole = false;
-                if (!sender.hasPermission("bungeeipc.command.ipcb.command.player.other")) {
+            } else {
+                if (!playerName.equalsIgnoreCase(sender.getName()) && !sender.hasPermission("bungeeipc.command.ipcb.command.player.other")) {
                     sender.sendMessage(new ComponentBuilder("You do not have permission to execute commands as another player.").color(ChatColor.RED).create());
                     return;
                 }
-            } else {
-                isConsole = false;
-            }
-            
-            if (!isConsole) {
+                
                 ProxiedPlayer player = this.ipcPlugin.getProxy().getPlayer(playerName);
                 if (player == null) {
                     for (final ProxiedPlayer possiblePlayer : this.ipcPlugin.getProxy().getPlayers()) {
@@ -140,10 +138,12 @@ public final class IPCBCommand extends Command implements TabExecutor {
                     sender.sendMessage(builder.create());
                     return;
                 }
+                
+                playerId = player.getUniqueId().toString();
             }
             
             final IPCMessage message = new ServerIPCMessage(serverName, "SERVER_COMMAND");
-            message.add(playerName);
+            message.add(playerId);
             for (final String commandPart : argsList) {
                 message.add(commandPart);
             }
@@ -173,7 +173,7 @@ public final class IPCBCommand extends Command implements TabExecutor {
             }
             
             sender.sendMessage(new ComponentBuilder("Available commands:").color(ChatColor.GOLD).create());
-            sender.sendMessage(new ComponentBuilder("----------------------------------------------------------------").color(ChatColor.DARK_GRAY).create());
+            sender.sendMessage(new ComponentBuilder("--------------------------------").color(ChatColor.DARK_GRAY).create());
             
             if (permissionCommand) {
                 final ComponentBuilder builder = new ComponentBuilder(" - ").color(ChatColor.WHITE);
@@ -268,13 +268,15 @@ public final class IPCBCommand extends Command implements TabExecutor {
                         continue;
                     }
                     accessibleServers++;
-                    sender.sendMessage(new ComponentBuilder(" - ").color(ChatColor.WHITE).append(server.getName()).color(this.getColor(server.getName())).create());
+                    final ClickEvent clickEvent = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/server " + server.getName());
+                    final HoverEvent hoverEvent = new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(new ComponentBuilder(server.getPlayers().size() + " online").color(ChatColor.AQUA).create()));
+                    sender.sendMessage(new ComponentBuilder(" - ").color(ChatColor.WHITE).append(server.getName()).color(this.getColor(server.getName())).event(clickEvent).event(hoverEvent).create());
                 }
                 
                 if (accessibleServers == 0) {
                     sender.sendMessage(new ComponentBuilder("No servers.").color(ChatColor.RED).create());
                 }
-                sender.sendMessage(new ComponentBuilder("================================================================").color(ChatColor.DARK_GRAY).create());
+                sender.sendMessage(new ComponentBuilder("================================").color(ChatColor.DARK_GRAY).create());
             } else if (argsList.size() == 1) {
                 
                 this.sendStatusHeader(sender, isPlayer);
@@ -296,7 +298,7 @@ public final class IPCBCommand extends Command implements TabExecutor {
                     builder.append(serverName).color(this.getColor(serverName));
                     sender.sendMessage(builder.create());
                 }
-                sender.sendMessage(new ComponentBuilder("================================================================").color(ChatColor.DARK_GRAY).create());
+                sender.sendMessage(new ComponentBuilder("================================").color(ChatColor.DARK_GRAY).create());
             } else {
                 sender.sendMessage(new ComponentBuilder("Syntax: /ipcb status [server]").color(ChatColor.RED).create());
             }
@@ -320,21 +322,21 @@ public final class IPCBCommand extends Command implements TabExecutor {
      */
     private void sendStatusHeader(@NotNull final CommandSender sender, final boolean isPlayer) {
         
-        sender.sendMessage(new ComponentBuilder("================================================================").color(ChatColor.DARK_GRAY).create());
+        sender.sendMessage(new ComponentBuilder("================================").color(ChatColor.DARK_GRAY).create());
         sender.sendMessage(new ComponentBuilder("Minecraft servers attached to the BungeeCord proxy:").color(ChatColor.WHITE).create());
-        sender.sendMessage(new ComponentBuilder("----------------------------------------------------------------").color(ChatColor.DARK_GRAY).create());
+        sender.sendMessage(new ComponentBuilder("--------------------------------").color(ChatColor.DARK_GRAY).create());
         sender.sendMessage(new ComponentBuilder("GRAY").color(ChatColor.GRAY).append("   : No Information").color(ChatColor.WHITE).create());
         sender.sendMessage(new ComponentBuilder("RED").color(ChatColor.RED).append("    : Offline").color(ChatColor.WHITE).create());
         sender.sendMessage(new ComponentBuilder("BLUE").color(ChatColor.BLUE).append("   : Online, Non-IPC").color(ChatColor.WHITE).create());
         sender.sendMessage(new ComponentBuilder("GOLD").color(ChatColor.GOLD).append("   : Online, IPC Not Available").color(ChatColor.WHITE).create());
         sender.sendMessage(new ComponentBuilder("YELLOW").color(ChatColor.YELLOW).append(" : Online, IPC Not Connected").color(ChatColor.WHITE).create());
         sender.sendMessage(new ComponentBuilder("GREEN").color(ChatColor.GREEN).append("  : Online, IPC Connected").color(ChatColor.WHITE).create());
-        sender.sendMessage(new ComponentBuilder("----------------------------------------------------------------").color(ChatColor.DARK_GRAY).create());
+        sender.sendMessage(new ComponentBuilder("--------------------------------").color(ChatColor.DARK_GRAY).create());
         
         if (isPlayer) {
             final String serverName = ((ProxiedPlayer) sender).getServer().getInfo().getName();
             sender.sendMessage(new ComponentBuilder("Current Server: ").color(ChatColor.WHITE).append(serverName).color(this.getColor(serverName)).create());
-            sender.sendMessage(new ComponentBuilder("----------------------------------------------------------------").color(ChatColor.DARK_GRAY).create());
+            sender.sendMessage(new ComponentBuilder("--------------------------------").color(ChatColor.DARK_GRAY).create());
         }
     }
     
