@@ -47,40 +47,40 @@ To add BungeeIPC as a dependency to your project, use one of the following commo
 Include the following in your `pom.xml` file:<br />
 ```
 <repositories>
-  <repository>
-    <id>sonatype-repo</id>
-    <url>https://oss.sonatype.org/content/repositories/releases/</url>
-  </repository>
+    <repository>
+        <id>sonatype-repo</id>
+        <url>https://oss.sonatype.org/content/repositories/releases/</url>
+    </repository>
 </repositories>
 
 <!-- For both Bukkit and BungeeCord -->
 <dependencies>
-  <dependency>
-    <groupId>org.bspfsystems.bungeeipc</groupId>
-    <artifactId>bungeeipc-common-api</artifactId>
-    <version>3.0.2</version>
-    <scope>provided</scope>
-  </dependency>
+    <dependency>
+        <groupId>org.bspfsystems.bungeeipc</groupId>
+        <artifactId>bungeeipc-common-api</artifactId>
+        <version>3.0.2</version>
+        <scope>provided</scope>
+    </dependency>
 </dependencies>
 
 <!-- For Bukkit -->
 <dependencies>
-  <dependency>
-    <groupId>org.bspfsystems.bungeeipc</groupId>
-    <artifactId>bungeeipc-client-api</artifactId>
-    <version>3.0.2</version>
-    <scope>provided</scope>
-  </dependency>
+    <dependency>
+        <groupId>org.bspfsystems.bungeeipc</groupId>
+        <artifactId>bungeeipc-client-api</artifactId>
+        <version>3.0.2</version>
+        <scope>provided</scope>
+    </dependency>
 </dependencies>
 
 <!-- For BungeeCord -->
 <dependencies>
-  <dependency>
-    <groupId>org.bspfsystems.bungeeipc</groupId>
-    <artifactId>bungeeipc-server-api</artifactId>
-    <version>3.0.2</version>
-    <scope>provided</scope>
-  </dependency>
+    <dependency>
+        <groupId>org.bspfsystems.bungeeipc</groupId>
+        <artifactId>bungeeipc-server-api</artifactId>
+        <version>3.0.2</version>
+        <scope>provided</scope>
+    </dependency>
 </dependencies>
 ```
 
@@ -88,7 +88,6 @@ Include the following in your `pom.xml` file:<br />
 Include the following in your `build.gradle` file:<br />
 ```
 repositories {
-    mavenCentral()
     maven {
         url "https://oss.sonatype.org/content/repositories/releases/"
     }
