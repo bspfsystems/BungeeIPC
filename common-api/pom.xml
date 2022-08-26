@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.bspfsystems.bungeeipc</groupId>
         <artifactId>bungeeipc-parent</artifactId>
-        <version>3.0.3</version>
+        <version>3.0.4</version>
     </parent>
     
     <artifactId>bungeeipc-common-api</artifactId>

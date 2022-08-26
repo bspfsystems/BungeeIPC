@@ -105,8 +105,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
         
         // Command setup
         
-        final TabExecutor ipcTabExecutor = new IPCTabExecutor(this);
-        this.registerCommand("ipc", ipcTabExecutor);
+        this.registerCommand("ipc", new IPCTabExecutor(this));
         
         // Main data directory setup
         
