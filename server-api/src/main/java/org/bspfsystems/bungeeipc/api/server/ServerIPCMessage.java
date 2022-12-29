@@ -37,11 +37,14 @@ public final class ServerIPCMessage extends AbstractIPCMessage {
      * 
      * @param destination The destination {@link IPCSocket}.
      * @param channel The channel the {@link IPCMessage} will be read by.
-     * @see AbstractIPCMessage#AbstractIPCMessage(String, String, String)
      * @throws IllegalArgumentException If {@code destination} and/or
      *                                  {@code channel} are blank.
+     * @throws IllegalStateException If the given parameters contain too much
+     *                               data to send in a single
+     *                               {@link IPCMessage}.
+     * @see AbstractIPCMessage#AbstractIPCMessage(String, String, String)
      */
-    public ServerIPCMessage(@NotNull final String destination, @NotNull final String channel) throws IllegalArgumentException {
+    public ServerIPCMessage(@NotNull final String destination, @NotNull final String channel) throws IllegalArgumentException, IllegalStateException {
         super(IPCMessage.PROXY_SERVER, destination, channel);
     }
     
@@ -53,12 +56,15 @@ public final class ServerIPCMessage extends AbstractIPCMessage {
      * @param destination The destination {@link IPCSocket}.
      * @param channel The channel the {@link IPCMessage} will be read by.
      * @param data The initial data as a {@link List}. Order will be maintained.
-     * @see AbstractIPCMessage#AbstractIPCMessage(String, String, String, List)
      * @throws IllegalArgumentException If {@code destination} and/or
      *                                  {@code channel} are blank, or if any
      *                                  element in {@code data} is {@code null}.
+     * @throws IllegalStateException If the given parameters contain too much
+     *                               data to send in a single
+     *                               {@link IPCMessage}.
+     * @see AbstractIPCMessage#AbstractIPCMessage(String, String, String, List)
      */
-    public ServerIPCMessage(@NotNull final String destination, @NotNull final String channel, @NotNull final List<String> data) throws IllegalArgumentException {
+    public ServerIPCMessage(@NotNull final String destination, @NotNull final String channel, @NotNull final List<String> data) throws IllegalArgumentException, IllegalStateException {
         super(IPCMessage.PROXY_SERVER, destination, channel, data);
     }
     
@@ -71,12 +77,15 @@ public final class ServerIPCMessage extends AbstractIPCMessage {
      * @param channel The channel the {@link IPCMessage} will be read by.
      * @param data The initial data as a {@link Queue}. Order will be
      *             maintained.
-     * @see AbstractIPCMessage#AbstractIPCMessage(String, String, String, Queue)
      * @throws IllegalArgumentException If {@code destination} and/or
      *                                  {@code channel} are blank, or if any
      *                                  element in {@code data} is {@code null}.
+     * @throws IllegalStateException If the given parameters contain too much
+     *                               data to send in a single
+     *                               {@link IPCMessage}.
+     * @see AbstractIPCMessage#AbstractIPCMessage(String, String, String, Queue)
      */
-    public ServerIPCMessage(@NotNull final String destination, @NotNull final String channel, @NotNull final Queue<String> data) throws IllegalArgumentException {
+    public ServerIPCMessage(@NotNull final String destination, @NotNull final String channel, @NotNull final Queue<String> data) throws IllegalArgumentException, IllegalStateException {
         super(IPCMessage.PROXY_SERVER, destination, channel, data);
     }
 }

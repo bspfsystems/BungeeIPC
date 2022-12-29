@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.bspfsystems.bungeeipc</groupId>
         <artifactId>bungeeipc-parent</artifactId>
-        <version>3.0.4</version>
+        <version>3.1.0</version>
     </parent>
     
     <artifactId>bungeeipc-client-api</artifactId>
@@ -36,13 +36,13 @@
         <dependency>
             <groupId>org.bspfsystems.bungeeipc</groupId>
             <artifactId>bungeeipc-common-api</artifactId>
-            <version>3.0.4</version>
+            <version>3.1.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>23.0.0</version>
+            <version>23.1.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

@@ -19,13 +19,13 @@
 
 package org.bspfsystems.bungeeipc.api.common;
 
+import java.io.DataOutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * An abstract implementation of an {@link IPCMessage}.
@@ -39,17 +39,22 @@ public abstract class AbstractIPCMessage implements IPCMessage {
     private final String channel;
     private final Queue<String> data;
     
+    private int length;
+    
     /**
      * Constructs a new {@link IPCMessage} containing no data.
      * 
      * @param origin The origin {@link IPCSocket}.
      * @param destination The destination {@link IPCSocket}.
      * @param channel The channel the {@link IPCMessage} will be read by.
-     * @see AbstractIPCMessage#AbstractIPCMessage(String, String, String, List)
      * @throws IllegalArgumentException If {@code origin}, {@code destination},
      *                                  and/or {@code channel} are blank.
+     * @throws IllegalStateException If the given parameters contain too much
+     *                               data to send in a single
+     *                               {@link IPCMessage}.
+     * @see AbstractIPCMessage#AbstractIPCMessage(String, String, String, List)
      */
-    protected AbstractIPCMessage(@NotNull final String origin, @NotNull final String destination, @NotNull final String channel) throws IllegalArgumentException {
+    protected AbstractIPCMessage(@NotNull final String origin, @NotNull final String destination, @NotNull final String channel) throws IllegalArgumentException, IllegalStateException {
         this(origin, destination, channel, new ArrayList<String>());
     }
     
@@ -62,13 +67,16 @@ public abstract class AbstractIPCMessage implements IPCMessage {
      * @param destination The destination {@link IPCSocket}.
      * @param channel The channel the {@link IPCMessage} will be read by.
      * @param data The initial data as a {@link List}. Order will be maintained.
-     * @see AbstractIPCMessage#AbstractIPCMessage(String, String, String, Queue)
      * @throws IllegalArgumentException If {@code origin}, {@code destination},
      *                                  and/or {@code channel} are blank, or if
      *                                  any element in {@code data} is
      *                                  {@code null}.
+     * @throws IllegalStateException If the given parameters contain too much
+     *                               data to send in a single
+     *                               {@link IPCMessage}.
+     * @see AbstractIPCMessage#AbstractIPCMessage(String, String, String, Queue)
      */
-    protected AbstractIPCMessage(@NotNull final String origin, @NotNull final String destination, @NotNull final String channel, @NotNull final List<String> data) throws IllegalArgumentException {
+    protected AbstractIPCMessage(@NotNull final String origin, @NotNull final String destination, @NotNull final String channel, @NotNull final List<String> data) throws IllegalArgumentException, IllegalStateException {
         this(origin, destination, channel, (Queue<String>) new LinkedList<String>(data));
     }
     
@@ -86,13 +94,27 @@ public abstract class AbstractIPCMessage implements IPCMessage {
      *                                  and/or {@code channel} are blank, or if
      *                                  any element in {@code data} is
      *                                  {@code null}.
+     * @throws IllegalStateException If the given parameters contain too much
+     *                               data to send in a single
+     *                               {@link IPCMessage}.
      */
     protected AbstractIPCMessage(@NotNull final String origin, @NotNull final String destination, @NotNull final String channel, @NotNull final Queue<String> data) throws IllegalArgumentException {
         
-        AbstractIPCMessage.validateNotBlank(origin, "IPCMessage origin cannot be blank.");
-        AbstractIPCMessage.validateNotBlank(destination, "IPCMessage destination cannot be blank.");
-        AbstractIPCMessage.validateNotBlank(channel, "IPCMessage channel cannot be blank.");
-        AbstractIPCMessage.validateNotNull(data, "IPC data cannot have null entries: " + data);
+        if (origin.trim().isEmpty()) {
+            throw new IllegalArgumentException("IPCMessage origin cannot be blank.");
+        }
+        if (destination.trim().isEmpty()) {
+            throw new IllegalArgumentException("IPCMessage destination cannot be blank.");
+        }
+        if (channel.trim().isEmpty()) {
+            throw new IllegalArgumentException("IPCMessage channel cannot be blank.");
+        }
+        
+        for (final String item : data) {
+            if (item == null) {
+                throw new IllegalArgumentException("IPCMessage data cannot have null items.");
+            }
+        }
         
         if (origin.equals(IPCMessage.BROADCAST_SERVER)) {
             throw new IllegalArgumentException("IPCMessage origin cannot be the broadcast server.");
@@ -106,7 +128,15 @@ public abstract class AbstractIPCMessage implements IPCMessage {
         this.channel = channel;
         this.data = data;
         
-        this.validateDataLength(null);
+        this.length = this.getLength(this.origin);
+        this.length += this.getLength(this.destination);
+        this.length += this.getLength(this.channel);
+        
+        for (final String item : this.data) {
+            this.length += this.addLength(item);
+        }
+        
+        this.checkLength(0);
     }
     
     /**
@@ -140,9 +170,39 @@ public abstract class AbstractIPCMessage implements IPCMessage {
      * {@inheritDoc}
      */
     @Override
-    public final void add(@NotNull final String message) throws IllegalArgumentException {
-        this.validateDataLength(message);
-        this.data.offer(message);
+    public final void add(@NotNull final String data) throws IllegalStateException {
+        
+        final int length = this.addLength(data);
+        this.checkLength(length);
+        
+        this.length += length;
+        this.data.offer(data);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public final void add(@NotNull final List<String> data) throws IllegalStateException {
+        this.add((Queue<String>) new LinkedList<String>(data));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public final void add(@NotNull final Queue<String> data) throws IllegalStateException {
+        
+        int length = 0;
+        for (final String item : data) {
+            length += this.addLength(item);
+        }
+        this.checkLength(length);
+        
+        this.length += length;
+        for (final String item : data) {
+            this.data.offer(item);
+        }
     }
     
     /**
@@ -159,11 +219,11 @@ public abstract class AbstractIPCMessage implements IPCMessage {
     @Override
     @NotNull
     public final String next() throws NoSuchElementException {
-        final String message = this.data.poll();
-        if (message == null) {
+        final String data = this.data.poll();
+        if (data == null) {
             throw new NoSuchElementException();
         }
-        return message;
+        return data;
     }
     
     /**
@@ -195,78 +255,68 @@ public abstract class AbstractIPCMessage implements IPCMessage {
     }
     
     /**
-     * Checks the length of the data contained {@link String} generated by the
-     * {@link IPCMessage#write()} method. If the length is larger than 65535,
-     * this {@link IPCMessage} will not be able to be sent.
+     * Gets the length of the given {@link String} via the same methods as
+     * {@code DataOutputStream#writeUTF(String, DataOutput)}.
      * 
-     * @param message If not {@code null}, the message will be calculated along
-     *                with the data already in this {@link IPCMessage}, as if
-     *                the message was part of this {@link IPCMessage}. If it is
-     *                {@code null}, only the data currently in this
-     *                {@link IPCMessage} will be checked.
-     * @throws IllegalArgumentException If the length of the data contained in
-     *                                  this {@link IPCMessage} is too long.
+     * @param string The {@link String} to get the length of.
+     * @return The length of the {@link String}.
      */
-    private void validateDataLength(@Nullable final String message) throws IllegalArgumentException {
+    private int getLength(@NotNull final String string) {
         
-        final StringBuilder builder = new StringBuilder();
-        builder.append(this.write());
-        if (message != null) {
-            builder.append(AbstractIPCMessage.SEPARATOR).append(message);
-        }
+        final int stringLength = string.length();
+        int length = stringLength;
         
-        final String data = builder.toString();
-        
-        // This is from DataOutputStream#writeUTF(String, DataOutput)
-        final int length = data.length();
-        int checkLength = 0;
-        int c = 0;
-        
-        for (int index = 0; index < length; index++) {
-            c = data.charAt(index);
-            if ((c >= 0x0001) && (c <= 0x007F)) {
-                checkLength++;
-            } else if (c > 0x07FF) {
-                checkLength += 3;
-            } else {
-                checkLength += 2;
+        for (int index = 0; index < stringLength; index++) {
+            final char c = string.charAt(index);
+            if (c >= 0x80 || c == 0) {
+                length += (c >= 0x800) ? 2 : 1;
             }
         }
         
-        if (checkLength > 65535) {
-            throw new IllegalArgumentException("Encoded IPCMessage is too long: " + checkLength + " bytes.");
-        }
+        return length;
     }
     
     /**
-     * Validates that the given {@link String value} is not empty (or only
-     * whitespace).
+     * Gets the length of the given {@link String} added to the length of
+     * {@link AbstractIPCMessage#SEPARATOR}. This uses the same methods as
+     * {@code DataOutputStream#writeUTF(String, DataOutput)} to calculate the
+     * length.
      * 
-     * @param value The {@link String value} to check for being blank.
-     * @param message The error message to display if the value is blank.
-     * @throws IllegalArgumentException If the given value is blank.
+     * @param string The {@link String} to get the length of.
+     * @return The length of the {@link String} combined with the length of
+     *         {@link AbstractIPCMessage#SEPARATOR}.
      */
-    protected static void validateNotBlank(@NotNull final String value, @NotNull final String message) throws IllegalArgumentException {
-        if (value.trim().isEmpty()) {
-            throw new IllegalArgumentException(message);
-        }
-    }
     
-    /**
-     * Validates that the given {@link Queue} has no data in it that is
-     * {@code null}.
-     * 
-     * @param data The {@link Queue} of data to check.
-     * @param message The error message to display if the given {@link Queue}
-     *                has {@code null} data in it.
-     * @throws IllegalArgumentException If the given {@link Queue} has
-     *                                  {@code null} data in it.
-     */
-    private static void validateNotNull(@NotNull final Queue<String> data, @NotNull final String message) throws IllegalArgumentException {
-        for (final String item : data) {
-            if (item == null) {
-                throw new IllegalArgumentException(message);
+    private int addLength(@NotNull final String string) {
+        
+        final String fullString = AbstractIPCMessage.SEPARATOR + string;
+        final int stringLength = fullString.length();
+        int length = stringLength;
+        
+        for (int index = 0; index < stringLength; index++) {
+            final char c = fullString.charAt(index);
+            if (c >= 0x80 || c == 0) {
+                length += (c >= 0x800) ? 2 : 1;
             }
+        }
+        
+        return length;
+    }
+    
+    /**
+     * Checks the length of this {@link IPCMessage} added to the given length.
+     * If the total is too long (greater than 65535), then it will throw an
+     * {@link IllegalStateException}, as this {@link IPCMessage} cannot be sent
+     * via a {@link DataOutputStream} when its length is greater than that.
+     * 
+     * @param length The additional length to check.
+     * @throws IllegalStateException If the current length of this
+     *                               {@link IPCMessage} added to the given
+     *                               length is greater than 65535.
+     */
+    private void checkLength(final int length) throws IllegalStateException {
+        if (this.length + length > 65535) {
+            throw new IllegalStateException("IPCMessage is too long.");
         }
     }
 }

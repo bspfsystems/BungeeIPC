@@ -122,7 +122,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
                 this.logger.log(Level.SEVERE, "IPC Client will not be started.");
                 return;
             }
-        } catch (SecurityException e) {
+        } catch (final SecurityException e) {
             this.logger.log(Level.SEVERE, "Unable to validate if the BungeeIPC data directory has been properly created at " + dataDirectory.getPath());
             this.logger.log(Level.SEVERE, "IPC Client will not be started.");
             this.logger.log(Level.SEVERE, e.getClass().getSimpleName() + " thrown.", e);
@@ -368,7 +368,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
                     }
                     return;
                 }
-            } catch (SecurityException | IOException e) {
+            } catch (final SecurityException | IOException e) {
                 this.logger.log(Level.WARNING, "Unable to load the BungeeIPC configuration file at " + configFile.getPath());
                 this.logger.log(Level.WARNING, "IPC Client will not be started.");
                 this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
@@ -381,7 +381,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
             final YamlConfiguration config = new YamlConfiguration();
             try {
                 config.load(configFile);
-            } catch (IOException | InvalidConfigurationException | IllegalArgumentException e) {
+            } catch (final IOException | InvalidConfigurationException | IllegalArgumentException e) {
                 this.logger.log(Level.WARNING, "Unable to load BungeeIPC configuration.");
                 this.logger.log(Level.WARNING, "IPC Client will not be started.");
                 this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
@@ -395,7 +395,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
             Level rawLoggingLevel;
             try {
                 rawLoggingLevel = Level.parse(config.getString("logging_level", "INFO"));
-            } catch (NullPointerException | IllegalArgumentException e) {
+            } catch (final NullPointerException | IllegalArgumentException e) {
                 this.logger.log(Level.WARNING, "Unable to load the BungeeIPC logging level.");
                 this.logger.log(Level.WARNING, "Will use the default level (INFO).");
                 this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
@@ -456,7 +456,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
                     sslContext.init(null, null, null);
                     
                     sslSocketFactory = sslContext.getSocketFactory();
-                } catch (NoSuchAlgorithmException | KeyManagementException e) {
+                } catch (final NoSuchAlgorithmException | KeyManagementException e) {
                     this.logger.log(Level.WARNING, "Unable to create SSLSocketFactory.");
                     this.logger.log(Level.WARNING, "IPC Client will not be started.");
                     this.logger.log(Level.WARNING, e.getClass().getSimpleName() + "thrown.", e);
@@ -471,7 +471,7 @@ public final class BukkitIPCPlugin extends JavaPlugin implements ClientIPCPlugin
                 
                 try {
                     this.socket = new BukkitClientIPCSocket(this, config, sslSocketFactory, tlsVersionWhitelist, tlsCipherSuiteWhitelist);
-                } catch (IllegalArgumentException e) {
+                } catch (final IllegalArgumentException e) {
                     this.logger.log(Level.WARNING, "Unable to create IPC Client.");
                     this.logger.log(Level.WARNING, "IPC Client will not be started.");
                     this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);

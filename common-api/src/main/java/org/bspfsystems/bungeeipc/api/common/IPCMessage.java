@@ -19,6 +19,8 @@
 
 package org.bspfsystems.bungeeipc.api.common;
 
+import java.io.DataOutputStream;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import org.jetbrains.annotations.NotNull;
@@ -82,13 +84,53 @@ public interface IPCMessage {
     
     /**
      * Adds the next message to this {@link IPCMessage}.
+     * <p>
+     * An {@link IllegalStateException} will be thrown if the additional data
+     * pushes the total length of this {@link IPCMessage} beyond its maximum
+     * allowable number of bytes to be processed. See
+     * {@code DataOutputStream#writeUTF(String, DataOutput)} for more
+     * information.
      * 
-     * @param message The next message to add to this {@link IPCMessage}.
-     * @throws IllegalArgumentException If adding the message to this
-     *                                  {@link IPCMessage} would make it too
-     *                                  long to be sent.
+     * @param data The next message to add to this {@link IPCMessage}.
+     * @throws IllegalStateException If adding the given message causes this
+     *                               {@link IPCMessage} to be too long to be
+     *                               sent via a {@link DataOutputStream}.
      */
-    void add(@NotNull final String message) throws IllegalArgumentException;
+    void add(@NotNull final String data) throws IllegalStateException;
+    
+    /**
+     * Adds the next messages to this {@link IPCMessage}.
+     * <p>
+     * An {@link IllegalStateException} will be thrown if the additional data
+     * pushes the total length of this {@link IPCMessage} beyond its maximum
+     * allowable number of bytes to be processed. See
+     * {@code DataOutputStream#writeUTF(String, DataOutput)} for more
+     * information.
+     * 
+     * @param data The {@link List} of messages to add to this
+     *             {@link IPCMessage}.
+     * @throws IllegalStateException If adding the given messages causes this
+     *                               {@link IPCMessage} to be too long to be
+     *                               sent via a {@link DataOutputStream}.
+     */
+    void add(@NotNull final List<String> data) throws IllegalStateException;
+    
+    /**
+     * Adds the next messages to this {@link IPCMessage}.
+     * <p>
+     * An {@link IllegalStateException} will be thrown if the additional data
+     * pushes the total length of this {@link IPCMessage} beyond its maximum
+     * allowable number of bytes to be processed. See
+     * {@code DataOutputStream#writeUTF(String, DataOutput)} for more
+     * information.
+     * 
+     * @param data The {@link Queue} of messages to add to this
+     *             {@link IPCMessage}.
+     * @throws IllegalStateException If adding the given messages causes this
+     *                               {@link IPCMessage} to be too long to be
+     *                               sent via a {@link DataOutputStream}.
+     */
+    void add(@NotNull final Queue<String> data) throws IllegalStateException;
     
     /**
      * Checks to see if there is any remaining data to be read.

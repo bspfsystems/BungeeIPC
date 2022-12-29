@@ -80,7 +80,7 @@ final class ServerStatusUpdater implements Runnable {
                 
                 this.ipcPlugin.setOnlineStatus(server.getName(), true);
                 continue;
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 this.logger.log(Level.FINE, e.getClass().getSimpleName() + " thrown while updating status.", e);
             }
             this.ipcPlugin.setOnlineStatus(server.getName(), false);

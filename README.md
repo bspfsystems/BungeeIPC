@@ -5,7 +5,7 @@ BungeeIPC is a set of APIs and plugins meant for BungeeCord proxies and their ba
 ## Obtaining BungeeIPC
 
 You can obtain a copy of BungeeIPC via the following methods:
-- Download a pre-built copy from the [Releases page](https://github.com/bspfsystems/BungeeIPC/releases/latest/). The latest version is release 3.0.4.
+- Download a pre-built copy from the [Releases page](https://github.com/bspfsystems/BungeeIPC/releases/latest/). The latest version is release 3.1.0.
 - Build from source (see below).
 
 If you need to use BungeeIPC as a dependency for your project, please see the Development API section below.
@@ -58,7 +58,7 @@ Include the following in your `pom.xml` file:<br />
     <dependency>
         <groupId>org.bspfsystems.bungeeipc</groupId>
         <artifactId>bungeeipc-common-api</artifactId>
-        <version>3.0.4</version>
+        <version>3.1.0</version>
         <scope>provided</scope>
     </dependency>
 </dependencies>
@@ -68,7 +68,7 @@ Include the following in your `pom.xml` file:<br />
     <dependency>
         <groupId>org.bspfsystems.bungeeipc</groupId>
         <artifactId>bungeeipc-client-api</artifactId>
-        <version>3.0.4</version>
+        <version>3.1.0</version>
         <scope>provided</scope>
     </dependency>
 </dependencies>
@@ -78,7 +78,7 @@ Include the following in your `pom.xml` file:<br />
     <dependency>
         <groupId>org.bspfsystems.bungeeipc</groupId>
         <artifactId>bungeeipc-server-api</artifactId>
-        <version>3.0.4</version>
+        <version>3.1.0</version>
         <scope>provided</scope>
     </dependency>
 </dependencies>
@@ -95,17 +95,17 @@ repositories {
 
 // For both Bukkit and BungeeCord
 dependencies {
-    compileOnly "org.bspfsystems.bungeeipc:bungeeipc-common-api:3.0.4"
+    compileOnly "org.bspfsystems.bungeeipc:bungeeipc-common-api:3.1.0"
 }
 
 // For Bukkit
 dependencies {
-     compileOnly "org.bspfsystems.bungeeipc:bungeeipc-client-api:3.0.4"
+     compileOnly "org.bspfsystems.bungeeipc:bungeeipc-client-api:3.1.0"
 }
 
 // For BungeeCord
 dependencies {
-     compileOnly "org.bspfsystems.bungeeipc:bungeeipc-server-api:3.0.4"
+     compileOnly "org.bspfsystems.bungeeipc:bungeeipc-server-api:3.1.0"
 }
 ```
 

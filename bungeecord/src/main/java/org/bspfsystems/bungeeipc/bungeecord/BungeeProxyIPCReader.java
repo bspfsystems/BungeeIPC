@@ -74,7 +74,7 @@ final class BungeeProxyIPCReader implements IPCReader {
                 final UUID proxySenderId;
                 try {
                     proxySenderId = UUID.fromString(proxySenderName);
-                } catch (IllegalArgumentException e) {
+                } catch (final IllegalArgumentException e) {
                     this.logger.log(Level.WARNING, "Unable to decipher proxy command sender UUID.");
                     this.logger.log(Level.WARNING, "Incoming value: " + proxySenderName);
                     this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);

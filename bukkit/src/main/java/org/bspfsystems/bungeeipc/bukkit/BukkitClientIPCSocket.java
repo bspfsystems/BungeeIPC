@@ -93,7 +93,9 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
         final String addressValue = config.getString("bungeecord_ip", "localhost");
         final int portValue = config.getInt("port", -1);
         
-        BukkitClientIPCSocket.validateNotBlank(addressValue, "IP address cannot be blank.");
+        if (addressValue.trim().isEmpty()) {
+            throw new IllegalArgumentException("IP address cannot be blank.");
+        }
         if (portValue == -1) {
             throw new IllegalArgumentException("Port must be specified in the config.");
         }
@@ -103,7 +105,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
         
         try {
             this.address = InetAddress.getByName(addressValue);
-        } catch (UnknownHostException e) {
+        } catch (final UnknownHostException e) {
             throw new IllegalArgumentException("Unable to decipher IP address from config value.", e);
         }
         this.port = portValue;
@@ -165,7 +167,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
             
             this.connected.set(true);
             this.logger.log(Level.INFO, "Connected to the IPC server.");
-        } catch (IOException e) {
+        } catch (final IOException e) {
             
             this.logger.log(Level.INFO, "Unable to connect to IPC server.");
             this.logger.log(Level.CONFIG, "IP Address  - " + this.address.getHostAddress());
@@ -185,7 +187,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
                 final IPCMessage message = SimpleClientIPCMessage.read(fromBungee.readUTF());
                 this.scheduler.runTask(this.ipcPlugin, () -> this.ipcPlugin.receiveMessage(message));
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             
             this.logger.log(Level.INFO, "IPC connection broken.");
             this.logger.log(Level.CONFIG, "IP Address  - " + this.address.getHostAddress());
@@ -196,7 +198,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
                 if (this.toBungee != null) {
                     this.toBungee.close();
                 }
-            } catch (IOException e1) {
+            } catch (final IOException e1) {
                 this.logger.log(Level.WARNING, "Failure for IPC client.");
                 this.logger.log(Level.WARNING, "Unable to close the DataOutputStream after the IPC connection was broken.");
                 this.logger.log(Level.WARNING, e1.getClass().getSimpleName() + " thrown.", e1);
@@ -206,7 +208,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
                 if (this.socket != null) {
                     this.socket.close();
                 }
-            } catch (IOException e1) {
+            } catch (final IOException e1) {
                 this.logger.log(Level.WARNING, "Failure for IPC client.");
                 this.logger.log(Level.WARNING, "Unable to close the Socket after the IPC connection was broken.");
                 this.logger.log(Level.WARNING, e1.getClass().getSimpleName() + " thrown.", e1);
@@ -229,18 +231,21 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
         
         /**
          * Constructs a new {@link IPCMessage}.
-         *
+         * 
          * @param origin The origin {@link IPCSocket}.
          * @param destination The destination {@link IPCSocket}.
          * @param channel The channel the {@link IPCMessage} will be read by.
          * @param data The initial data as a {@link Queue}. Order will be
          *             maintained.
-         * @see AbstractIPCMessage#AbstractIPCMessage(String, String, String, Queue)
          * @throws IllegalArgumentException If {@code origin},
          *                                  {@code destination}, and/or
          *                                  {@code channel} are blank, or if any
          *                                  element in {@code data} is
          *                                  {@code null}.
+         * @throws IllegalStateException If the given parameters contain too much
+         *                               data to send in a single
+         *                               {@link IPCMessage}.
+         * @see AbstractIPCMessage#AbstractIPCMessage(String, String, String, Queue)
          */
         private SimpleClientIPCMessage(@NotNull final String origin, @NotNull final String destination, @NotNull final String channel, @NotNull final Queue<String> data) {
             super(origin, destination, channel, data);
@@ -253,11 +258,17 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
          * @param message The serialized {@link IPCMessage} as a {@link String}.
          * @return The deserialized {@link IPCMessage}.
          * @throws IllegalArgumentException If the given message is blank.
+         * @throws IllegalStateException If the given parameters contain too much
+         *                               data to send in a single
+         *                               {@link IPCMessage}.
          */
         @NotNull
-        private static IPCMessage read(@NotNull String message) {
+        private static IPCMessage read(@NotNull String message) throws IllegalArgumentException, IllegalStateException {
             
-            AbstractIPCMessage.validateNotBlank(message, "IPCMessage data cannot be blank, cannot recreate IPCMessage: " + message);
+            if (message.trim().isEmpty()) {
+                throw new IllegalArgumentException("IPCMessage data cannot be blank, cannot recreate IPCMessage: " + message);
+            }
+            
             final Queue<String> split = new LinkedList<String>();
             
             int index = message.indexOf(AbstractIPCMessage.SEPARATOR);
@@ -304,7 +315,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
             if (this.toBungee != null) {
                 this.toBungee.close();
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             this.logger.log(Level.WARNING, "Failure for IPC client.");
             this.logger.log(Level.WARNING, "Unable to close the DataOutputStream during shutdown.");
             this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
@@ -314,7 +325,7 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
             if (this.socket != null) {
                 this.socket.close();
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             this.logger.log(Level.WARNING, "Failure for IPC client.");
             this.logger.log(Level.WARNING, "Unable to close the Socket during shutdown.");
             this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
@@ -355,23 +366,9 @@ final class BukkitClientIPCSocket implements ClientIPCSocket {
         
         try {
             this.toBungee.writeUTF(message.write());
-        } catch (IOException e) {
+        } catch (final IOException e) {
             this.logger.log(Level.WARNING, "Cannot send IPC message to Bungee proxy.");
             this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
-        }
-    }
-    
-    /**
-     * Validates that the given {@link String value} is not empty (or only
-     * whitespace).
-     * 
-     * @param value The {@link String value} to check for being blank.
-     * @param message The error message to display if the value is blank.
-     * @throws IllegalArgumentException If the given value is blank.
-     */
-    private static void validateNotBlank(@Nullable final String value, @NotNull final String message) throws IllegalArgumentException {
-        if (value != null && value.trim().isEmpty()) {
-            throw new IllegalArgumentException(message);
         }
     }
 }

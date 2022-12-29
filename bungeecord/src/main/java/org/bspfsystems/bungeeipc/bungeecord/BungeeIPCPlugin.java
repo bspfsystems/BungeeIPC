@@ -169,7 +169,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                 this.logger.log(Level.WARNING, "IPC Client will not be started.");
                 return;
             }
-        } catch (SecurityException e) {
+        } catch (final SecurityException e) {
             this.logger.log(Level.WARNING, "Unable to validate if the BungeeIPC data directory has been properly created at " + dataDirectory.getPath());
             this.logger.log(Level.WARNING, "IPC Client will not be started.");
             this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
@@ -465,7 +465,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                     }
                     return;
                 }
-            } catch (SecurityException | IOException e) {
+            } catch (final SecurityException | IOException e) {
                 this.logger.log(Level.WARNING, "Unable to load the BungeeIPC configuration file at " + configFile.getPath());
                 this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
                 this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
@@ -478,7 +478,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
             final Configuration config;
             try {
                 config = provider.load(configFile);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 this.logger.log(Level.WARNING, "Unable to load the BungeeIPC configuration.");
                 this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
                 this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
@@ -499,7 +499,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
             Level loggingLevel;
             try {
                 loggingLevel = Level.parse(config.getString("logging_level", "INFO"));
-            } catch (NullPointerException | IllegalArgumentException e) {
+            } catch (final NullPointerException | IllegalArgumentException e) {
                 this.logger.log(Level.WARNING, "Unable to load the BungeeIPC logging level.");
                 this.logger.log(Level.WARNING, "Will use the default level (INFO).");
                 this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
@@ -611,7 +611,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                     sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
                     
                     sslServerSocketFactory = sslContext.getServerSocketFactory();
-                } catch (KeyStoreException | SecurityException | IOException | NoSuchAlgorithmException | CertificateException | UnrecoverableKeyException | KeyManagementException e) {
+                } catch (final KeyStoreException | SecurityException | IOException | NoSuchAlgorithmException | CertificateException | UnrecoverableKeyException | KeyManagementException e) {
                     this.logger.log(Level.WARNING, "Unable to create SSLServerSocketFactory.");
                     this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
                     this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
@@ -660,7 +660,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                 for (final NetworkInterface iface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
                     localAddresses.addAll(Collections.list(iface.getInetAddresses()));
                 }
-            } catch (SocketException e) {
+            } catch (final SocketException e) {
                 this.logger.log(Level.WARNING, "Unable to load all local network interfaces.");
                 this.logger.log(Level.WARNING, "None of the IPC Servers will be started.");
                 this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
@@ -676,7 +676,7 @@ public final class BungeeIPCPlugin extends Plugin implements ServerIPCPlugin {
                 final BungeeServerIPCSocket serverSocket;
                 try {
                     serverSocket = new BungeeServerIPCSocket(this, serverName, serverConfig, localAddresses, sslServerSocketFactory, tlsVersionWhitelist, tlsCipherSuiteWhitelist);
-                } catch (IllegalArgumentException e) {
+                } catch (final IllegalArgumentException e) {
                     this.logger.log(Level.WARNING, "Failure while attempting to create ServerIPCSocket " + serverName + ".");
                     this.logger.log(Level.WARNING, "IPC Server " + serverName + " will not be started.");
                     this.logger.log(Level.WARNING, e.getClass().getSimpleName() + " thrown.", e);
